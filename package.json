@@ -1,0 +1,28 @@
+{
+  "name": "NodejsFranchiseComm",
+  "description": "franchise communication system",
+  "version": "1.0.0",
+  "author": "",
+  "main": "app.js",
+  "dependencies": {
+    "bcrypt-nodejs": "~0.0.3",
+    "body-parser": "*",
+    "bookshelf": "~0.8.1",
+    "co": "~4.6.0",
+    "connect-flash": "*",
+    "connect-session-knex": "~1.0.16",
+    "express": "4.x",
+    "express-session": "*",
+    "knex": "~0.8.6",
+    "lodash": "~3.10.1",
+    "morgan": "*",
+    "mysql": "*",
+    "node-gcm": "^0.13.0",
+    "passport": "*",
+    "passport-local": "*",
+    "socket.io": "~1.3.6"
+  },
+  "scripts": {
+    "start": "node app.js"
+  }
+}

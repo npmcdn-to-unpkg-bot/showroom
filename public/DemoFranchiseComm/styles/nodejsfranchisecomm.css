@@ -1,0 +1,77 @@
+.general-post-panel {
+border-top-color: LightGrey;
+border-top-left-radius: 16px;
+border-top-right-radius: 16px;
+border-top-style: solid;
+border-top-width: 1px;
+border-bottom-color: LightGrey;
+border-bottom-left-radius: 16px;
+border-bottom-right-radius: 16px;
+border-bottom-style: solid;
+border-bottom-width: 1px;
+border-left-color: LightGrey;
+border-left-style: solid;
+border-left-width: 1px;
+border-right-color: LightGrey;
+border-right-style: solid;
+border-right-width: 1px;
+margin: 20px;
+}
+
+.general-post-panel input, input:focus{
+outline: none;
+border-style: none;
+}
+
+.add-post-panel-top {
+padding: 12px;
+}
+
+.add-post-panel-bottom {
+margin: -1px;
+padding: 5px 25px;
+background-color: LightGrey;
+border-bottom-color: LightGrey;
+border-bottom-left-radius: 16px;
+border-bottom-right-radius: 16px;
+}
+
+.animate-repeat.ng-move,
+.animate-repeat.ng-enter,
+.animate-repeat.ng-leave {
+  transition: all linear 0.5s;
+}
+.animate-repeat.ng-leave.ng-leave-active,
+.animate-repeat.ng-move,
+.animate-repeat.ng-enter {
+  opacity: 0;
+  max-height: 0;
+}
+.animate-repeat.ng-leave,
+.animate-repeat.ng-move.ng-move-active,
+.animate-repeat.ng-enter.ng-enter-active {
+  opacity: 1;
+  max-height: 100px;
+}
+
+.cc-profile-panel {
+width: 90%;
+margin: 0px auto;
+border-top-color: white;
+border-top-left-radius: 3px;
+border-top-right-radius: 3px;
+border-top-style: solid;
+border-top-width: 0px;
+border-bottom-color: white;
+border-bottom-left-radius: 3px;
+border-bottom-right-radius: 3px;
+border-bottom-style: solid;
+border-bottom-width: 0px;
+border-left-color: white;
+border-left-style: solid;
+border-left-width: 0px;
+border-right-color: white;
+border-right-style: solid;
+border-right-width: 0px;
+background-color: white;
+}

@@ -1,0 +1,202 @@
+    <!-- Forum Sidebar -->
+    <div class="page-aside">
+      <div class="page-aside-switch">
+        <i class="icon wb-chevron-left" aria-hidden="true"></i>
+        <i class="icon wb-chevron-right" aria-hidden="true"></i>
+      </div>
+      <div class="page-aside-inner" data-plugin="pageAsideScroll">
+        <div data-role="container" style="height: 100%; overflow-y: auto;">
+          <div data-role="content">
+						<div style="width: 100%; position: relative;">
+							<img src="assets/images/profile_background.png" style="width: 100%;">
+							<div style="width: 100%; height: 100%; position: absolute; top: 20%;">
+								<div style="text-align: center;">
+									<a class="avatar avatar-100 bg-white margin-bottom-10 img-bordered margin-xs-0" ui-sref="profile({userId: $root.loginUser.id})">
+										<img ng-src="{{$root.loginUser.avatar}}">
+									</a>
+									<p style="font-style: bold; font-size: 20px; text-align: center;">{{profileUser.name}}</p>
+									<p style="font-size: 14px; text-align: center;">{{profileUser.title}}</p>
+								</div>
+							</div>
+						</div>
+						<div class="row" style="margin: 0 0 0 0;">
+							<div class="col-sm-4">
+								<br>
+								<p style="text-align:center; font-size: 0.9em; margin: 0 0 0 0;">Posts</p>
+								<p style="text-align:center; margin: 0 0 0 0;">436</p>
+							</div>
+							<div class="col-sm-4">
+								<br>
+								<p style="text-align:center; font-size: 0.9em; margin: 0 0 0 0;">Comments</p>
+								<p style="text-align:center; margin: 0 0 0 0;">1648</p>
+							</div>
+							<div class="col-sm-4">
+								<br>
+								<p style="text-align:center; font-size: 0.9em; margin: 0 0 0 0;">Followers</p>
+								<p style="text-align:center; margin: 0 0 0 0;">192</p>
+							</div>
+						</div>
+						<hr>
+            <section class="page-aside-section">
+              <div class="list-group">
+                <a class="list-group-item" href="javascript:void(0)">
+                  <i class="icon wb-list" aria-hidden="true"></i>
+                  <span class="list-group-item-content">My Posts</span>
+                </a>
+                <a class="list-group-item" href="javascript:void(0)">
+                  <i class="icon wb-tag" aria-hidden="true"></i>
+                  <span class="list-group-item-content">Tagged Posts</span>
+                </a>
+                <a class="list-group-item" href="javascript:void(0)">
+                  <i class="icon wb-users" aria-hidden="true"></i>
+                  <span class="list-group-item-content">Posts from My Group</span>
+                </a>
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Forum Content -->
+    <div class="page-main" style="height: 100%; overflow-y: scroll; background-color: white; padding-right: 100px;">
+
+      <!-- Forum Content Header -->
+<!--       <div class="page-header" style="padding-bottom: 10px;">
+        <h1 class="page-title"><img src="assets/images/folded-newspaper.png" style="width:32px;height:32px;">
+					&nbsp&nbspNewsFeed
+				</h1>
+      </div> -->
+
+      <!-- Forum Nav -->
+      <div class="page-nav-tabs">
+        <ul class="nav nav-tabs nav-tabs-line" data-plugin="nav-tabs" role="tablist">
+          <li class="active" role="presentation">
+            <a data-toggle="tab" href="" ng-click="" aria-controls="forum-newest" aria-expanded="true"
+            role="tab">Internal</a>
+          </li>
+          <li role="presentation">
+            <a data-toggle="tab" href="" ng-click="" aria-controls="forum-activity" aria-expanded="false"
+            role="tab">External</a>
+          </li>
+          <li role="presentation">
+            <a data-toggle="tab" href="" ng-click="" aria-controls="forum-answer" aria-expanded="false"
+            role="tab">Monitor <span class="badge">2</span></a>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Message Input-->
+			<div class="general-post-panel">
+				<div class="add-post-panel-top">
+					<textarea type="text" class="form-control" style="border-style: none;" placeholder="What do you want to share?" rows="2" ng-model="newPostMsg"></textarea>
+				</div>
+				<div class="add-post-panel-bottom">
+					<div class="container-fluid">
+<!-- 						<div class="row">
+							<div class="col-sm-6">
+								<div class="message-input-actions btn-group">
+									<button class="btn btn-pure btn-icon btn-default" type="button">
+										<i class="icon wb-emoticon" aria-hidden="true"></i>
+									</button>
+									<button class="btn btn-pure btn-icon btn-default" type="button" ng-click="clickInput('messageImage')">
+										<i class="icon wb-image" aria-hidden="true"></i>
+									</button>
+									<button class="btn btn-pure btn-icon btn-default" type="button" ng-click="clickInput('messageFile')">
+										<i class="icon wb-paperclip" aria-hidden="true"></i>
+									</button>
+									<input id="messageImage" type="file" multiple accept="image/*" name="messageImage" style="display: none;">
+									<input id="messageFile" type="file" multiple name="messageFile" style="display: none;">
+								</div>
+							</div>
+							<div class="col-sm-6" style="text-align: right">
+								<button class="btn btn-primary" type="button" ng-click="addPost()">Post</button>
+							</div>
+						</div> -->
+						<div style="height: 28px;">
+
+									<button class="btn btn-pure btn-icon btn-default" type="button" style="padding: 2px 10px; margin: auto;">
+										<img src="assets/images/smiling-emoticon-square-face.png" style="width: 20px;" aria-hidden="true">
+									</button>
+									<button class="btn btn-pure btn-icon btn-default" type="button" style="padding: 2px 10px;" ng-click="clickInput('messageImage')">
+										<img src="assets/images/add-some-picture.png" style="width: 20px;" aria-hidden="true">
+									</button>
+									<button class="btn btn-pure btn-icon btn-default" type="button" style="padding: 2px 10px;" ng-click="clickInput('messageFile')">
+										<img src="assets/images/plus.png" style="width: 20px;" aria-hidden="true">
+									</button>
+									<input id="messageImage" type="file" multiple accept="image/*" name="messageImage" style="display: none;">
+									<input id="messageFile" type="file" multiple name="messageFile" style="display: none;">
+
+
+								<button class="btn btn-primary" type="button" style="padding: 2px 5px; float: right;" ng-click="addPost()">Post</button>
+
+						</div>
+					</div>
+
+				</div>
+			</div>
+      <!-- End Message Input-->
+
+      <!-- Forum Content -->
+			<div ng-repeat="post in postList">
+				<div class="general-post-panel">
+					<!-- Content -->
+					<div class="container-fluid">
+						<div style="padding: 5px 0px; height: 54px;">
+							<div style="display: inline-block;">
+								<a class="avatar avatar-online" ui-sref="profile({userId: post.owner.id})" style="vertical-align: -20%;">
+									<img class="img-responsive" ng-src="{{post.owner.avatar}}" alt="...">
+								</a>
+							</div>
+							<div style="display: inline-block; padding-left: 10px;">
+								<a ui-sref="profile({userId: post.owner.id})" style="color: #89bceb; font-weight: 500; margin: 0px;">{{post.owner.name}}</a>
+								<p style="margin: 0px;">{{post.owner.title}} <img src="assets/images/Objects-Timer-icon-small.png"> 5 hours ago</p>
+							</div>
+						</div>
+						<div style="padding: 5px 0px;">
+							<p ng-bind-html="linkify(post.content.text)"></p>
+							<div>
+								<div ng-show="post.content.attachments.length > 0">
+									<div style="display: inline-block">
+										<p style="font-style: italic; font-weight: 500;">Attachments:</p>
+									</div>
+									<div style="display: inline-block;" ng-repeat="attachment in post.content.attachments">
+										<a href="javascript:void(0)" style="padding-left: 10px;"><img src="assets/images/Very-Basic-Paper-Clip-icon.png" style="width: 20px; height: 20px;"> {{attachment}}</a>
+									</div>
+								</div>
+							</div>
+							<div ng-repeat="postImage in post.content.images track by $index"" style="display: inline-block; margin-bottom: 5px; margin-right: 10px;">
+								<img ng-src="{{postImage}}" style="height: 150px;">
+							</div>
+							<div>
+								<a href=""><img src="assets/images/imgpsh_fullsize.png" style="width: 20px; height: 20px; vertical-align: text-bottom;">&nbsp;&nbsp;{{post.likes.length}}&nbsp;Likes</a>
+								<a href="" style="padding-left: 15px;"><img src="assets/images/comments.png" style="width: 20px; height: 20px;"> &nbsp;&nbsp;{{post.comments.length}}&nbsp;Comments</a>
+							</div>
+						</div>
+						<div class="animate-repeat" ng-repeat="comment in post.comments">
+							<hr style="margin: 5px 0px;">
+							<div style="padding: 5px 30px;">
+								<a class="avatar avatar-sm" ui-sref="profile({userId: comment.owner.id})" style="vertical-align: 5%;">
+									<img class="img-responsive" ng-src="{{comment.owner.avatar}}" alt="...">
+								</a>
+								<div style="display: inline-block; padding-left: 10px;">
+									<p style="margin: 0px;"><a ui-sref="profile({userId: comment.owner.id})" style="color: #89bceb; font-weight: 500;">{{comment.owner.name}}</a> <img src="assets/images/Objects-Timer-icon-small.png"> 6 hours ago</p>
+									<p style="margin: 0px;">{{comment.content.text}}</p>
+								</div>
+							</div>
+						</div>
+						<hr style="margin: 5px 0px;">
+						<input type="text" placeholder="Write a comment ..." rows="1" ng-model="currentMsg[$index]" ng-keyup="$event.keyCode === 13 && addComment($index)" style="padding: 5px 20px; width: 100%;"></input>
+					</div>
+					<!-- End Content -->
+				</div>
+
+
+				
+
+
+			</div>
+			<!-- End Forum Content -->
+
+    </div>
+		<!-- End Forum Content -->
