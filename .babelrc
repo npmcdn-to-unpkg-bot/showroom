@@ -1,0 +1,4 @@
+{
+	"presets": [],
+	"plugins": ["syntax-async-functions", "transform-es2015-arrow-functions", "transform-regenerator"]
+}

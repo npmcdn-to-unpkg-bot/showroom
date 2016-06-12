@@ -1,0 +1,27 @@
+<ion-view view-title="My List">
+	<ion-content class="padding" id="list-wrapper-mylist">
+
+<!-- <a ng-href="#/{{$root.index_name}}/new" class="btn btn-primary"><span class="glyphicon glyphicon-plus"></span>New item</a> -->
+
+<ns-search-box ns-search="search" ns-click-button="" ns-show-button="false"></ns-search-box>
+<br>
+<div class="content list" infinite-scroll="LoadMore()" infinite-scroll-distance="2" infinite-scroll-disabled="itemsInList>=listData.mylist.length" infinite-scroll-container="'#list-wrapper-mylist'">
+	<div ng-animate="'animate'" ng-repeat="item in listData.mylist | filter: search | orderBy: orderProp : orderReverse | limitTo: itemsInList track by item.id">
+		<div class="item item-button-right">
+			<p>{{item.MLS}}</p>
+			<p>{{item.street}}</p>
+			<p>{{item.city}} {{item.province}} {{item.postcode}}</p>
+			<p>{{item.description}}</p>
+			<p>Total quantity: {{item.totalQty}}, Available quantity: {{item.ownerQty}}</p>
+			<button  type="button" ng-click="$root.$state.go('{{$root.index_name}}.edit', {itemId: item.id});" class="button button-calm">
+				<!-- <i class="icon ion-edit"></i> -->
+				Edit
+			</button>
+<!-- 			<a ng-href="#/{{$root.index_name}}/edit/{{item.id}}"><span class="glyphicon glyphicon-pencil"></span>Edit</a>
+			<br> -->
+		</div>
+	</div>
+</div>
+
+	</ion-content>
+</ion-view>

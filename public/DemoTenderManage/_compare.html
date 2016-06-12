@@ -1,0 +1,112 @@
+<nav class="navbar navbar-default navbar-fixed-top" role="navigation" style="margin-top:50px">
+	<div class="container-fluid">
+
+		<form name="compareForm">
+			<div class="row">
+<!-- 				<div class="col-sm-1">
+					<p>Watchers: {{countWatchers}}</p>
+				</div> -->
+				<div class="col-sm-1">
+					<label ng-class="{'has-errors': compareForm['leftDocNum'].$invalid && !compareForm['leftDocNum'].$pristine}">
+						<!-- <input type="text" size="8" name="leftDocNum" ng-model="initset.leftDocNum" required> -->
+						<input type="text" size="8" name="leftDocNum" ng-model="initset.leftDocNum">
+					</label>
+					<!-- <span ng-show="compareForm['leftDocNum'].$error.required && !compareForm['leftDocNum'].$pristine" class="help-inline">
+						Required
+					</span> -->
+				</div>
+				<div class="col-sm-1">
+					<label ng-class="{'has-errors': compareForm['rightDocNum'].$invalid && !compareForm['rightDocNum'].$pristine}">
+						<input type="text" size="8" name="rightDocNum" ng-model="initset.rightDocNum">
+					</label>
+					<!-- <span ng-show="compareForm['rightDocNum'].$error.required && !compareForm['rightDocNum'].$pristine" class="help-inline">
+						Required
+					</span> -->
+				</div>
+				<div class="col-sm-7">
+					<div class="row">
+						<div class="col-sm-1">
+							<button ng-click="LoadDocument()" ng-disabled="compareForm.$invalid" class="button button-small button-positive"> Load </button>
+						</div>
+						<div class="col-sm-1">
+							<button ng-click="NewDocument()" ng-disabled="compareForm.$invalid" class="button button-small button-positive">&nbsp;&nbsp;New&nbsp;&nbsp;</button>
+						</div>
+						<div class="col-sm-1">
+							<button ng-click="CreateDocument()" ng-disabled="compareForm.$invalid" class="button button-small button-positive">Fork</button>
+						</div>
+						<div class="col-sm-1">
+							<button ng-click="CopyItem()" ng-disabled="compareForm.$invalid" class="button button-small button-positive"> Copy </button>
+						</div>
+						<div class="col-sm-1">
+							<button ng-click="PasteItem()" ng-disabled="compareForm.$invalid" class="button button-small button-positive">Paste</button>
+						</div>
+						<div class="col-sm-1">
+							<button ng-click="AddItem()" ng-disabled="compareForm.$invalid" class="button button-small button-positive">&nbsp;&nbsp;Add&nbsp;&nbsp;</button>
+						</div>
+						<div class="col-sm-1">
+							<button ng-click="RemoveItem()" ng-disabled="compareForm.$invalid" class="button button-small button-positive">Remove</button>
+						</div>
+						<div class="col-sm-2">
+							<button ng-click="initset.onlyShowDiff=!initset.onlyShowDiff" ng-disabled="compareForm.$invalid" class="button button-small button-positive" ng-class="[initset.onlyShowDiff?'active' : '']">&nbsp;&nbsp;Diff&nbsp;&nbsp;</button>
+						</div>
+					</div>
+				</div>
+				<div class="col-sm-2">
+					<!-- <ns-search-box ns-search="search" ns-click-button="" ns-show-button="false"></ns-search-box> -->
+					<div class="input-group">
+					  <span class="input-group-addon"><span class="glyphicon glyphicon-search" aria-hidden="true"></span></span>
+					  <input type="text" class="form-control" placeholder="Search" ng-model="search" aria-describedby="basic-addon1">
+					</div>
+				</div>
+			</div>
+		<!-- 	<br>
+			<button ng-click="nsCancel()" class="button button-dark">Cancel</button>
+			<button ng-click="nsSave()" ng-disabled="compareForm.$invalid" class="button button-positive">&nbsp; Save &nbsp;</button>
+			<button ng-click="nsDelete()" ng-show="nsShowDelete" class="button button-assertive">Delete</button> -->
+		</form>
+		<!-- <ns-search-box ns-search="search" ns-click-button="" ns-show-button="false"></ns-search-box> -->
+<!-- 		<br>
+		<span ng-show="showAlert" class="alert alert-warning">{{errorMsg}}</span> -->
+	</div>
+</nav>
+
+<ion-view view-title="Messages"> <!-- navbar cannot be put inside ion-view otherwise it will not fix to top -->
+	<ion-content class="padding">
+
+
+
+
+	<!-- <div class="content list" infinite-scroll="LoadMore()" infinite-scroll-distance="2" infinite-scroll-disabled="itemsInList > reqList.length" infinite-scroll-container="'#compare-wrapper-messages'">
+		<div ng-animate="'animate'" ng-repeat="item in reqList | filter: search | orderBy: orderProp : orderReverse | limitTo: itemsInList track by $index" >
+			<div class="item">
+				<div class="row">
+					<div class="col-sm-6">
+						<p>{{item.key}} {{item.note}}</p>
+					</div>
+					<div class="col-sm-6">
+						<p>{{item.key}} {{item.note}}</p>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div> -->
+<div class="container-fluid" id="compare-wrapper-messages"  style="margin-top:60px">
+	<div id="repeat-parent-div" infinite-scroll="LoadMore()" infinite-scroll-distance="2" infinite-scroll-disabled="itemsInList > reqList.length" infinite-scroll-container="'#compare-wrapper-messages'">
+		<div class="animate-repeat" ng-repeat="item in reqList | filter: search | filter: IsNotEqual | limitTo: itemsInList track by $id(item)" >
+	<!-- 		<div class="row">
+				<div class="col-sm-6">
+					<p ng-if="item[0]!=={}">left: {{item[0].key}} {{item[0].note}}</p>
+				</div>
+				<div class="col-sm-6">
+					<p ng-if="item[1]!=={}">right: {{item[1].key}} {{item[1].note}}</p>
+				</div>
+			</div> -->
+			<ns-compare ns-requirement="item" ns-readonly="initset.readonly" ns-current="initset" ns-repeat-parent-div="#repeat-parent-div"></ns-compare>
+		</div>
+	</div>
+
+</div>
+
+
+	</ion-content>
+</ion-view>

@@ -1,0 +1,15 @@
+<ion-modal-view style="width: 80%; height: 60%; top: 20%; left: 10%; right: 10%; bottom: 20%;">
+    <ion-header-bar class="bar-dark">
+		<h4 class="modal-title">Please confirm:</h4>
+		<button class="button button-clear pull-right" ng-click="receiveItemModal.hide()" aria-hidden="true"><span class="icon ion-android-close"></button>
+    </ion-header-bar>
+    <ion-content>
+		<div class="row">
+			<div class="col col-offset-10">
+				<p>Click "Yes" if you have received the item from the owner.</p>
+			</div>
+		</div>
+		<button ng-click="receiveItemModal.hide()" class="button button-dark">&nbsp;No&nbsp;</button>
+		<button ng-click="ReceiveItem(holderId, itemId)" class="button button-balanced">&nbsp;Yes&nbsp;</button>
+    </ion-content>
+</ion-modal-view>

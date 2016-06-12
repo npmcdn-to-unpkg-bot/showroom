@@ -1,0 +1,24 @@
+<ion-nav-bar class="bar-dark">
+	<ion-nav-back-button>
+	</ion-nav-back-button>
+</ion-nav-bar>
+
+<ion-tabs class="tabs-icon-top tabs-stable {{$root.hideTabs}}">
+
+	<ion-tab title="Search" icon-on="ion-ios-search-strong" icon-off="ion-ios-search" href="#/index_cordova/search">
+		<ion-nav-view name="search-tab"></ion-nav-view>
+	</ion-tab>
+
+	<ion-tab title="Messages" icon-on="ion-ios-chatboxes" icon-off="ion-ios-chatboxes-outline" href="#/index_cordova/messages" badge="$root.messagesTabBadgeNum" badge-style="badge-assertive">
+		<ion-nav-view name="messages-tab"></ion-nav-view>
+	</ion-tab>
+
+	<ion-tab title="List" icon-on="ion-ios-list" icon-off="ion-ios-list-outline" href="#/index_cordova/list">
+		<ion-nav-view name="list-tab"></ion-nav-view>
+	</ion-tab>
+
+	<ion-tab title="Settings" icon-on="ion-ios-gear" icon-off="ion-ios-gear-outline" href="#/index_cordova/settings">
+		<ion-nav-view name="settings-tab"></ion-nav-view>
+	</ion-tab>
+
+</ion-tabs>

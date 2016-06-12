@@ -1,0 +1,44 @@
+<div class="row no-margin-padding" ng-class="[nsFormat.whole?'compare-different-whole' : 'compare-same-whole']">
+	<div class="col-sm-6" ng-click="clickFunc(0)">
+		<div class="row no-margin-padding">
+			<div ng-class="['col-sm-2', nsFormat.section?'compare-different-cell' : 'compare-same-cell']">
+				<textarea class="compare-cell" ng-model="nsRequirement[0].section" ng-readonly="nsReadonly[0]"></textarea>
+			</div>
+			<div ng-class="['col-sm-6', nsFormat.key?'compare-different-cell' : 'compare-same-cell']">
+				<textarea class="compare-cell" ng-model="nsRequirement[0].key" ng-readonly="nsReadonly[0]"></textarea>
+			</div>
+			<div ng-class="['col-sm-2', nsFormat.value?'compare-different-cell' : 'compare-same-cell']">
+				<textarea class="compare-cell" ng-model="nsRequirement[0].value" ng-readonly="nsReadonly[0]"></textarea>
+			</div>
+			<div ng-class="['col-sm-2', nsFormat.unit?'compare-different-cell' : 'compare-same-cell']">
+				<textarea class="compare-cell" ng-model="nsRequirement[0].unit" ng-readonly="nsReadonly[0]"></textarea>
+			</div>
+		</div>
+		<div class="row no-margin-padding">
+			<div ng-class="['col-sm-12', nsFormat.note?'compare-different-cell' : 'compare-same-cell']">
+				<textarea class="compare-cell" ng-model="nsRequirement[0].note" ng-readonly="nsReadonly[0]"></textarea>
+			</div>
+		</div>
+	</div>
+	<div class="col-sm-6" ng-click="clickFunc(1)">
+		<div class="row no-margin-padding">
+			<div ng-class="['col-sm-2', nsFormat.section?'compare-different-cell' : 'compare-same-cell']">
+				<textarea class="compare-cell" ng-model="nsRequirement[1].section" ng-readonly="nsReadonly[1]"></textarea>
+			</div>
+			<div ng-class="['col-sm-6', nsFormat.key?'compare-different-cell' : 'compare-same-cell']">
+				<textarea class="compare-cell" ng-model="nsRequirement[1].key" ng-readonly="nsReadonly[1]"></textarea>
+			</div>
+			<div ng-class="['col-sm-2', nsFormat.value?'compare-different-cell' : 'compare-same-cell']">
+				<textarea class="compare-cell" ng-model="nsRequirement[1].value" ng-readonly="nsReadonly[1]"></textarea>
+			</div>
+			<div ng-class="['col-sm-2', nsFormat.unit?'compare-different-cell' : 'compare-same-cell']">
+				<textarea class="compare-cell" ng-model="nsRequirement[1].unit" ng-readonly="nsReadonly[1]"></textarea>
+			</div>
+		</div>
+		<div class="row no-margin-padding">
+			<div ng-class="['col-sm-12', nsFormat.note?'compare-different-cell' : 'compare-same-cell']">
+				<textarea class="compare-cell" ng-model="nsRequirement[1].note" ng-readonly="nsReadonly[1]"></textarea>
+			</div>
+		</div>
+	</div>
+</div>

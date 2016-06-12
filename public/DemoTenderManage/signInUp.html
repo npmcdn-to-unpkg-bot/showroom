@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="translucent black">
+    <title>Sign In</title>
+  </head>
+
+  <body ng-app="signInUp" ng-controller="signInUp_main">
+		<span us-spinner spinner-key="spinner-1"></span>
+		<div ng-view>Loading...</div>
+
+		<script src="cordova.js"></script>		
+		<script>
+			(function(){
+				var headTag = document.getElementsByTagName('head')[0],
+					bodyTag = document.getElementsByTagName('body')[0],
+					cssAppend, jsAppend;
+
+				if (window.hasOwnProperty('cordova')) {
+					cssArray = [
+						"./styles/bootstrap/3.3.5/bootstrap.min.css",
+						"./styles/signin.css"
+					];
+					jsArray = [
+						"./js/lib/jquery-1.11.1.js",
+						"./js/lib/angular-1.4.5.min.js",
+						"./js/lib/angular-route-1.4.5.min.js",
+						"./js/lib/bootstrap/bootstrap-3.3.5.min.js",
+						"./js/lib/spinner-0.0.1.js",
+						"./js/lib/angular-spinner-0.6.2.js",
+						"KM_tools.js",
+						"signInUp.js"
+					];
+				} else {
+					cssArray = [
+						"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css",
+						"./styles/signin.css"
+					];
+					jsArray = [
+						"https://code.jquery.com/jquery-1.11.3.min.js",
+						"https://ajax.googleapis.com/ajax/libs/angularjs/1.4.5/angular.min.js",
+						"https://ajax.googleapis.com/ajax/libs/angularjs/1.4.5/angular-route.js",
+						"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js",
+						"./js/lib/spinner-0.0.1.js",
+						"./js/lib/angular-spinner-0.6.2.js",
+						"KM_tools.js",
+						"signInUp.js"
+					];
+				}
+
+				cssArray.forEach(function(cssFile){
+					cssAppend = document.createElement("link"),
+					cssAppend.rel = "stylesheet";
+					cssAppend.type = "text/css";
+					cssAppend.href = cssFile;
+					headTag.appendChild(cssAppend);
+				});
+
+				jsArray.forEach(function(jsFile){
+					jsAppend = document.createElement("script");
+					jsAppend.type = "text/javascript";
+					jsAppend.async = false;
+					jsAppend.src = jsFile;
+					bodyTag.appendChild(jsAppend);
+				});
+			})();
+		</script>
+
+  </body>
+</html>

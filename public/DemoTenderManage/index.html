@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<p id="debuginfo">Loading ...</p>
+	<script>
+	/*
+		var xmlhttp = new XMLHttpRequest(),
+			connect = function(){
+				var retryConn = function(){
+					document.getElementById("debuginfo").innerHTML = "Network unavailable. Retrying...";
+					setTimeout(connect, 3000);
+				};
+				xmlhttp.onreadystatechange = function() {
+					if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+						window.location.assign(JSON.parse(xmlhttp.responseText)? "content.html" : "signInUp.html");
+					} else if (xmlhttp.readyState == 4 && Number(xmlhttp.status) >= 400) {
+						retryConn();
+					}
+				};
+				xmlhttp.open("POST", 'https://keydecision.tk/ajax/isLoggedIn', true);
+				xmlhttp.onerror = retryConn;
+				xmlhttp.send();
+			};
+		connect();
+	*/
+		window.location.assign("content.html");
+	</script>
+</html>

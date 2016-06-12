@@ -1,0 +1,24 @@
+<form name="nsFormName">
+	<div class="list">
+		<div ng-animate="'animate'" ng-repeat="field in ::nsFields" ng-switch="field.tag">
+			<div ng-switch-when="input">
+				<label class="item item-input" ng-class="{'has-errors': nsFormName[field.name].$invalid && !nsFormName[field.name].$pristine}">
+					<span class="input-label" style="background-color:WhiteSmoke;">{{field.label}}</span>
+					<input type="{{field.type}}" name="{{field.name}}" ng-model="nsFormData[field.name]" required>
+				</label>
+				<span ng-show="nsFormName[field.name].$error.required && !nsFormName[field.name].$pristine" class="help-inline">
+					Required
+				</span>
+			</div>
+			<div ng-switch-when="textarea">
+				<br>
+				<label class="item">{{field.label}}</label>
+				<textarea style="width:100%; padding: 16px;" rows="3" name="{{field.name}}" ng-model="nsFormData.description"></textarea>
+			</div>
+		</div>
+	</div>
+	<br>
+	<button ng-click="nsCancel()" class="button button-dark">Cancel</button>
+	<button ng-click="nsSave()" ng-disabled="nsFormName.$invalid" class="button button-balanced">&nbsp; Save &nbsp;</button>
+	<button ng-click="nsDelete()" ng-show="nsShowDelete" class="button button-assertive">Delete</button>
+</form>
