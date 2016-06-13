@@ -21,6 +21,11 @@ angular
 		url: "/profile/{userId:int}",
 				templateUrl: "_profile.html",
 				controller: '_profile'
+	})
+	.state('taskBoard', {
+		url: "/taskBoard",
+				templateUrl: "_taskBoard.html",
+				controller: '_taskBoard'
 	});
 	$urlRouterProvider.otherwise("/newsFeed");
 }])
@@ -145,6 +150,9 @@ angular
 		}
 		return tempAct;
 	});
+}])
+.controller("_taskBoard", ['$scope', '$stateParams', 'ChainCloudDb', function ($scope, $stateParams, ChainCloudDb) {
+
 }])
 .directive('hideTabs', ['$rootScope', function($rootScope) {
   return {
