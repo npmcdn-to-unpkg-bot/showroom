@@ -1,0 +1,34 @@
+<ion-modal-view style="width: 80%; height: 60%; top: 20%; left: 10%; right: 10%; bottom: 20%;">
+    <ion-header-bar class="bar-dark">
+		<h4 class="modal-title">User information:</h4>
+		<button class="button button-clear pull-right" ng-click="showUserModal.hide()" aria-hidden="true"><span class="icon ion-android-close"></button>
+    </ion-header-bar>
+    <ion-content>
+		<div class="row">
+			<div class="col col-offset-10">
+				<p>
+					{{user.username}}
+					<br>
+				  {{user.firstname}} {{user.lastname}}
+					<br>
+				  {{user.company}}
+					<br>
+				  {{user.street}}
+					<br>
+				  {{user.city}} {{user.province}}
+					<br>
+				  {{user.country}} {{user.postcode}}
+					<br>
+				  {{user.phone}}
+					<br>
+				  {{user.email}}
+				  <br>
+				</p>
+			</div>
+		</div>
+    </ion-content>
+
+<!-- 	<div class="bar bar-footer">
+		<button class="button button-dark pull-right" ng-click="closeModal()">Close</button>
+	</div> -->
+</ion-modal-view>

@@ -1,0 +1,25 @@
+<ion-view view-title="Search">
+	<ion-content class="padding" id="list-wrapper-search">
+
+<ns-search-box ns-search="search.term" ns-click-button="SearchItem()" ns-show-button="true"></ns-search-box>
+<p><span ng-show="showAlert" class="alert alert-warning">{{errorMsg}}</span></p>
+
+<div class="content list" infinite-scroll="LoadMore()" infinite-scroll-distance="2" infinite-scroll-disabled="itemsInList>=items.length" infinite-scroll-container="'#list-wrapper-search'">
+	<div ng-animate="'animate'" ng-repeat="item in items | orderBy: orderProp : orderReverse | limitTo: itemsInList track by item.id" >
+		<div class="item item-button-right">
+			<p>{{item.MLS}}</p>
+			<p>{{item.street}}</p>
+			<p>{{item.city}} {{item.province}} {{item.postcode}}</p>
+			<p>{{item.description}}</p>
+			<p>Available quantity: {{item.ownerQty}}, Owned by: <a href="" style="cursor: pointer;" ng-click="OpenShowUserModal(item.owner)">{{item.owner.username}}</a></p>
+			<button  ng-click="OpenGrabItemModal(item.id)" class="button button-calm">
+				<!-- <span class="icon ion-ios-telephone"></span> -->
+				&nbsp;
+				Get one
+			</button>
+		</div>
+	</div>
+</div>
+
+	</ion-content>
+</ion-view>

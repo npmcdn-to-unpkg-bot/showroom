@@ -1,0 +1,9 @@
+<ion-view view-title="Edit User">
+	<ion-content class="padding">
+
+<ns-fill-form ns-fields="fields" ns-form-data="formData" ns-cancel="($root.useAppStyle)? $root.$ionicHistory.goBack() : $root.goBack()" ns-save="UpdateUser()" ns-show-delete="false"></ns-fill-form>
+<p ng-show="showAlert" class="alert alert-warning">{{errorMsg}}</p>
+<br>
+
+	</ion-content>
+</ion-view>

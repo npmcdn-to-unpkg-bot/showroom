@@ -1,0 +1,11 @@
+<div class='list'>
+	<div class='item item-input-inset'>
+		<label class='item-input-wrapper'>
+			<span class='icon ion-search placeholder-icon'></span>
+			<input type='text' ng-model='nsSearch' placeholder='Search for ...' ng-keyup="$event.keyCode === 13 && nsClickButton()">
+		</label>
+		<button  ng-show="nsShowButton" ng-click="nsClickButton()" class="button button-small button-calm">
+			Search
+		</button>
+	</div>
+</div>

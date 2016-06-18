@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no, width=device-width">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="translucent black">
+	<meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline'">
+    <title>Sign In</title>
+  </head>
+
+  <body ng-controller="content_main">
+		<span us-spinner spinner-key="spinner-1"></span>
+
+		<ion-nav-view></ion-nav-view>
+
+		<!-- <script src="http://keydecision.tk:8081/target/target-script-min.js#anonymous"></script> -->
+		<script src="cordova.js"></script>
+		<script>
+			var useAppStyle = window.hasOwnProperty('cordova'),
+				//useAppStyle = true,
+				usePushService = window.hasOwnProperty('cordova');
+
+			(function(){
+				var headTag = document.getElementsByTagName('head')[0],
+					bodyTag = document.getElementsByTagName('body')[0],
+					cssAppend, jsAppend;
+
+				if (useAppStyle) {
+					cssArray = [
+						//"./styles/bootstrap/3.3.5/bootstrap.min.css",
+						"./styles/ionic-1.2.1.min.css",
+						"./styles/contentCdv.css"
+					];
+					jsArray = [
+						"./js/lib/lodash-4.5.1.min.js",
+						"./js/lib/jquery-1.11.1.js",
+						"./js/lib/moment-2.11.1.min.js",
+						"./js/lib/ionic.bundle-1.2.1.min.js",
+						//"./js/lib/bootstrap/bootstrap-3.3.5.min.js",
+						"./js/lib/spinner-0.0.1.js",
+						"./js/lib/angular-spinner-0.6.2.js",
+						"./js/lib/socket.io-1.3.5.js",
+						"./js/lib/angular-socket-0.0.1.min.js",
+						"./js/lib/ng-infinite-scroll-1.2.0.min.js",
+						"KM_tools.js",
+						"content.js"
+					];
+				} else {
+					cssArray = [
+						//"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css",
+						"https://code.ionicframework.com/1.2.1/css/ionic.min.css",
+						"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css",
+						"./styles/contentWeb.css"
+					];
+					jsArray = [
+						"https://cdn.jsdelivr.net/lodash/4.5.1/lodash.min.js",
+						"https://code.jquery.com/jquery-1.11.3.min.js",
+						"https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.11.1/moment.min.js",
+						"https://code.ionicframework.com/1.2.1/js/ionic.bundle.min.js",
+						//"https://ajax.googleapis.com/ajax/libs/angularjs/1.4.5/angular.min.js",
+						//"https://cdnjs.cloudflare.com/ajax/libs/angular-ui-router/0.2.18/angular-ui-router.min.js",
+						"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js",
+						"./js/lib/spinner-0.0.1.js",
+						"./js/lib/angular-spinner-0.6.2.js",
+						"https://cdn.socket.io/socket.io-1.3.5.js",
+						"./js/lib/angular-socket-0.0.1.min.js",
+						"./js/lib/ng-infinite-scroll-1.2.0.min.js",
+						"KM_tools.js",
+						"content.js"
+					];
+				}
+
+				cssArray.forEach(function(cssFile){
+					cssAppend = document.createElement("link"),
+					cssAppend.rel = "stylesheet";
+					cssAppend.type = "text/css";
+					cssAppend.href = cssFile;
+					headTag.appendChild(cssAppend);
+				});
+
+				jsArray.forEach(function(jsFile){
+					jsAppend = document.createElement("script");
+					jsAppend.type = "text/javascript";
+					jsAppend.async = false;
+					jsAppend.src = jsFile;
+					bodyTag.appendChild(jsAppend);
+				});
+			})();
+		</script>
+
+<script id="_list.html" type="text/ng-template">
+	<ion-view view-title="List">
+		<ion-content class="padding">
+			<ns-link-box ns-state="{{$root.index_name}}.new" ns-icon="ion-plus-round">New item</ns-link-box>
+			<ns-link-box ns-state="{{$root.index_name}}.mylist" ns-icon="ion-ios-paper">My list</ns-link-box>
+			<ns-link-box ns-state="{{$root.index_name}}.borrowed" ns-icon="ion-ios-paper">Borrowed list</ns-link-box>
+			<ns-link-box ns-state="{{$root.index_name}}.lent" ns-icon="ion-ios-paper">Lent list</ns-link-box>
+		</ion-content>
+	</ion-view>
+</script>
+
+<script id="_settings.html" type="text/ng-template">
+	<ion-view view-title="Settings">
+		<ion-content class="padding">
+			<ns-link-box ns-state="{{$root.index_name}}.editUser" ns-icon="ion-edit">Edit user</ns-link-box>
+			<ns-link-box ng-click="logoff()" ns-icon="ion-log-out">Log Off</ns-link-box>
+		</ion-content>
+	</ion-view>
+</script>
+
+
+  </body>
+</html>

@@ -1,0 +1,71 @@
+.odd {
+	background-color: WhiteSmoke;
+}
+.even {
+	background-color: White;
+}
+.active {
+	background-color: LightGray;
+}
+.has-errors {
+	border-left: 3px solid #cc2511;
+	border-right: 3px solid #cc2511;
+}
+.no-errors {
+	border-left: 3px solid #3d8b3d;
+	border-right: 3px solid #3d8b3d;
+}
+.calm, a.calm, .button-calm {
+	color: DodgerBlue;
+}
+.compare-different-whole {
+    outline: 2px solid red;
+    outline-offset: -3px;
+}
+.compare-same-whole {
+
+}
+.compare-different-cell {
+	outline: 1px solid white;
+	outline-offset: -1px;
+	background-color: #ff9999;
+}
+.compare-same-cell {
+	outline: 1px solid white;
+	outline-offset: -1px;
+	background-color: MediumAquaMarine;
+}
+.no-margin-padding {
+	margin: 0px;
+	padding: 3px;
+}
+textarea.compare-cell, textarea.compare-cell[readonly] {
+	background-color: transparent;
+	resize: none;
+	width: 100%;
+	padding-top: 8px;
+	padding-bottom: 8px;
+}
+input.form-control[type="text"] {
+	border-style: solid;
+	border-width: 1px;
+	border-color: rgb(204, 204, 204)
+}
+.animate-repeat.ng-move,
+.animate-repeat.ng-enter,
+.animate-repeat.ng-leave {
+  transition: all linear 0.5s;
+}
+.animate-repeat.ng-leave.ng-leave-active,
+.animate-repeat.ng-move,
+.animate-repeat.ng-enter {
+  opacity: 0;
+  max-height: 0;
+}
+.animate-repeat.ng-leave,
+.animate-repeat.ng-move.ng-move-active,
+.animate-repeat.ng-enter.ng-enter-active {
+  opacity: 1;
+  max-height: 100px;
+}
+}

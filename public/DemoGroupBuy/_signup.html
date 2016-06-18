@@ -1,0 +1,46 @@
+<div class="container">
+  <form method="post" name="signupForm" class="form-signin">
+    <h2 class="form-signin-heading">Please sign up</h2>
+
+    <label for="signupUsername" class="sr-only">User name</label>
+    <input ng-model="cred.username" name="signupUsername" type="text" placeholder="User name" required autofocus class="form-control">
+    <span ng-show="signupForm.signupUsername.$error.required && !signupForm.signupUsername.$pristine" class="help-inline">
+        Required
+		</span>
+
+    <label for="inputEmail" class="sr-only">Email address</label>
+    <input ng-model="cred.email" name="inputEmail" type="email" placeholder="Email address" required class="form-control">
+    <span ng-show="signupForm.inputEmail.$error.email && !signupForm.inputEmail.$pristine" class="help-inline">
+        Invalid Email Address
+		</span>
+
+    <label for="inputPassword" class="sr-only">Password</label>
+    <input ng-model="cred.password" ng-keyup="$event.keyCode === 13 && signup()" name="inputPassword" type="password" placeholder="Password" required class="form-control">
+    <span ng-show="signupForm.inputPassword.$error.required && !signupForm.inputPassword.$pristine" class="help-inline">
+        Required
+		</span>
+
+		<div ng-animate="'animate'" ng-repeat="item in 
+			[
+				{name: 'firstname', description: 'First name'},
+				{name: 'lastname', description: 'Last name'},
+				{name: 'phone', description: 'Phone'},
+				{name: 'company', description: 'Company name'},
+				{name: 'street', description: 'Street No and name'},
+				{name: 'city', description: 'City'},
+				{name: 'province', description: 'Province'},
+				{name: 'country', description: 'Country'},
+				{name: 'postcode', description: 'Post code'}
+			]">
+			<div>
+				<label for="signup_{{item.name}}" class="sr-only">{{item.description}}</label>
+				<input ng-model="cred[item.name]" ng-keyup="$event.keyCode === 13 && signup()" id="signup_{{item.name}}" type="text" placeholder="{{item.description}}" class="form-control">
+			</div>
+		</div>
+
+    <p ng-show="showAlert" class="alert alert-warning">{{errorMsg}}</p>
+	<p ng-show="showAlert_success" class="alert alert-success">{{errorMsg}}</p>
+    <button ng-click="signup()" ng-disabled="signupForm.$invalid" type="button" class="btn btn-lg btn-primary btn-block">Sign up</button><br>
+    <div style="border-top: 1px solid#888; padding-top:15px; font-size:85%" class="col-md-12 control">Already have an account! <a href="#/signin">Sign In Here</a></div>
+  </form>
+</div>

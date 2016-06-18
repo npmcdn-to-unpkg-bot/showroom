@@ -1,0 +1,20 @@
+		<ion-view view-title="Borrowed Items">
+			<ion-content class="padding" id="list-wrapper-borrowed">
+
+<ns-search-box ns-search="search" ns-click-button="" ns-show-button="false"></ns-search-box>
+<br>
+<p><span ng-show="showAlert" class="alert alert-warning">{{errorMsg}}</span></p>
+<div class="content list" infinite-scroll="LoadMore()" infinite-scroll-distance="2" infinite-scroll-disabled="itemsInList>=listData.borrowed.length" infinite-scroll-container="'#list-wrapper-borrowed'">
+	<div ng-animate="'animate'" ng-repeat="item in listData.borrowed | filter: search | orderBy: orderProp : orderReverse | limitTo: itemsInList track by item.id" >
+		<div class="item">
+			<p>{{item.MLS}}</p>
+			<p>{{item.street}}</p>
+			<p>{{item.city}} {{item.province}} {{item.postcode}}</p>
+			<p>{{item.description}}</p>
+			<p>Quantity: {{item._pivot_quantity}}, Owner: <a href="" style="cursor: pointer;" ng-click="OpenShowUserModal(item.owner)">{{item.owner.username}}</a></p>
+		</div>
+	</div>
+</div>
+
+			</ion-content>
+		</ion-view>

@@ -1,0 +1,25 @@
+<ion-view view-title="Lent Items">
+	<ion-content class="padding" id="list-wrapper-lent">
+
+<ns-search-box ns-search="search" ns-click-button="" ns-show-button="false"></ns-search-box>
+<br>
+<p><span ng-show="showAlert" class="alert alert-warning">{{errorMsg}}</span></p>
+<div class="content list" infinite-scroll="LoadMore()" infinite-scroll-distance="2" infinite-scroll-disabled="itemsInList>=listData.lent.length" infinite-scroll-container="'#list-wrapper-lent'">
+	<div ng-animate="'animate'" ng-repeat="item in listData.lent | filter: search | orderBy: orderProp : orderReverse | limitTo: itemsInList track by item.id" >
+		<div class="item item-button-right">
+			<p>{{item.MLS}}</p>
+			<p>{{item.street}}</p>
+			<p>{{item.city}} {{item.province}} {{item.postcode}}</p>
+			<p>{{item.description}}</p>
+			<p>Quantity: {{item.holder._pivot_quantity}}, Held by: <a href="" style="cursor: pointer;" ng-click="OpenShowUserModal(item.holder)">{{item.holder.username}}</a></p>
+			<button  ng-click="OpenReceiveItemModal(item.holder.id, item.id)" class="button button-calm">
+				<!-- <i class="icon ion-arrow-return-left"></i> -->
+				&nbsp;
+				Retrieve back
+			</button>
+		</div>
+	</div>
+</div>
+
+	</ion-content>
+</ion-view>

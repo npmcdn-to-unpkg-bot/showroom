@@ -1,0 +1,19 @@
+<ion-view view-title="Messages">
+	<ion-content class="padding" id="list-wrapper-messages">
+
+<ns-search-box ns-search="search" ns-click-button="" ns-show-button="false"></ns-search-box>
+<br>
+<span ng-show="showAlert" class="alert alert-warning">{{errorMsg}}</span>
+
+<div class="content list" infinite-scroll="LoadMore()" infinite-scroll-distance="2" infinite-scroll-disabled="$root.messagesAllRetrieved" infinite-scroll-container="'#list-wrapper-messages'">
+	<div ng-animate="'animate'" ng-repeat="item in listData.messages | filter: search | orderBy: orderProp : orderReverse | limitTo: itemsInList track by item.id" >
+		<div class="item">
+			<p ng-if="::!changeLine">{{item.content}} {{item.fromNow}}</p>
+			<p ng-if="::changeLine">{{item.content}}</p>
+			<p ng-if="::changeLine">{{item.fromNow}}</p>
+		</div>
+	</div>
+</div>
+
+	</ion-content>
+</ion-view>
