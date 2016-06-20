@@ -40,7 +40,8 @@
 
 <body>
 
-    <div id="wrapper" ng-app="content" ng-controller="content_main">
+    <!-- <div id="wrapper" ng-app="content" ng-controller="content_main"> -->
+		<div id="wrapper" ng-controller="content_main">
 
         <!-- Navigation -->
         <nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom: 0">
@@ -251,7 +252,7 @@
                         <i class="fa fa-user fa-fw"></i>  <i class="fa fa-caret-down"></i>
                     </a>
                     <ul class="dropdown-menu dropdown-user">
-                        <li><a ui-sref="profile({id: 1})"><i class="fa fa-user fa-fw"></i> User Profile</a>
+                        <li><a ui-sref="profile.address({id: 1})"><i class="fa fa-user fa-fw"></i> User Profile</a>
                         </li>
                         <li><a href="#"><i class="fa fa-gear fa-fw"></i> Settings</a>
                         </li>
@@ -265,7 +266,7 @@
             </ul>
             <!-- /.navbar-top-links -->
 
-						<div ui-view="sidemenu"></div>
+						<!-- <div ui-view="sidemenu"></div> -->
             <!-- /.navbar-static-side -->
         </nav>
 
@@ -292,19 +293,23 @@
     <script src="../js/lib/sb-admin-2.js"></script>
 
 		<script src="../js/lib/lodash.core-4.13.1.js"></script>
-		<script src="../js/lib/angular-1.4.5.min.js"></script>
-		<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.4.5/angular-animate.js"></script>
-		<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.4.5/angular-sanitize.js"></script>
+		<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.5.3/angular.min.js"></script>
+		<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.5.3/angular-animate.min.js"></script>
+		<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.5.3/angular-sanitize.js"></script>
+		<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.5.3/angular-messages.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/react/15.1.0/react-with-addons.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/react/15.1.0/react-dom.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.23/browser.min.js"></script>
 		<script src="../js/lib/angular-ui-router-0.2.18.min.js"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.11.1/moment.min.js"></script>
+		<script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.11.1/moment.min.js"></script>
 		<script src="../js/lib/spinner-0.0.1.js"></script>
 		<script src="../js/lib/angular-spinner-0.6.2.js"></script>
-		<script src="https://cdn.socket.io/socket.io-1.3.5.js"></script>
+		<script src="//cdn.socket.io/socket.io-1.3.5.js"></script>
 		<script src="../js/lib/angular-socket-0.0.1.min.js"></script>
 		<script src="../js/lib/ng-infinite-scroll-1.2.0.min.js"></script>
 
 		<script src="./KM_tools.js"></script>
-		<script src="./content.js"></script>
+		<script type="text/babel" src="./content.js"></script>
 </body>
 
 </html>

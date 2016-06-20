@@ -10,7 +10,6 @@ angular
 	.state('storeList', {
 		url: "/storeList",
     views: {
-      'sidemenu': {template: ""},
       'mainpage': {
 				templateUrl: '_storeList.html',
 				controller: '_storeList'
@@ -20,9 +19,6 @@ angular
 	.state('storeVisit', {
 		url: "/storeVisit/{id:int}",
     views: {
-      'sidemenu': {
-				templateUrl: '_storeVisit_sidemenu.html'
-			},
       'mainpage': {
 				templateUrl: '_storeVisit.html',
 				controller: '_storeVisit'
@@ -30,14 +26,21 @@ angular
     }
 	})
 	.state('profile', {
+		abstract: true,
 		url: "/profile/{id:int}",
     views: {
-      'sidemenu': {
-				templateUrl: "_profile_sidemenu.html"
-			},
       'mainpage': {
 				templateUrl: '_profile.html',
 				controller: '_profile'
+			}
+    }
+	})
+	.state('profile.address', {
+		url: "/address",
+    views: {
+      'mainpage': {
+				templateUrl: '_profile_address.html',
+				controller: '_profile_address'
 			}
     }
 	})
@@ -52,6 +55,12 @@ angular
 		$socketProvider.setConnectionUrl(configPara.ip);
 	}
 ])
+.run(['$rootScope', '$timeout', function ($rootScope, $timeout) {
+		$rootScope.$on('$stateChangeSuccess', function(event, toState, toParams, fromState, fromParams){
+			$timeout(function(){$('#side-menu').metisMenu();}, 20);
+		})
+	}
+])
 .controller("content_main", ['$scope', 'common', function ($scope, common) {
 
 }])
@@ -63,6 +72,62 @@ angular
 }])
 .controller("_profile", ['$scope', '$timeout', function ($scope, $timeout) {
 
+}])
+.controller("_profile_address", ['$scope', '$timeout', function ($scope, $timeout) {
+var AddressList = React.createClass({
+  getInitialState: function() {
+    return {data: [1,2,3,4,5]};
+  },
+  render: function() {
+    var addressNodes = this.state.data.map(function(address, index) {
+      return (
+        <Address author={address} key={index}>
+        </Address>
+      );
+    });
+    return (
+      <ReactCSSTransitionGroup transitionName="gb-transition" transitionEnterTimeout={500} transitionLeaveTimeout={300}>
+        {addressNodes}
+      </ReactCSSTransitionGroup>
+    );
+  }
+}),
+Address = React.createClass({
+  render: function() {
+    return (
+                <div className="col-lg-3 col-md-6">
+                    <div className="panel panel-primary">
+                        <div className="panel-heading">
+                            <div>
+															100 King Street,
+														</div>
+														<div>
+															Kitchener, Ontario
+														</div>
+														<div>
+															Canada N3U 9I2
+                            </div>
+                        </div>
+                        <a href="#">
+                            <div className="panel-footer">
+                                <span className="pull-left">Edit</span>
+                                <span className="pull-right"><i className="fa fa-edit"></i></span>
+                                <div className="clearfix"></div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+    );
+  }
+}),
+ReactCSSTransitionGroup = React.addons.CSSTransitionGroup,
+addressListComponent = ReactDOM.render(
+  <AddressList />,
+  document.getElementById('address-list-content')
+);
+$scope.addAddress = function(){
+	addressListComponent.setState({data: _.concat(addressListComponent.state.data, 20)});
+};
 }])
 .controller("_newsFeed", ['$scope', '$timeout', 'ChainCloudDb', function ($scope, $timeout, ChainCloudDb) {
 	$scope.postList = ChainCloudDb.fetchPost({posttype: 'all'});
@@ -176,3 +241,7 @@ angular
 		}
   };
 }]);
+
+angular.element(document).ready(function () {
+	angular.bootstrap(document, ['content']);
+});

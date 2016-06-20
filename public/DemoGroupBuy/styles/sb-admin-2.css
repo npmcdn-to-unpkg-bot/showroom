@@ -138,7 +138,7 @@ body {
         z-index: 1;
         position: absolute;
         width: 250px;
-        margin-top: 51px;
+        margin-top: 1px;
     }
 
     .navbar-top-links .dropdown-messages,
@@ -369,4 +369,23 @@ table.dataTable thead .sorting:after {
 
 .panel-yellow a:hover {
     color: #df8a13;
+}
+
+
+.gb-transition-enter {
+  opacity: 0.01;
+}
+
+.gb-transition-enter.gb-transition-enter-active {
+  opacity: 1;
+  transition: opacity 500ms ease-in;
+}
+
+.gb-transition-leave {
+  opacity: 1;
+}
+
+.gb-transition-leave.gb-transition-leave-active {
+  opacity: 0.01;
+  transition: opacity 300ms ease-in;
 }
