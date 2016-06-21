@@ -42,6 +42,7 @@
 
     <!-- <div id="wrapper" ng-app="content" ng-controller="content_main"> -->
 		<div id="wrapper" ng-controller="content_main">
+				<span us-spinner spinner-key="spinner-1"></span>
 
         <!-- Navigation -->
         <nav class="navbar navbar-default navbar-static-top" role="navigation" style="margin-bottom: 0">
@@ -294,8 +295,9 @@
 
 		<script src="../js/lib/lodash.core-4.13.1.js"></script>
 		<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.5.3/angular.min.js"></script>
+		<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.5.3/angular-mocks.js"></script>
 		<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.5.3/angular-animate.min.js"></script>
-		<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.5.3/angular-sanitize.js"></script>
+		<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.5.3/angular-sanitize.min.js"></script>
 		<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.5.3/angular-messages.min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/react/15.1.0/react-with-addons.min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/react/15.1.0/react-dom.min.js"></script>
@@ -309,7 +311,9 @@
 		<script src="../js/lib/ng-infinite-scroll-1.2.0.min.js"></script>
 
 		<script src="./KM_tools.js"></script>
+		<script type="text/babel" src="./react_component.js"></script>
 		<script type="text/babel" src="./content.js"></script>
+		<script type="text/babel" src="./e2e.js"></script>
 </body>
 
 </html>

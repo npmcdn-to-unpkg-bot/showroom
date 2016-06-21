@@ -73,61 +73,15 @@ angular
 .controller("_profile", ['$scope', '$timeout', function ($scope, $timeout) {
 
 }])
-.controller("_profile_address", ['$scope', '$timeout', function ($scope, $timeout) {
-var AddressList = React.createClass({
-  getInitialState: function() {
-    return {data: [1,2,3,4,5]};
-  },
-  render: function() {
-    var addressNodes = this.state.data.map(function(address, index) {
-      return (
-        <Address author={address} key={index}>
-        </Address>
-      );
-    });
-    return (
-      <ReactCSSTransitionGroup transitionName="gb-transition" transitionEnterTimeout={500} transitionLeaveTimeout={300}>
-        {addressNodes}
-      </ReactCSSTransitionGroup>
-    );
-  }
-}),
-Address = React.createClass({
-  render: function() {
-    return (
-                <div className="col-lg-3 col-md-6">
-                    <div className="panel panel-primary">
-                        <div className="panel-heading">
-                            <div>
-															100 King Street,
-														</div>
-														<div>
-															Kitchener, Ontario
-														</div>
-														<div>
-															Canada N3U 9I2
-                            </div>
-                        </div>
-                        <a href="#">
-                            <div className="panel-footer">
-                                <span className="pull-left">Edit</span>
-                                <span className="pull-right"><i className="fa fa-edit"></i></span>
-                                <div className="clearfix"></div>
-                            </div>
-                        </a>
-                    </div>
-                </div>
-    );
-  }
-}),
-ReactCSSTransitionGroup = React.addons.CSSTransitionGroup,
-addressListComponent = ReactDOM.render(
-  <AddressList />,
+.controller("_profile_address", ['$scope', 'common', function ($scope, common) {
+var addressListComponent;
+ReactDOM.render(
+  <GbAddressList ref={function(ref){addressListComponent = ref;}}/>,
   document.getElementById('address-list-content')
 );
-$scope.addAddress = function(){
-	addressListComponent.setState({data: _.concat(addressListComponent.state.data, 20)});
-};
+common.xhr('getAddressList', {}).then(function(data){
+	console.log(data);
+});
 }])
 .controller("_newsFeed", ['$scope', '$timeout', 'ChainCloudDb', function ($scope, $timeout, ChainCloudDb) {
 	$scope.postList = ChainCloudDb.fetchPost({posttype: 'all'});
@@ -242,6 +196,6 @@ $scope.addAddress = function(){
   };
 }]);
 
-angular.element(document).ready(function () {
+/* angular.element(document).ready(function () {
 	angular.bootstrap(document, ['content']);
-});
+}); */

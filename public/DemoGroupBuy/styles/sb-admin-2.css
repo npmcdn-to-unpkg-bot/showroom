@@ -305,6 +305,10 @@ table.dataTable thead .sorting:after {
     margin: 15px 0;
 }
 
+.gb-cursor-pointer {
+	cursor: pointer;
+}
+
 .panel a {
     text-decoration: none;
 }

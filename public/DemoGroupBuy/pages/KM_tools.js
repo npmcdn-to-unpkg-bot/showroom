@@ -5,10 +5,10 @@
 		return angular
 			.module("KM_tools", ['angularSpinner'])
 			.constant('configPara', {
-				// ip: 'http://localhost:3000',
+				ip: 'http://localhost:3000',
 				// ip: 'http://52.4.177.161:3000',
 				// ip: 'https://ec2-52-4-177-161.compute-1.amazonaws.com:3000',
-				ip: 'https://keydecision.tk',
+				// ip: 'https://keydecision.tk',
 				// ip: window.location.protocol + '//' + window.location.hostname,
 				api: '/ajax/',
 				// isPhone: (window.location.protocol !== 'http:' && window.location.protocol !== 'https:')
