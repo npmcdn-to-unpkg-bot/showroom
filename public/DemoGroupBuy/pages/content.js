@@ -76,12 +76,10 @@ angular
 .controller("_profile_address", ['$scope', 'common', function ($scope, common) {
 var addressListComponent;
 ReactDOM.render(
-  <GbAddressList ref={function(ref){addressListComponent = ref;}}/>,
+  <GbAddressList ref={function(ref){addressListComponent = ref;}} ajax={common.xhr}/>,
   document.getElementById('address-list-content')
 );
-common.xhr('getAddressList', {}).then(function(data){
-	console.log(data);
-});
+
 }])
 .controller("_newsFeed", ['$scope', '$timeout', 'ChainCloudDb', function ($scope, $timeout, ChainCloudDb) {
 	$scope.postList = ChainCloudDb.fetchPost({posttype: 'all'});

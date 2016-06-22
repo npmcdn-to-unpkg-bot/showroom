@@ -4,30 +4,38 @@ w.ReactCSSTransitionGroup = React.addons.CSSTransitionGroup;
 
 w.GbAddressList = React.createClass({
   getInitialState: function() {
-    return {data: [1,2,3,4,5]};
+    return {addresses: [], modalAddress: {}};
   },
+	componentDidMount: function() {
+		(async function(){
+			var addresses;
+			try {
+				addresses = await this.props.ajax('getAddressList', {});
+			} catch(e){
+				addresses = [];
+			}
+			this.setState({addresses: addresses});
+		}.bind(this))();
+	},
 	handleAddAddress: function(e){
-		this.setState({data: _.concat(this.state.data, 20)});
+		
+	},
+	handleClick: function(modalAddress){
+		this.setState({modalAddress: modalAddress});
+		$('#edit-address').modal('show');
+	},
+	handleModalChange: function(key, value){
+		var tempModalAddress = angular.copy(this.state.modalAddress);
+		tempModalAddress[key] = value;
+		this.setState({modalAddress: tempModalAddress});
 	},
   render: function() {
-    var AddressNodes = this.state.data.map(function(address, index) {
-      return (
-        <GbAddress author={address} key={index}>
-        </GbAddress>
-      );
-    });
+		var _this = this;
     return (
       <ReactCSSTransitionGroup transitionName="gb-transition" transitionEnterTimeout={500} transitionLeaveTimeout={300}>
-        {AddressNodes}
-				<div className="col-lg-3 col-md-6" key='-1'>
-						<div className="panel panel-primary">
-								<div onClick={this.handleAddAddress} className="gb-cursor-pointer">
-										<div className="panel-footer text-center" style={{padding: '25px'}}>
-											<i className="fa fa-plus-square-o fa-5x"></i>
-										</div>
-								</div>
-						</div>
-				</div>
+        {this.state.addresses.map( address => <GbAddress key={address.id} address={address} click={this.handleClick}/> )}
+				<GbAddressBtn click={this.handleClick}/>
+				<GbAddressModal name="edit-address" address={this.state.modalAddress} change={this.handleModalChange}/>
       </ReactCSSTransitionGroup>
     );
   }
@@ -40,23 +48,89 @@ w.GbAddress = React.createClass({
 					<div className="panel panel-primary">
 							<div className="panel-heading">
 									<div>
-										100 King Street,
+										{this.props.address.streetno} {this.props.address.streetname},
 									</div>
 									<div>
-										Kitchener, Ontario
+										{this.props.address.city}, {this.props.address.province}
 									</div>
 									<div>
-										Canada N3U 9I2
+										{this.props.address.country} {this.props.address.postcode}
 									</div>
 							</div>
-							<a href="#">
+							<div onClick={ () => this.props.click(this.props.address) } className="gb-cursor-pointer">
 									<div className="panel-footer">
 											<span className="pull-left">Edit</span>
 											<span className="pull-right"><i className="fa fa-edit"></i></span>
 											<div className="clearfix"></div>
 									</div>
-							</a>
+							</div>
 					</div>
+			</div>
+    );
+  }
+});
+
+w.GbAddressBtn = React.createClass({
+  render: function() {
+    return (
+			<div className="col-lg-3 col-md-6" key='-1'>
+					<div className="panel panel-primary">
+							<div onClick={ () => this.props.click() } className="gb-cursor-pointer">
+									<div className="panel-footer text-center" style={{padding: '25px'}}>
+										<i className="fa fa-plus-square-o fa-5x"></i>
+									</div>
+							</div>
+					</div>
+			</div>
+    );
+  }
+});
+
+w.GbAddressModal = React.createClass({
+  render: function() {
+		var currentAddr = {};
+    return (
+			<div className="modal fade" id={this.props.name} tabindex="-1" role="dialog">
+				<div className="modal-dialog">
+					<div className="modal-content">
+						<div className="modal-header">
+							<button type="button" className="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+							<h4 className="modal-title">Modal title</h4>
+						</div>
+						<div className="modal-body">
+							<form>
+								<div className="form-group">
+									<label htmlFor="streetno" className="control-label">Recipient:</label>
+									<input type="text" className="form-control" id="streetno" value={this.props.address.streetno} onChange={ e => {this.props.change('streetno', e.target.value)} }/>
+								</div>
+								<div className="form-group">
+									<label htmlFor="streetname" className="control-label">Recipient:</label>
+									<input type="text" className="form-control" id="streetname" value={this.props.address.streetname}/>
+								</div>
+								<div className="form-group">
+									<label htmlFor="city" className="control-label">Recipient:</label>
+									<input type="text" className="form-control" id="city" value={this.props.address.city}/>
+								</div>
+								<div className="form-group">
+									<label htmlFor="province" className="control-label">Recipient:</label>
+									<input type="text" className="form-control" id="province" value={this.props.address.province}/>
+								</div>
+								<div className="form-group">
+									<label htmlFor="country" className="control-label">Recipient:</label>
+									<input type="text" className="form-control" id="country" value={this.props.address.country}/>
+								</div>
+								<div className="form-group">
+									<label htmlFor="postcode" className="control-label">Recipient:</label>
+									<input type="text" className="form-control" id="streetname" value={this.props.address.postcode}/>
+								</div>
+							</form>
+						</div>
+						<div className="modal-footer">
+							<button type="button" className="btn btn-default" data-dismiss="modal">Close</button>
+							<button type="button" className="btn btn-primary">Save changes</button>
+						</div>
+					</div>
+				</div>
 			</div>
     );
   }

@@ -5,7 +5,8 @@
 		return angular
 			.module("KM_tools", ['angularSpinner'])
 			.constant('configPara', {
-				ip: 'http://localhost:3000',
+				ip: '',
+				// ip: 'http://localhost:3000',
 				// ip: 'http://52.4.177.161:3000',
 				// ip: 'https://ec2-52-4-177-161.compute-1.amazonaws.com:3000',
 				// ip: 'https://keydecision.tk',
@@ -23,7 +24,7 @@
 						return response.data;
 					}, function(response) {
 						usSpinnerService.stop('spinner-1');
-						return $q.reject(response.data || "Request failed");
+						return $q.reject(new Error(response.data || "Request failed"));
 					});
 				};
 				this.WebsiteAvailability = function(websiteUrls){
