@@ -1,3 +1,24 @@
+function reducer(state = {profile: {address: {}}}, action) {
+var tempState = {...state};
+  switch (action.type) {
+    case "profile.address.addNewAddress":
+			tempState.profile.address.modalAddress = {};
+			tempState.profile.address.modalShow = true;
+      break;
+    case "profile.address.editAddress":
+			tempState.profile.address.modalAddress = action.oldAddr;
+			tempState.profile.address.modalShow = true;
+      break;
+    case "profile.address.changeAddressForm":
+			tempState.profile.address.modalAddress[action.key] = action.value;
+      break;
+		default:
+  }
+  return tempState;
+}
+
+window.store = Redux.createStore(reducer);
+
 angular
 .module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.router', 'ngAnimate', 'ngSanitize'])
 .config(['$stateProvider', '$urlRouterProvider', function($stateProvider, $urlRouterProvider) {
@@ -42,7 +63,10 @@ angular
 				templateUrl: '_profile_address.html',
 				controller: '_profile_address'
 			}
-    }
+    },
+		onExit: function(){
+			ReactDOM.unmountComponentAtNode(document.getElementById('address-list-content'));
+		}
 	})
 	.state('newsFeed', {
 		url: "/newsFeed",
@@ -76,7 +100,7 @@ angular
 .controller("_profile_address", ['$scope', 'common', function ($scope, common) {
 var addressListComponent;
 ReactDOM.render(
-  <GbAddressList ref={function(ref){addressListComponent = ref;}} ajax={common.xhr}/>,
+  <GbAddressList ajax={common.xhr}/>,
   document.getElementById('address-list-content')
 );
 
