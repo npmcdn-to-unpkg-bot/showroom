@@ -1,7 +1,34 @@
         <div id="page-wrapper-without-sidemenu">
             <div class="row">
                 <div class="col-lg-12">
-                    <h1 class="page-header">Dashboard</h1>
+									<ul class="nav nav-pills" role="tablist"> 
+										<li role="presentation" class="active">
+											<span>Delivery address: {{primAddr.streetno}} {{primAddr.streetname}}, {{primAddr.city}}, {{primAddr.province}}, {{primAddr.country}}  </span>
+										</li>
+										<li role="presentation" class="dropdown">
+											<button id="dLabel" type="button" class="btn btn-default" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+												Change <span class="caret"></span>
+											</button>
+
+											<div class="dropdown-menu list-group">
+												<button type="button" class="list-group-item" ng-repeat="address in addresses track by address.id" ng-click="changePrimAddr(address.id)">
+														<div>
+															{{address.streetno}} {{address.streetname}},
+														</div>
+														<div>
+															{{address.city}}, {{address.province}}
+														</div>
+														<div>
+															{{address.country}} {{address.postcode}}
+														</div>
+												</button>
+											</div>
+										</li>
+										<li role="presentation" class="dropdown">
+											<button type="button" class="btn btn-default" data-toggle="modal" data-target="#add-new-address">New address</button>
+										</li>
+									</ul>
+
                 </div>
                 <!-- /.col-lg-12 -->
             </div>
@@ -27,5 +54,50 @@
             </div>
             <!-- /.row -->
 
+
+						
+						<div class="modal fade" id="add-new-address" tabindex="-1" role="dialog">
+							<div class="modal-dialog">
+								<div class="modal-content">
+									<div class="modal-header">
+										<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+										<h4 class="modal-title">New delivery address</h4>
+									</div>
+									<div class="modal-body">
+										<form>
+											<div class="form-group">
+												<label for="streetno" class="control-label">Street number:</label>
+												<input type="text" class="form-control" id="streetno" ng-model="newAddress.streetno"/>
+											</div>
+											<div class="form-group">
+												<label for="streetname" class="control-label">Street name:</label>
+												<input type="text" class="form-control" id="streetname" ng-model="newAddress.streetname"/>
+											</div>
+											<div class="form-group">
+												<label for="city" class="control-label">City:</label>
+												<input type="text" class="form-control" id="city" ng-model="newAddress.city"/>
+											</div>
+											<div class="form-group">
+												<label for="province" class="control-label">Province:</label>
+												<input type="text" class="form-control" id="province" ng-model="newAddress.province"/>
+											</div>
+											<div class="form-group">
+												<label for="country" class="control-label">Country:</label>
+												<input type="text" class="form-control" id="country" ng-model="newAddress.country"/>
+											</div>
+											<div class="form-group">
+												<label for="postcode" class="control-label">Postcode:</label>
+												<input type="text" class="form-control" id="streetname" ng-model="newAddress.postcode"/>
+											</div>
+										</form>
+									</div>
+									<div class="modal-footer">
+										<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+										<button type="button" class="btn btn-primary" data-dismiss="modal" ng-click="addNewAddr(newAddress)"> Save </button>
+									</div>
+								</div>
+							</div>
+						</div>
+						
         </div>
         <!-- /#page-wrapper -->

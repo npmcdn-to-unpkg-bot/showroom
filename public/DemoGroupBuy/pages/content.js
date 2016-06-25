@@ -1,6 +1,9 @@
-function reducer(state = {profile: {address: {}}}, action) {
+function reducer(state = {user: {}, profile: {address: {}}}, action) {
 var tempState = {...state};
   switch (action.type) {
+    case "updateUser":
+			tempState.user = action.user;
+      break;
     case "profile.address.addNewAddress":
 			tempState.profile.address.modalAddress = {};
 			tempState.profile.address.modalShow = true;
@@ -11,6 +14,9 @@ var tempState = {...state};
       break;
     case "profile.address.changeAddressForm":
 			tempState.profile.address.modalAddress[action.key] = action.value;
+      break;
+    case "profile.address.modalHide":
+			tempState.profile.address.modalShow = false;
       break;
 		default:
   }
@@ -64,6 +70,9 @@ angular
 				controller: '_profile_address'
 			}
     },
+		onEnter: function(){
+			setTimeout( () => $('#side-menu').metisMenu(), 20);
+		},
 		onExit: function(){
 			ReactDOM.unmountComponentAtNode(document.getElementById('address-list-content'));
 		}
@@ -79,17 +88,51 @@ angular
 		$socketProvider.setConnectionUrl(configPara.ip);
 	}
 ])
-.run(['$rootScope', '$timeout', function ($rootScope, $timeout) {
-		$rootScope.$on('$stateChangeSuccess', function(event, toState, toParams, fromState, fromParams){
+.run(['$rootScope', 'common', '$timeout', function ($rootScope, common, $timeout) {
+/* 		$rootScope.$on('$stateChangeSuccess', function(event, toState, toParams, fromState, fromParams){
 			$timeout(function(){$('#side-menu').metisMenu();}, 20);
-		})
+		}) */
+		(async function(){
+			try {
+				let user = await common.xhr('getUser', {});
+				console.log("user: ", user);
+				store.dispatch({type: "updateUser", user: user});
+			} catch(e){
+				store.dispatch({type: "updateUser", user: {}});
+			}
+		})();
 	}
 ])
 .controller("content_main", ['$scope', 'common', function ($scope, common) {
 
 }])
-.controller("_storeList", ['$scope', '$timeout', function ($scope, $timeout) {
-
+.controller("_storeList", ['$scope', 'common', '$timeout', function ($scope, common, $timeout) {
+	(async function(){
+		try {
+			$scope.addresses = await common.xhr('getAddressList', {});
+			$scope.primAddr = _.find($scope.addresses, o => (o.id === store.getState().user.primaryaddr));
+		} catch(e){
+			$scope.addresses = [{}];
+			$scope.primAddr = {};
+		}
+		$scope.$apply();
+	})();
+	$scope.changePrimAddr = async function(id){
+		try {
+			let user = await common.xhr('updateUser', {primaryaddr: id});
+			store.dispatch({type: "updateUser", user: user});
+			$scope.$apply(function(){$scope.primAddr = _.find($scope.addresses, o => (o.id === store.getState().user.primaryaddr));});
+		} catch(e){
+		}
+	};
+	$scope.newAddress = {streetno: '', streetname: '', city: '', province: '', country: '', postcode: ''};
+	$scope.addNewAddr = async function(newAddress){
+		try {
+			$scope.addresses = await common.xhr('saveAddress', newAddress);
+			$scope.changePrimAddr(_.last($scope.addresses).id);
+		} catch(e){
+		}
+	};
 }])
 .controller("_storeVisit", ['$scope', '$timeout', function ($scope, $timeout) {
 
@@ -98,12 +141,7 @@ angular
 
 }])
 .controller("_profile_address", ['$scope', 'common', function ($scope, common) {
-var addressListComponent;
-ReactDOM.render(
-  <GbAddressList ajax={common.xhr}/>,
-  document.getElementById('address-list-content')
-);
-
+	ReactDOM.render(<GbAddressList ajax={common.xhr}/>, document.getElementById('address-list-content'));
 }])
 .controller("_newsFeed", ['$scope', '$timeout', 'ChainCloudDb', function ($scope, $timeout, ChainCloudDb) {
 	$scope.postList = ChainCloudDb.fetchPost({posttype: 'all'});

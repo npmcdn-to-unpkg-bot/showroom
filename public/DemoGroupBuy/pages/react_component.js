@@ -17,13 +17,16 @@ w.GbAddressList = React.createClass({
 			this.setState({addresses: addresses});
 		}.bind(this))();
 	},
+	handleRefresh: function(addresses) {
+		this.setState({addresses: addresses});
+	},
   render: function() {
 		var _this = this;
     return (
       <ReactCSSTransitionGroup transitionName="gb-transition" transitionEnterTimeout={500} transitionLeaveTimeout={300}>
         {this.state.addresses.map( address => <GbAddress key={address.id} address={address}/> )}
 				<GbAddressBtn/>
-				<GbAddressModal name="edit-address"/>
+				<GbAddressModal name="edit-address" ajax={this.props.ajax} callback={this.handleRefresh}/>
       </ReactCSSTransitionGroup>
     );
   }
@@ -77,6 +80,30 @@ w.GbAddressBtn = React.createClass({
 w.GbAddressModal = React.createClass({
 	unsubscribe: function() {},
 	modalElement: undefined,
+	handleSaveAddress: function(){
+		(async function(){
+			let addresses;
+			try {
+				addresses = await this.props.ajax('saveAddress', this.state.modalAddress);
+			} catch(e){
+				addresses = [];
+			}
+			store.dispatch({type: "profile.address.modalHide"});
+			this.props.callback(addresses);
+		}.bind(this))();
+	},
+	handleDeleteAddress: function(){
+		(async function(){
+			let addresses;
+			try {
+				addresses = await this.props.ajax('deleteAddress', this.state.modalAddress);
+			} catch(e){
+				addresses = [];
+			}
+			store.dispatch({type: "profile.address.modalHide"});
+			this.props.callback(addresses);
+		}.bind(this))();
+	},
   getInitialState: function() {
 		console.log("initial", {...this});
     return {modalAddress: {}, modalShow: false};
@@ -86,11 +113,11 @@ w.GbAddressModal = React.createClass({
 		console.log("DidMount", {...this});
 		this.modalElement = $('#' + this.props.name);
 		this.modalElement.on('hidden.bs.modal', function (e) {
-			_this.setState({modalShow: false});
+			store.dispatch({type: "profile.address.modalHide"});
 		})
 		this.unsubscribe = store.subscribe(() => {
 			let tempState = store.getState().profile.address;
-			console.log("sub", {...tempState});
+			console.log("subscribe", {...tempState});
 			_this.setState({modalAddress: tempState.modalAddress, modalShow: tempState.modalShow});
 		});
 	},
@@ -98,6 +125,9 @@ w.GbAddressModal = React.createClass({
 		if (this.state.modalShow && !prevState.modalShow) {
 			this.modalElement.modal('show');
 			console.log("modal show", {...this.state});
+		} else if (!this.state.modalShow) {
+			this.modalElement.modal('hide');
+			console.log("modal hide", {...this.state});
 		}
 	},
 	componentWillUnmount: function() {
@@ -117,34 +147,35 @@ w.GbAddressModal = React.createClass({
 						<div className="modal-body">
 							<form>
 								<div className="form-group">
-									<label htmlFor="streetno" className="control-label">Recipient:</label>
+									<label htmlFor="streetno" className="control-label">Street number:</label>
 									<input type="text" className="form-control" id="streetno" value={this.state.modalAddress.streetno} onChange={ e => {store.dispatch({type: "profile.address.changeAddressForm", key: "streetno", value: e.target.value})} }/>
 								</div>
 								<div className="form-group">
-									<label htmlFor="streetname" className="control-label">Recipient:</label>
-									<input type="text" className="form-control" id="streetname" value={this.state.modalAddress.streetname}/>
+									<label htmlFor="streetname" className="control-label">Street name:</label>
+									<input type="text" className="form-control" id="streetname" value={this.state.modalAddress.streetname} onChange={ e => {store.dispatch({type: "profile.address.changeAddressForm", key: "streetname", value: e.target.value})} }/>
 								</div>
 								<div className="form-group">
-									<label htmlFor="city" className="control-label">Recipient:</label>
-									<input type="text" className="form-control" id="city" value={this.state.modalAddress.city}/>
+									<label htmlFor="city" className="control-label">City:</label>
+									<input type="text" className="form-control" id="city" value={this.state.modalAddress.city} onChange={ e => {store.dispatch({type: "profile.address.changeAddressForm", key: "city", value: e.target.value})} }/>
 								</div>
 								<div className="form-group">
-									<label htmlFor="province" className="control-label">Recipient:</label>
-									<input type="text" className="form-control" id="province" value={this.state.modalAddress.province}/>
+									<label htmlFor="province" className="control-label">Province:</label>
+									<input type="text" className="form-control" id="province" value={this.state.modalAddress.province} onChange={ e => {store.dispatch({type: "profile.address.changeAddressForm", key: "province", value: e.target.value})} }/>
 								</div>
 								<div className="form-group">
-									<label htmlFor="country" className="control-label">Recipient:</label>
-									<input type="text" className="form-control" id="country" value={this.state.modalAddress.country}/>
+									<label htmlFor="country" className="control-label">Country:</label>
+									<input type="text" className="form-control" id="country" value={this.state.modalAddress.country} onChange={ e => {store.dispatch({type: "profile.address.changeAddressForm", key: "country", value: e.target.value})} }/>
 								</div>
 								<div className="form-group">
-									<label htmlFor="postcode" className="control-label">Recipient:</label>
-									<input type="text" className="form-control" id="streetname" value={this.state.modalAddress.postcode}/>
+									<label htmlFor="postcode" className="control-label">Postcode:</label>
+									<input type="text" className="form-control" id="streetname" value={this.state.modalAddress.postcode} onChange={ e => {store.dispatch({type: "profile.address.changeAddressForm", key: "postcode", value: e.target.value})} }/>
 								</div>
 							</form>
 						</div>
 						<div className="modal-footer">
-							<button type="button" className="btn btn-default" data-dismiss="modal">Close</button>
-							<button type="button" className="btn btn-primary">Save changes</button>
+							<button type="button" className="btn btn-warning" onClick={this.handleDeleteAddress}>Delete</button>
+							<button type="button" className="btn btn-default" data-dismiss="modal">Cancel</button>
+							<button type="button" className="btn btn-primary" onClick={this.handleSaveAddress}>Save</button>
 						</div>
 					</div>
 				</div>
