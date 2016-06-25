@@ -2,6 +2,9 @@
 logs
 *.log
 
+# babel-core
+babel-core-browser.5.8.23.min.js
+
 # Runtime data
 pids
 *.pid
