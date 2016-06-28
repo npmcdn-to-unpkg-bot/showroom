@@ -1,13 +1,13 @@
         <div id="page-wrapper-without-sidemenu">
             <div class="row" style="padding-top: 10px; padding-bottom: 10px; border-bottom-style: solid; border-bottom-width: 1px; border-bottom-color: rgb(231,231,231);">
-                <div class="col-md-6">
+                <div class="col-sm-6">
 									<ul class="nav nav-pills" role="tablist"> 
 										<li role="presentation" class="">
-											<h5>Delivery address:&nbsp;{{primAddr.streetno}}&nbsp;{{primAddr.streetname}},&nbsp;{{primAddr.city}},&nbsp;{{primAddr.province}},&nbsp;{{primAddr.country}}&nbsp;&nbsp; </h5>
+											<h5>Delivery address:&nbsp;</h5>
 										</li>
 										<li role="presentation" class="dropdown">
 											<button id="dLabel" type="button" class="btn btn-default" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-												Change <span class="caret"></span>
+												{{primAddr.streetno}}&nbsp;{{primAddr.streetname}},&nbsp;{{primAddr.city}},&nbsp;{{primAddr.province}},&nbsp;{{primAddr.country}}&nbsp;<span class="caret"></span>
 											</button>
 
 											<div class="dropdown-menu list-group">
@@ -33,7 +33,7 @@
                 <!-- /.col-md-6 -->
 								
 								<!-- /.col-md-6 -->
-                <div class="col-md-6">
+                <div class="col-sm-6">
 									<div class="input-group">
 										<input type="text" class="form-control" placeholder="What are you looking for?" aria-describedby="basic-addon2" ng-model="searchWord">
 										<span class="input-group-btn">

@@ -70,12 +70,19 @@ angular
 				controller: '_profile_address'
 			}
     },
-		onEnter: function(){
-			setTimeout( () => $('#side-menu').metisMenu(), 20);
-		},
-		onExit: function(){
-			ReactDOM.unmountComponentAtNode(document.getElementById('address-list-content'));
-		}
+		onEnter: function(){ setTimeout( () => $('#side-menu').metisMenu(), 20); },
+		onExit: function(){ ReactDOM.unmountComponentAtNode(document.getElementById('address-list-content')); }
+	})
+	.state('profile.store', {
+		url: "/store/{storeid:int}",
+    views: {
+      'mainpage': {
+				templateUrl: '_profile_store.html',
+				controller: '_profile_store'
+			}
+    },
+		onEnter: function(){ setTimeout( () => $('#side-menu').metisMenu(), 20); },
+		onExit: function(){ }
 	})
 	.state('newsFeed', {
 		url: "/newsFeed",
@@ -142,6 +149,9 @@ angular
 }])
 .controller("_profile_address", ['$scope', 'common', function ($scope, common) {
 	ReactDOM.render(<GbAddressList ajax={common.xhr}/>, document.getElementById('address-list-content'));
+}])
+.controller("_profile_store", ['$scope', 'common', function ($scope, common) {
+
 }])
 .controller("_newsFeed", ['$scope', '$timeout', 'ChainCloudDb', function ($scope, $timeout, ChainCloudDb) {
 	$scope.postList = ChainCloudDb.fetchPost({posttype: 'all'});
