@@ -1,0 +1,35 @@
+.odd {
+	background-color: WhiteSmoke;
+}
+.even {
+	background-color: White;
+}
+.active {
+	background-color: LightGray;
+}
+.has-errors {
+	border-left: 3px solid #cc2511;
+	border-right: 3px solid #cc2511;
+}
+.no-errors {
+	border-left: 3px solid #3d8b3d;
+	border-right: 3px solid #3d8b3d;
+}
+.calm, a.calm, .button-calm {
+	color: DodgerBlue;
+}
+.tab-item.tab-item-active, .tab-item.active, .tab-item.activated {
+    color: Lime;
+}
+.pane, .view{
+    background-color: Gainsboro;
+}
+.item-button-right > .button,
+.item-button-right .item-content > .button,
+.item-button-right > .buttons,
+.item-button-right .item-content > .buttons {
+  min-width: 28px;
+  min-height: 30px;
+  font-size: 12px;
+  line-height: 26px;
+}

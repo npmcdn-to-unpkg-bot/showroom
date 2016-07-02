@@ -1,0 +1,72 @@
+        <div id="page-wrapper-without-sidemenu">
+
+            <!-- /.row -->
+<!--             <div class="row" style="padding-top: 10px;">
+                <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+                    <div class="panel panel-primary">
+                        <p ng-bind="python"></p>
+                    </div>
+                </div>
+
+            </div> -->
+						
+						<style>
+						table, th, td {
+								border: 1px solid black;
+						}
+						
+						th, td {
+								text-align: center;
+						}
+						</style>
+						<div id="matrix-topology" style="display: inline-block; width: 300px; height: 400px;"></div>
+						<div id="container-sigma" style="display: inline-block; width: auto; height: 400px;"></div>
+            <!-- /.row -->
+
+
+						
+						<div class="modal fade" id="add-new-address" tabindex="-1" role="dialog">
+							<div class="modal-dialog">
+								<div class="modal-content">
+									<div class="modal-header">
+										<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+										<h4 class="modal-title">New delivery address</h4>
+									</div>
+									<div class="modal-body">
+										<form>
+											<div class="form-group">
+												<label for="streetno" class="control-label">Street number:</label>
+												<input type="text" class="form-control" id="streetno" ng-model="newAddress.streetno"/>
+											</div>
+											<div class="form-group">
+												<label for="streetname" class="control-label">Street name:</label>
+												<input type="text" class="form-control" id="streetname" ng-model="newAddress.streetname"/>
+											</div>
+											<div class="form-group">
+												<label for="city" class="control-label">City:</label>
+												<input type="text" class="form-control" id="city" ng-model="newAddress.city"/>
+											</div>
+											<div class="form-group">
+												<label for="province" class="control-label">Province:</label>
+												<input type="text" class="form-control" id="province" ng-model="newAddress.province"/>
+											</div>
+											<div class="form-group">
+												<label for="country" class="control-label">Country:</label>
+												<input type="text" class="form-control" id="country" ng-model="newAddress.country"/>
+											</div>
+											<div class="form-group">
+												<label for="postcode" class="control-label">Postcode:</label>
+												<input type="text" class="form-control" id="streetname" ng-model="newAddress.postcode"/>
+											</div>
+										</form>
+									</div>
+									<div class="modal-footer">
+										<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+										<button type="button" class="btn btn-primary" data-dismiss="modal" ng-click="addNewAddr(newAddress)"> Save </button>
+									</div>
+								</div>
+							</div>
+						</div>
+						
+        </div>
+        <!-- /#page-wrapper -->

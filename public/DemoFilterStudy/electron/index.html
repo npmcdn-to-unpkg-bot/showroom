@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Hello World!</title>
+  </head>
+  <body>
+    <h1>Hello World!</h1>
+    <!-- All of the Node.js APIs are available in this renderer process. -->
+    We are using Electron.
+  </body>
+
+  <script>
+		//var _qq = readFileExample('preload.js');
+		if (typeof preloaded !== "undefined") {
+			preloaded.readFilePromise('preload.js').then(function(o){console.log(o)});
+		}
+
+function json(response) {
+	console.log(response.body);
+  return response.json()  
+}
+
+fetch('http://localhost:4000/')
+	.then(json)
+  .then(function (data) {  
+    console.log('Request succeeded with JSON response', data);  
+  })  
+  .catch(function (error) {  
+    console.log('Request failed', error);  
+  });
+
+fetch('http://localhost:4000/t', {  
+    method: 'post',  
+    headers: {  
+      "Content-type": "application/json; charset=UTF-8"  
+    },  
+    body: JSON.stringify({myval: 'hello, Sam!'})
+  })
+	.then(json)
+  .then(function (data) {  
+    console.log('Request succeeded with JSON response', data);  
+  })  
+  .catch(function (error) {  
+    console.log('Request failed', error);  
+  });
+
+  </script>
+</html>

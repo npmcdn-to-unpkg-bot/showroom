@@ -108,8 +108,10 @@ app.use(flash());
 app.use(passport.initialize());
 app.use(passport.session());
 app.use('/ajax', bodyParser.json());
+app.use('/python', bodyParser.text());
 
 app.post('/ajax/:method', require('./routes/ajax')(eventEmitter, io));
+app.post('/python/:method', require('./routes/python')(eventEmitter, io));
 
 var server = http.listen(app.get('port'), function(err) {
    if(err) throw err;

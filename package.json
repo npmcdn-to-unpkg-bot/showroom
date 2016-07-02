@@ -18,6 +18,7 @@
     "lodash": "~3.10.1",
     "morgan": "*",
     "mysql": "*",
+    "node-fetch": "^1.5.3",
     "node-gcm": "^0.13.0",
     "passport": "*",
     "passport-local": "*",
