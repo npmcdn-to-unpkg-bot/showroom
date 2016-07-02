@@ -85,7 +85,7 @@ angular
 	}
 ])
 .controller("content_main", ['$scope', 'common', function ($scope, common) {
-/* 	common.xhr('isLoggedIn', {}).then(function (msg) {
+	common.xhr('isLoggedIn', {}).then(function (msg) {
 		if (msg) {
 		} else {
 			window.location.assign("login.html");
@@ -98,7 +98,7 @@ angular
 				window.location.assign("login.html");
 			}
 		});
-	}; */
+	};
 }])
 .controller("_synthesis", ['$scope', 'common', '$timeout', '$http', function ($scope, common, $timeout, $http) {
 /* 	(async function(){
@@ -249,13 +249,19 @@ var vis = d3.select("#container-sigma")
 		vis
 			.append("g")
 			.attr("id", "group-nodes");
-              
-
+							
 function handleChangeM(){
 	var dataM = M2Nodeslinks(store.getState().topoM, 100),
 	nodes = dataM.nodes,
-	links = dataM.links;
+	links = dataM.links,
+	minX = _.min(nodes.map(function(o){return o.x})),
+	maxX = _.max(nodes.map(function(o){return o.x})),
+	minY = _.min(nodes.map(function(o){return o.y})),
+	maxY = _.max(nodes.map(function(o){return o.y}));
 
+	vis
+	.attr("viewBox", (minX - 50) + " " + (minY - 50) + " " + (maxX - minX + 100) + " " + (maxY - minY + 100))
+	.attr("preserveAspectRatio", "xMidYMid meet");
 	console.log(dataM);
 	var selectLinks = vis.select("#group-links").selectAll("line").data(links),
 		selectNodes = vis.select("#group-nodes").selectAll("g.node").data(nodes);
@@ -308,7 +314,6 @@ function handleChangeM(){
 			});
 
 			selectNodes.exit().remove();
-
 }
 
 	var unsubscribe = store.subscribe(handleChangeM);
