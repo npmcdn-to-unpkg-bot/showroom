@@ -5,7 +5,6 @@ w.ReactCSSTransitionGroup = React.addons.CSSTransitionGroup;
 w.MatrixTopology = React.createClass({
   render: function() {
 		var tableStyle = {width: '100%', borderCollapse: 'collapse'};
-		console.log("this.props.topoM: ", this.props.topoM);
 		var _this = this;
     return (
       <ReactCSSTransitionGroup transitionName="gb-transition" transitionEnterTimeout={500} transitionLeaveTimeout={300}>

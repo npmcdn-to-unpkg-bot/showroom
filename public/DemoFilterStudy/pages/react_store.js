@@ -10,7 +10,7 @@ var tempState = {...state};
 			tempState.topoM[action.row][action.col] = action.value;
 			tempState.topoM[action.col] = [...state.topoM[action.col]];
 			tempState.topoM[action.col][action.row] = action.value;
-			console.log("updateTopoM triggered: ", action, tempState);
+			//console.log("updateTopoM triggered: ", action, tempState);
       break;
 		default:
   }

@@ -104,7 +104,6 @@ angular
 	(async function(){
 		try {
 			var temp1 = await common.xhr2('try', {myval: "hello from browser!"});
-			console.log(temp1);
 			$scope.python = JSON.stringify(temp1);
 		} catch(e){
 			$scope.python = e.message;
@@ -112,15 +111,18 @@ angular
 		$scope.$apply();
 	})();
 	var M=[
-	[0, 1, 0, 0, 0, 0, 0, 0, 0],
-	[1, 1, 1, 1, 0, 0, 0, 0, 0],
-	[0, 1, 1, 1, 0, 0, 0, 0, 0],
-	[0, 1, 1, 1, 1, 0, 0, 0, 0],
-	[0, 0, 0, 1, 1, 1, 0, 0, 0],
-	[0, 0, 0, 0, 1, 1, 1, 0, 0],
-	[0, 0, 0, 0, 0, 1, 1, 1, 0],
-	[0, 0, 0, 0, 0, 0, 1, 1, 1],
-	[0, 0, 0, 0, 0, 0, 0, 1, 0]
+	[0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+	[1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+	[0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+	[0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0],
+	[0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0],
+	[0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0],
+	[0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0],
+	[0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0],
+	[0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0],
+	[0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0],
+	[0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1],
+	[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0]
 	];
 	function M2Nodeslinks(M, unitStep){
 		var N = M.length - 2, nodes = [], links = [], i, j, k, edgeIndex = 0;
@@ -166,72 +168,13 @@ angular
 			}
 		}
 		
-/* 		console.log(nodes);
-		console.log(links);
-		if (s.graph.nodes.length === 0){
-			nodes.forEach(function(o){s.graph.addNode(o)});
-			links.forEach(function(o){s.graph.addEdge(o)});
-			s.refresh();
-		} else {
-			nodes.forEach(function(o){
-				s.graph.nodes[o.id].new_x = o.x;
-				s.graph.nodes[o.id].new_y = o.y;
-			})
-			s.graph.links.forEach(function(o){s.graph.dropEdge(o.id)});
-			links.forEach(function(o){s.graph.addEdge(o)});
-			sigma.plugins.animate(
-				s,
-				{ x: 'new_x', y: 'new_y' }
-			);
-		} */
 		return {nodes: nodes, links: links}
 	}
 
-/* 	var s = new sigma({
-		container: 'container-sigma',
-		settings: {
-			minNodeSize: 1,
-			maxNodeSize: 16,
-			minlinksize: 1,
-			maxlinksize: 10,
-			defaultNodeColor: '#ff0000',
-			defaultEdgeColor: '#ff0000',
-			edgeColor: "default",
-			labelThreshold: 2,
-			animationsTime: 1000
-		}
-	});
-	M2Nodeslinks(M, s); */
-	
 var w = 900,
     h = 400;
 
 var circleWidth = 5;
-
-var fontFamily = 'Bree Serif',
-    fontSizeHighlight = '1.5em',
-    fontSizeNormal = '1em';
-
-var palette = {
-      "lightgray": "#819090",
-      "gray": "#708284",
-      "mediumgray": "#536870",
-      "darkgray": "#475B62",
-
-      "darkblue": "#0A2933",
-      "darkerblue": "#042029",
-
-      "paleryellow": "#FCF4DC",
-      "paleyellow": "#EAE3CB",
-      "yellow": "#A57706",
-      "orange": "#BD3613",
-      "red": "#D11C24",
-      "pink": "#C61C6F",
-      "purple": "#595AB7",
-      "blue": "#2176C7",
-      "green": "#259286",
-      "yellowgreen": "#738A05"
-  }
 
 var vis = d3.select("#container-sigma")
     .append("svg:svg")
@@ -258,7 +201,6 @@ function handleChangeM(){
 	vis
 	.attr("viewBox", (minX - 50) + " " + (minY - 50) + " " + (maxX - minX + 100) + " " + (maxY - minY + 100))
 	.attr("preserveAspectRatio", "xMidYMid meet");
-	console.log(dataM);
 	var selectLinks = vis.select("#group-links").selectAll("line").data(links),
 		selectNodes = vis.select("#group-nodes").selectAll("g.node").data(nodes);
 
@@ -320,55 +262,6 @@ function handleChangeM(){
 		</ReactRedux.Provider>,
 		document.getElementById('matrix-topology')
 	);
-/* 	var s = new sigma({
-		container: 'container-sigma',
-		settings: {
-			minNodeSize: 1,
-			maxNodeSize: 16,
-			minlinksize: 1,
-			maxlinksize: 10,
-			animationsTime: 1000
-		}
-	});
-    s.graph.addNode({
-      // Main attributes:
-      id: 'n0',
-      label: 'Hello',
-      // Display attributes:
-      x: 0,
-      y: 0.5,
-      size: 3,
-      color: '#f00'
-    }).addNode({
-      // Main attributes:
-      id: 'n1',
-      label: 'World !',
-      // Display attributes:
-      x: 1,
-      y: 1,
-      size: 3,
-      color: '#00f'
-    }).addEdge({
-      id: 'e0',
-      // Reference extremities:
-      source: 'n0',
-      target: 'n1',
-			size: 2,
-			weight: 2,
-			type: 'line',
-			color: '#668f3c'
-    });
-
-    // Finally, let's ask our sigma instance to refresh:
-    s.refresh();
-		setInterval(function(){
-      s.graph.links().forEach(function(e) {
-        e.size = Math.round(Math.random() * 10);
-				e.weight = e.size;
-				console.log("edge size changes to: ", e.size);
-      });
-			s.refresh();
-		}, 3000) */
 }])
 .controller("_storeVisit", ['$scope', '$timeout', function ($scope, $timeout) {
 
