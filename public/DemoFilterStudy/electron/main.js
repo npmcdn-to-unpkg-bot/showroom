@@ -23,8 +23,8 @@ function createWindow () {
 
   // and load the index.html of the app.
   // mainWindow.loadURL(`file://${__dirname}/index.html`)
-	// mainWindow.loadURL('https://keydecision.tk/demo.html')
-	mainWindow.loadURL('http://localhost:3000/demo.html')
+	// mainWindow.loadURL('https://keydecision.tk')
+	mainWindow.loadURL('http://localhost:3000')
 
   // Open the DevTools.
   // mainWindow.webContents.openDevTools()

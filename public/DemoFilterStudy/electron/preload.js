@@ -1,6 +1,23 @@
 // preload.js
-const fs = require('fs');
-const path = require('path');
+const fs = require('fs'),
+	path = require('path'),
+	exec = require('child_process').exec,
+	isWin = process.platform.indexOf('win') === 0;
+
+function execScript(scriptsArray, options, callback){
+	if(typeof options === 'function'){
+		callback = options;
+		options = null;
+	}
+	if(isWin){
+		var file = 'tempScript.vbs';
+		fs.writeFileSync(file, scriptsArray.join("\n"));
+		exec('cscript.exe /nologo "' + file + '"', options, function(){
+			fs.unlinkSync(file);
+			if(callback) callback();
+		});
+	}
+}
 
 var preloaded = {};
 

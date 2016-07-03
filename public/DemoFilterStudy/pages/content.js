@@ -199,12 +199,14 @@ function handleChangeM(){
 	maxY = _.max(nodes.map(function(o){return o.y}));
 
 	vis
+	.transition().duration(750)
 	.attr("viewBox", (minX - 50) + " " + (minY - 50) + " " + (maxX - minX + 100) + " " + (maxY - minY + 100))
 	.attr("preserveAspectRatio", "xMidYMid meet");
 	var selectLinks = vis.select("#group-links").selectAll("line").data(links),
 		selectNodes = vis.select("#group-nodes").selectAll("g.node").data(nodes);
 
 			selectLinks
+				.transition().duration(750)
 				.attr("x1", function(d) { return d.source.x })
 				.attr("y1", function(d) { return d.source.y })
 				.attr("x2", function(d) { return d.target.x })
@@ -229,6 +231,7 @@ function handleChangeM(){
 			selectLinks.exit().remove();
 			
 			selectNodes
+			.transition().duration(750)
 			.attr("transform", function(d){return "translate(" + d.x + "," + d.y + ")"});
 			
 			let eachNode = selectNodes
