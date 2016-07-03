@@ -7,13 +7,25 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="translucent black">
     <title>Sign In</title>
+		
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet">
+		<link href="../styles/signin.css" rel="stylesheet">
   </head>
 
   <body ng-app="login" ng-controller="login_main">
 		<span us-spinner spinner-key="spinner-1"></span>
 		<div ui-view="mainpage"></div>
 
-		<script src="cordova.js"></script>		
+		<script src="//code.jquery.com/jquery-1.11.3.min.js"></script>
+		<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.5.3/angular.min.js"></script>
+		<script src="../js/lib/angular-ui-router-0.2.18.min.js"></script>
+		<script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+		<script src="../js/lib/spinner-0.0.1.js"></script>
+		<script src="../js/lib/angular-spinner-0.6.2.js"></script>
+		<script src="KM_tools.js"></script>
+		<script src="login.js"></script>
+
+		<!-- <script src="cordova.js"></script>
 		<script>
 			(function(){
 				var headTag = document.getElementsByTagName('head')[0],
@@ -68,7 +80,7 @@
 					bodyTag.appendChild(jsAppend);
 				});
 			})();
-		</script>
+		</script>	 -->
 
   </body>
 </html>

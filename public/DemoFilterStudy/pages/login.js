@@ -28,7 +28,7 @@ angular
 				window.location.assign("content.html");
 			}
 		});
-		// window.location.assign("content.html");
+		//window.location.assign("content.html");
   }])
   .controller("_signin", ['$scope', 'common', function($scope, common) {
 		function setCookie(cname, cvalue, exdays) {

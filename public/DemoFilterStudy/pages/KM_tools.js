@@ -30,7 +30,7 @@
 				};
 				this.xhr2 = function(method, data){
 					usSpinnerService.spin('spinner-1');
-					return $http.post(configPara.ip + configPara.api2 + method, data, {withCredentials: true, headers: {'Content-Type': 'text/plain'}}).then(function(response){
+					return $http.post(configPara.ip + configPara.api2 + method, JSON.stringify(data), {withCredentials: true, headers: {'Content-Type': 'text/plain'}}).then(function(response){
 						usSpinnerService.stop('spinner-1');
 						return response.data;
 					}, function(response) {

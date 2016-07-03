@@ -101,20 +101,16 @@ angular
 	};
 }])
 .controller("_synthesis", ['$scope', 'common', '$timeout', '$http', function ($scope, common, $timeout, $http) {
-/* 	(async function(){
+	(async function(){
 		try {
-			var temp1 = await $http.post('/python/try', JSON.stringify({myval: "hello from browser!"}), {withCredentials: true, headers: {'Content-Type': 'text/plain'}}).then(function(response){
-						return response.data;
-					});
-			//var temp1 = await common.xhr('try', JSON.stringify({primaryaddr: 1000}));
-			//var temp1 = await common.xhr2();
+			var temp1 = await common.xhr2('try', {myval: "hello from browser!"});
 			console.log(temp1);
 			$scope.python = JSON.stringify(temp1);
 		} catch(e){
 			$scope.python = e.message;
 		}
 		$scope.$apply();
-	})(); */
+	})();
 	var M=[
 	[0, 1, 0, 0, 0, 0, 0, 0, 0],
 	[1, 1, 1, 1, 0, 0, 0, 0, 0],
