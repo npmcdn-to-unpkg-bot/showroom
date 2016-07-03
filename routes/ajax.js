@@ -220,12 +220,10 @@ exports = module.exports = function (eventEmitter, io) {
 						console.error(err.message);
 						res.send(err.message);
 					}
-					if (model) {
+					res.send('We do not accept new user at this moment.');
+/* 					if (model) {
 						res.send('username or email already exists');
 					} else {
-						//****************************************************//
-						// MORE VALIDATION GOES HERE(E.G. PASSWORD VALIDATION)
-						//****************************************************//
 						bcrypt.hash(req.body.password, null, null, function(err, hash) {
 							if (err) {
 								res.json(err);
@@ -242,7 +240,7 @@ exports = module.exports = function (eventEmitter, io) {
 								});
 							}
 						});
-					}
+					} */
 				}
 				break;
 
