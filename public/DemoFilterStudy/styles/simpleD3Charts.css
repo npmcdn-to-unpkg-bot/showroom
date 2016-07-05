@@ -1,0 +1,42 @@
+.axis path, .axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+path.line {
+  fill: none;
+  stroke-width: 1px;
+}
+.zoomOut {
+  fill: #66a;
+  cursor: pointer;
+}
+.zoomOutText {
+  pointer-events: none;
+  fill : #ccc;
+}
+.zoomOverlay {
+  pointer-events: all;
+  fill:none;
+}
+.zoombox {
+  fill : gray;
+  fill-opacity: 0.8;
+}
+.zoombox2 {
+  fill : none;
+  stroke-width: 1px;
+  stroke: red;
+}
+
+.bar {
+  fill: steelblue;
+}
+.bar:hover {
+  fill: brown;
+}
+.axis {
+  font: 10px sans-serif;
+}
+.x.axis path {
+}

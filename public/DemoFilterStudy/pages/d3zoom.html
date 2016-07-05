@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<link href="../styles/simpleD3Charts.css" rel="stylesheet">
+<body>
+  <div id="graph-linear-chart" style="display: inline-block; width: 600px; height:300px"></div>
+	<div id="graph-bar-chart" style="display: inline-block; width: 600px; height:300px"></div>
+	<script src="https://d3js.org/d3.v4.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.13.1/lodash.min.js"></script>
+	<script src="simpleD3Charts.js"></script>
+  <script>
+	var margin = {
+		top: 40,
+		right: 40,
+		bottom: 50,
+		left: 60
+	}
+	var linearChart = new simpleD3LinearChart("graph-linear-chart", margin, [0, 5], [-10, 50]),
+		barChart = new simpleD3BarChart("graph-bar-chart", margin);
+	
+	setInterval(function(){
+    var data = [];
+		
+    //data for testing
+    var data1 = [];
+    var data2 = [];
+		var data3 = [];
+		var data4 = [];
+
+    for (var i = 0; i < 500; i++) {
+      data1.push([i/100, Math.sin(i/100) * 20 + 10]);
+      data2.push([i/120, Math.cos(i/120) * 10 + 10]);
+			data3.push([i/150, Math.random() * 10 + 5]);
+			data4.push([i/200, Math.random() * 10 + 25]);
+    }
+
+    data.push({label: "S11(dB)", data: data1});
+    data.push({label: "S21(dB)", data: data2});
+		data.push({label: "S12(dB)", data: data3});
+		data.push({label: "S22(dB)", data: data4});
+	
+	
+	linearChart.update(data, false);
+	barChart.update([{key: "M11", value: Math.random()}, {key: "M12", value: 0.1}, {key: "M13", value: Math.random()}, {key: "M14", value: 0.25}]);
+	
+	}, 3000)
+  </script>
+  </body>
+</html>
