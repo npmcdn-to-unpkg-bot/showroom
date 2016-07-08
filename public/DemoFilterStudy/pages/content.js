@@ -15,53 +15,16 @@ angular
 				controller: '_synthesis'
 			}
     },
-		onExit: function(){ ReactDOM.unmountComponentAtNode(document.getElementById('matrix-topology')); unsubscribe();}
+		onExit: function(){ ReactDOM.unmountComponentAtNode(document.getElementById('matrix-topology-table'));}
 	})
-	.state('storeVisit', {
-		url: "/storeVisit/{id:int}",
+	.state('optimize', {
+		url: "/optimize",
     views: {
       'mainpage': {
-				templateUrl: '_storeVisit.html',
-				controller: '_storeVisit'
+				templateUrl: '_optimize.html',
+				controller: '_optimize'
 			}
     }
-	})
-	.state('profile', {
-		abstract: true,
-		url: "/profile/{id:int}",
-    views: {
-      'mainpage': {
-				templateUrl: '_profile.html',
-				controller: '_profile'
-			}
-    }
-	})
-	.state('profile.address', {
-		url: "/address",
-    views: {
-      'mainpage': {
-				templateUrl: '_profile_address.html',
-				controller: '_profile_address'
-			}
-    },
-		onEnter: function(){ setTimeout( () => $('#side-menu').metisMenu(), 20); },
-		onExit: function(){ ReactDOM.unmountComponentAtNode(document.getElementById('address-list-content')); }
-	})
-	.state('profile.store', {
-		url: "/store/{storeid:int}",
-    views: {
-      'mainpage': {
-				templateUrl: '_profile_store.html',
-				controller: '_profile_store'
-			}
-    },
-		onEnter: function(){ setTimeout( () => $('#side-menu').metisMenu(), 20); },
-		onExit: function(){ }
-	})
-	.state('newsFeed', {
-		url: "/newsFeed",
-				templateUrl: "_newsFeed.html",
-				controller: '_newsFeed'
 	});
 	$urlRouterProvider.otherwise("/synthesis");
 }])
@@ -112,8 +75,30 @@ angular
 	})();
 	$scope.data = {
 		filterType: "BPF",
-		tranZeros: [['', '']]
+		tranZeros: [['', '']],
+		matrixDisplay: "M"
 	}
+	
+	var margin = {
+		top: 40,
+		right: 40,
+		bottom: 50,
+		left: 60
+	}
+	var linearChart = new simpleD3LinearChart("graph-linear-chart", margin, [0, 5], [-10, 50]);
+	var data = [], data1 = [], data2 = [];
+
+	for (var i = 0; i < 500; i++) {
+		data1.push([i/100, Math.sin(i/100) * 20 + 10]);
+		data2.push([i/120, Math.cos(i/120) * 10 + 10]);
+	}
+
+	data.push({label: "S11(dB)", data: data1});
+	data.push({label: "S21(dB)", data: data2});
+	
+	linearChart.update(data, false);
+	
+	
 	var M=[
 	[0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
 	[1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -270,74 +255,10 @@ function handleChangeM(){
 		</ReactRedux.Provider>,
 		document.getElementById('matrix-topology-table')
 	);
+	$scope.$on("$destroy", unsubscribe);
 }])
-.controller("_storeVisit", ['$scope', '$timeout', function ($scope, $timeout) {
+.controller("_optimize", ['$scope', '$timeout', function ($scope, $timeout) {
 
-}])
-.controller("_profile", ['$scope', '$timeout', function ($scope, $timeout) {
-
-}])
-.controller("_profile_store", ['$scope', 'common', function ($scope, common) {
-
-}])
-.controller("_newsFeed", ['$scope', '$timeout', 'ChainCloudDb', function ($scope, $timeout, ChainCloudDb) {
-	$scope.postList = ChainCloudDb.fetchPost({posttype: 'all'});
-	$scope.currentMsg = [];
-	$scope.addComment = function(index){
-/* 		ChainCloudDb.addComment(postId, ChainCloudDb.loginUserId, {text: $scope.currentMsg[index]});
-		$scope.postList = ChainCloudDb.fetchPost({posttype: 'all'}); */
-		$scope.postList[index].comments.push({
-			owner: ChainCloudDb.user[$scope.$root.loginUserId],
-			publishtime: '1 min ago',
-			content: {text: $scope.currentMsg[index]}
-		});
-		$scope.currentMsg[index] = '';
-	};
-	var reader = new FileReader();
-	$scope.addPost = function(){
-		var messageImageFile = document.getElementById("messageImage"),
-			messageFileFile = document.getElementById("messageFile"), file, images = [], attachments = [];
-		if ('files' in messageImageFile) {
-			if (messageImageFile.files.length > 0) {
-				for (var i = 0; i < messageImageFile.files.length; i++) {
-					file = messageImageFile.files[i];
-					//console.log(file);
-					reader.onload = function(e) { images.push(e.target.result); };
-					reader.readAsDataURL(file);
-				}
-			}
-		}
-		if ('files' in messageFileFile) {
-			if (messageImageFile.files.length > 0) {
-				for (var i = 0; i < messageFileFile.files.length; i++) {
-					file = messageImageFile.files[i];
-					attachments.push({filename: file.name});
-				}
-			}
-		}
-		$timeout(function(){
-			$scope.postList.unshift({
-				owner: ChainCloudDb.user[$scope.$root.loginUserId],
-				publishtime: '1 min ago',
-				content: {
-					images: images,
-					text: $scope.newPostMsg,
-					attachments: attachments
-				},
-				comments: []
-			});
-			$scope.newPostMsg = '';
-		}, 100);
-		
-	};
-	$scope.clickInput = function(elementId) {
-		document.getElementById(elementId).click();
-	};
-	$scope.linkify = function(inputtext){
-		var result;
-		result = linkifyStr(inputtext, {defaultProtocol: 'https'});
-		return result;
-	};
 }])
 .directive('hideTabs', ['$rootScope', function($rootScope) {
   return {

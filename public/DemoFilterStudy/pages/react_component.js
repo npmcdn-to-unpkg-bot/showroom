@@ -6,7 +6,7 @@ w.MatrixTopology = React.createClass({
   render: function() {
 		var _this = this,
 			thStyle = {border: '1px solid black', textAlign: 'center'},
-			tdStyle = {border: '1px solid black'};
+			tdStyle = {border: '1px solid black', textAlign: 'center'};
     return (
       <ReactCSSTransitionGroup transitionName="gb-transition" transitionEnterTimeout={500} transitionLeaveTimeout={300}>
 				<table style={{width: '100%', borderCollapse: 'collapse'}}>

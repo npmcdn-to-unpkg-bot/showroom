@@ -12,15 +12,17 @@ let mainWindow
 function createWindow () {
   // Create the browser window.
   mainWindow = new BrowserWindow({
-		width: 1000,
-		height: 750,
-		autoHideMenuBar: false,
+		width: 900,
+		height: 480,
+		autoHideMenuBar: true,
 		webPreferences: {
 			nodeIntegration: false,
 			preload: path.join(__dirname, 'preload.js')
 		}
 	})
 
+	mainWindow.maximize()
+	
   // and load the index.html of the app.
   // mainWindow.loadURL(`file://${__dirname}/index.html`)
 	// mainWindow.loadURL('https://keydecision.tk')
