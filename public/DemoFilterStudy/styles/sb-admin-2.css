@@ -393,3 +393,23 @@ table.dataTable thead .sorting:after {
   opacity: 0.01;
   transition: opacity 300ms ease-in;
 }
+
+.label-sm {
+  font-size: 12px;
+}
+
+.label-md {
+  font-size: 16px;
+}
+
+.label-lg {
+  font-size: 20px;
+}
+
+input[type=number]::-webkit-inner-spin-button, 
+input[type=number]::-webkit-outer-spin-button { 
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    margin: 0; 
+}

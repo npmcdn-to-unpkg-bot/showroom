@@ -110,6 +110,10 @@ angular
 		}
 		$scope.$apply();
 	})();
+	$scope.data = {
+		filterType: "BPF",
+		tranZeros: [['', '']]
+	}
 	var M=[
 	[0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
 	[1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -171,24 +175,6 @@ angular
 		return {nodes: nodes, links: links}
 	}
 
-var w = 900,
-    h = 400;
-
-var circleWidth = 5;
-
-var vis = d3.select("#container-sigma")
-    .append("svg:svg")
-      .attr("class", "stage")
-      .attr("width", w)
-      .attr("height", h);
-			
-		vis
-			.append("g")
-			.attr("id", "group-links");
-		vis
-			.append("g")
-			.attr("id", "group-nodes");
-							
 function handleChangeM(){
 	var dataM = M2Nodeslinks(store.getState().topoM, 100),
 	nodes = dataM.nodes,
@@ -243,7 +229,7 @@ function handleChangeM(){
 			eachNode
       .append("svg:circle")
       .attr("class", "node-circle")
-      .attr("r", "10px")
+      .attr("r", "18px")
       .attr("fill", "#ff0000");
 			
 			eachNode
@@ -257,13 +243,32 @@ function handleChangeM(){
 			selectNodes.exit().remove();
 }
 
+	var vis = d3.select("#matrix-topology-container")
+			.append("svg:svg")
+				.attr("class", "stage")
+				.attr("width", document.getElementById("matrix-topology-container").offsetWidth)
+				.attr("height", document.getElementById("matrix-topology-container").offsetHeight);
+
+	vis
+		.append("g")
+		.attr("id", "group-links");
+	vis
+		.append("g")
+		.attr("id", "group-nodes");
+
+	$('#matrix-topology-modal').on('shown.bs.modal', function (e) {
+		d3.select("#matrix-topology-container").select("svg")
+			.attr("width", document.getElementById("matrix-topology-container").offsetWidth)
+			.attr("height", document.getElementById("matrix-topology-container").offsetHeight);
+		store.dispatch({type: 'createTopoM', M: M});
+	});
 	var unsubscribe = store.subscribe(handleChangeM);
 	store.dispatch({type: 'createTopoM', M: M})
 	ReactDOM.render(
 		<ReactRedux.Provider store={store}>
 			<MatrixTopologyContainer />
 		</ReactRedux.Provider>,
-		document.getElementById('matrix-topology')
+		document.getElementById('matrix-topology-table')
 	);
 }])
 .controller("_storeVisit", ['$scope', '$timeout', function ($scope, $timeout) {

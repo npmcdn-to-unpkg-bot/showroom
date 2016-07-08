@@ -1,72 +1,230 @@
-        <div id="page-wrapper-without-sidemenu">
+        <div id="page-wrapper-without-sidemenu" class="container-fluid">
 
             <!-- /.row -->
             <div class="row" style="padding-top: 10px;">
-                <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
-                    <div class="panel panel-primary">
-                        <p ng-bind="python"></p>
-                    </div>
+						
+                <div class="col-sm-2">
+									<div class="container-fluid">
+										<div class="row">
+											<div class="panel panel-primary">
+												<div class="panel-heading">
+													<h5>FILTER ORDER</h5>
+												</div>
+												<div class="panel-body">
+													<input type="number" class="form-control input-sm" placeholder="" ng-model="data.filterOrder">
+												</div>
+											</div>
+										</div>
+										<div class="row">
+											<div class="panel panel-primary">
+												<div class="panel-heading">
+													<h5>FILTER TYPE</h5>
+												</div>
+												<div class="panel-body">
+													<form name="myForm">
+														<input type="radio" ng-model="data.filterType" value="BPF" checked> Band Pass<br>
+														<input type="radio" ng-model="data.filterType" value="LPF"> Low Pass<br><br>
+													</form>
+												</div>
+											</div>
+										</div>
+									</div>
                 </div>
 
+                <div class="col-sm-3">
+
+                    <div class="panel panel-primary">
+											<div class="panel-heading">
+												<h5>PARAMETERS</h5>
+											</div>
+											<div class="panel-body">
+												<div class="row">
+													<div class="col-sm-6">
+													
+														<div class="form-group">
+															<label class="label-sm" for="center-freq">Center Freq(MHz)</label>
+															<input type="number" class="form-control input-sm" id="center-freq" placeholder="" ng-model="data.centerFreq">
+														</div>
+														
+														<div class="form-group">
+															<label class="label-sm" for="bandwidth">Band Width(MHz)</label>
+															<input type="number" class="form-control input-sm" id="bandwidth" placeholder="" ng-model="data.bandwidth">
+														</div>
+														
+														<div class="form-group">
+															<label class="label-sm" for="return-loss">Return Loss(dB)</label>
+															<input type="number" class="form-control input-sm" id="return-loss" placeholder="" ng-model="data.returnLoss">
+														</div>
+														
+													</div>
+													
+													<div class="col-sm-6">
+													
+														<div class="form-group">
+															<label class="label-sm" for="unloaded-q">Unloaded Q</label>
+															<input type="number" class="form-control input-sm" id="unloaded-q" placeholder="" ng-model="data.unloadedQ">
+														</div>
+														
+														<div class="form-group">
+															<label class="label-sm" for="temp-drift">Temperature Drift</label>
+															<input type="number" class="form-control input-sm" id="temp-drift" placeholder="" ng-model="data.tempDrift">
+														</div>
+														
+													</div>
+												</div>
+											</div>
+                    </div>
+									
+                </div>
+								
+                <div class="col-sm-2">
+									<div class="panel panel-primary">
+										<div class="panel-heading">
+											<h5>TRANSMISSION ZEROS</h5>
+										</div>
+										<div class="panel-body" style="max-height: 240px; overflow: auto;">
+											<table class="table table-condensed">
+												<thead>
+													<tr>
+														<th class="label-sm">Real</th>
+														<th class="label-sm">Image</th>
+													</tr>
+												</thead>
+												<tbody>
+													<tr ng-repeat="d in data.tranZeros track by $index">
+														<td>
+															<input type="number" class="form-control input-sm" ng-model="d[0]" ng-change="$last && (d[0] !== '') && data.tranZeros.push(['', ''])">
+														</td>
+														<td>
+															<input type="number" class="form-control input-sm" ng-model="d[1]" ng-change="$last && (d[1] !== '') && data.tranZeros.push(['', ''])">
+														</td>
+													</tr>
+												</tbody>
+											</table>
+										</div>
+									</div>
+                </div>
+								
+                <div class="col-sm-2">
+
+                    <div class="panel panel-primary">
+											<div class="panel-heading">
+												<h5>ANALYSIS BAND</h5>
+											</div>
+											<div class="panel-body">
+													
+												<div class="form-group">
+													<label class="label-sm" for="start-freq">Start Frequency(MHz)</label>
+													<input type="number" class="form-control input-sm" id="start-freq" placeholder="" ng-model="data.startFreq">
+												</div>
+												
+												<div class="form-group">
+													<label class="label-sm" for="stop-freq">Stop Frequency(MHz)</label>
+													<input type="number" class="form-control input-sm" id="stop-freq" placeholder="" ng-model="data.stopFreq">
+												</div>
+												
+												<div class="form-group">
+													<label class="label-sm" for="number-of-points">Number of Points</label>
+													<input type="number" class="form-control input-sm" id="number-of-points" placeholder="" ng-model="data.numOfPoints">
+												</div>
+														
+											</div>
+                    </div>
+									
+                </div>
+								
+                <div class="col-sm-2">
+									<div class="container-fluid">
+										<div class="row">
+											<div class="panel panel-primary">
+												<div class="panel-heading">
+													<h5>MATRIX TOPOLOGY</h5>
+												</div>
+												<div class="panel-body">
+													<!-- Button trigger modal -->
+													<button type="button" class="btn btn-default" data-toggle="modal" data-target="#matrix-topology-modal">
+														Edit Matrix Topology
+													</button>
+
+													<!-- Modal -->
+													<div class="modal fade" id="matrix-topology-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+														<div class="modal-dialog  modal-lg" role="document">
+															<div class="modal-content">
+																<div class="modal-header">
+																	<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+																	<h4 class="modal-title" id="myModalLabel">Edit Matrix Topology</h4>
+																</div>
+																<div class="modal-body">
+																	<div class="row">
+																		<div class="col-md-5" id="matrix-topology-table"></div>
+																		<div class="col-md-7" style="height: 300px;" id="matrix-topology-container"></div>
+																	</div>
+																</div>
+																<div class="modal-footer">
+																	<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+																</div>
+															</div>
+														</div>
+													</div>
+												</div>
+											</div>
+										</div>
+										<div class="row">
+											<div class="panel panel-primary">
+												<div class="panel-heading">
+													<h5>CALCULATE</h5>
+												</div>
+												<div class="panel-body">
+													<button type="button" class="btn btn-default" data-toggle="modal" data-target="#matrix-topology-modal">
+														Calculate
+													</button>
+												</div>
+											</div>
+										</div>
+									</div>
+                </div>
+								
             </div>
 						
-						<style>
-						table, th, td {
-								border: 1px solid black;
-						}
-						
-						th, td {
-								text-align: center;
-						}
-						</style>
-						<div id="matrix-topology" style="display: inline-block; width: 300px; height: 400px;"></div>
-						<div id="container-sigma" style="display: inline-block; width: auto; height: 400px;"></div>
-            <!-- /.row -->
-
-
-						
-						<div class="modal fade" id="add-new-address" tabindex="-1" role="dialog">
-							<div class="modal-dialog">
-								<div class="modal-content">
-									<div class="modal-header">
-										<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-										<h4 class="modal-title">New delivery address</h4>
+            <div class="row">
+							<div class="col-sm-7">
+								<div class="panel panel-primary">
+									<div class="panel-body" style="height: 300px;">
+										<!-- Nav tabs -->
+										<ul class="nav nav-tabs" role="tablist">
+											<li role="presentation" class="active"><a href="#home" aria-controls="home" role="tab" data-toggle="tab">S Parameter</a></li>
+											<li role="presentation"><a href="#profile" aria-controls="profile" role="tab" data-toggle="tab">Group Delay</a></li>
+										</ul>
+	
+										<div class="tab-content">
+											<div role="tabpanel" class="tab-pane fade in active" id="home">...</div>
+											<div role="tabpanel" class="tab-pane fade" id="profile">...</div>
+										</div>
 									</div>
-									<div class="modal-body">
-										<form>
-											<div class="form-group">
-												<label for="streetno" class="control-label">Street number:</label>
-												<input type="text" class="form-control" id="streetno" ng-model="newAddress.streetno"/>
-											</div>
-											<div class="form-group">
-												<label for="streetname" class="control-label">Street name:</label>
-												<input type="text" class="form-control" id="streetname" ng-model="newAddress.streetname"/>
-											</div>
-											<div class="form-group">
-												<label for="city" class="control-label">City:</label>
-												<input type="text" class="form-control" id="city" ng-model="newAddress.city"/>
-											</div>
-											<div class="form-group">
-												<label for="province" class="control-label">Province:</label>
-												<input type="text" class="form-control" id="province" ng-model="newAddress.province"/>
-											</div>
-											<div class="form-group">
-												<label for="country" class="control-label">Country:</label>
-												<input type="text" class="form-control" id="country" ng-model="newAddress.country"/>
-											</div>
-											<div class="form-group">
-												<label for="postcode" class="control-label">Postcode:</label>
-												<input type="text" class="form-control" id="streetname" ng-model="newAddress.postcode"/>
-											</div>
+								</div>
+							</div>
+							<div class="col-sm-5">
+								<div class="panel panel-primary">
+									<div class="panel-body" style="height: 300px;">
+										<form name="myForm">
+											<div class="row">
+												<div class="col-sm-2">
+													<input type="radio" ng-model="data.filterType" value="BPF" checked>M(i,j)<br>
+												</div>
+												<div class="col-sm-2">
+													<input type="radio" ng-model="data.filterType" value="LPF">C(i,j)<br>
+												</div>
+												<div class="col-sm-2">
+													<input type="radio" ng-model="data.filterType" value="SPF">K(i,j)<br>
+												</div>
 										</form>
-									</div>
-									<div class="modal-footer">
-										<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-										<button type="button" class="btn btn-primary" data-dismiss="modal" ng-click="addNewAddr(newAddress)"> Save </button>
+
+										
 									</div>
 								</div>
 							</div>
 						</div>
+
 						
         </div>
         <!-- /#page-wrapper -->
