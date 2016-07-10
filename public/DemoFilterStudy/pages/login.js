@@ -24,10 +24,10 @@ angular
 	}])
   .controller("login_main", ['$scope', 'common', function($scope, common) {
 		common.xhr('isLoggedIn', {}).then(function(msg){
-			if (msg) {
+			if (msg || (window.location.hostname.indexOf("localhost") !== -1)) {
 				window.location.assign("content.html");
 			}
-		});
+		});		
 		//window.location.assign("content.html");
   }])
   .controller("_signin", ['$scope', 'common', function($scope, common) {

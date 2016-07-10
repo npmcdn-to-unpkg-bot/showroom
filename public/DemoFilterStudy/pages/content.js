@@ -52,7 +52,7 @@ angular
 	};
 }])
 .controller("_synthesis", ['$scope', 'common', '$timeout', '$http', function ($scope, common, $timeout, $http) {
-	(async function(){
+/* 	(async function(){
 		try {
 			var temp1 = await common.xhr2('try', {myval: "hello from browser!", myval2: "hello from browser!"});
 			$scope.python = JSON.stringify(temp1);
@@ -60,7 +60,7 @@ angular
 			$scope.python = e.message;
 		}
 		$scope.$digest();
-	})();
+	})(); */
 	$scope.data = {
 		filterOrder: 6,
 		returnLoss: 20,
@@ -71,7 +71,7 @@ angular
 		stopFreq: 1040,
 		numberOfPoints: 1000,
 		filterType: "BPF",
-		tranZeros: [['', '']],
+		tranZeros: [['', 1.5], ['', '']],
 		matrixDisplay: "M"
 	}
 	$scope.calculate = async function(){
@@ -88,7 +88,9 @@ angular
 			coefP = responce.coefP.map(function(d){return numeric.t(d[0], d[1])}),
 			coefF = responce.coefF.map(function(d){return numeric.t(d[0], d[1])}),
 			coefE = responce.coefE.map(function(d){return numeric.t(d[0], d[1])}),
-			freqMHz = numeric.linspace($scope.data.startFreq, $scope.data.stopFreq, $scope.data.numberOfPoints),
+			numberOfPoints = ($scope.data.numberOfPoints < 5000)? $scope.data.numberOfPoints : 5000,
+			stopFreq = ($scope.data.startFreq < $scope.data.stopFreq)? $scope.data.stopFreq : $scope.data.startFreq + $scope.data.bandwidth * 8,
+			freqMHz = numeric.linspace($scope.data.startFreq, stopFreq, numberOfPoints),
 			bw = $scope.data.bandwidth,
 			w0 = Math.sqrt(($scope.data.centerFreq - bw / 2) * ($scope.data.centerFreq + bw / 2)),
 			q = $scope.data.unloadedQ,
@@ -303,6 +305,7 @@ function handleChangeM(){
 		document.getElementById('matrix-topology-table')
 	);
 	$scope.$on("$destroy", unsubscribe);
+	$timeout(function(){$("#button-calculate").click()}, 200);
 }])
 .controller("_optimize", ['$scope', '$timeout', function ($scope, $timeout) {
 
