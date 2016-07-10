@@ -5,6 +5,28 @@
             </div>
             <!-- /.row -->
             <div class="row" id="address-list-content">
-							<!-- React component: GbAddressList -->
+							<div class="col-lg-3 col-md-6" ng-repeat="address in addresses track by $index">
+								<div class="panel panel-primary">
+										<div class="panel-heading">
+												<div>
+													address.streetno address.streetname,
+												</div>
+												<div>
+													address.city, address.province
+												</div>
+												<div>
+													address.country, address.postcode
+												</div>
+										</div>
+										<div ng-click="editAddress" class="gb-cursor-pointer">
+												<div class="panel-footer">
+														<span class="pull-left">Edit</span>
+														<span class="pull-right"><i class="fa fa-edit"></i></span>
+														<div class="clearfix"></div>
+												</div>
+										</div>
+								</div>
+							</div>
+							<gbModalEditAddress id="edit-address" address="currentAddr" delete-button="" save-button=""/>
             </div>
             <!-- /.row -->

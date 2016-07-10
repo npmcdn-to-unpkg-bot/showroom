@@ -71,7 +71,9 @@ angular
 			}
     },
 		onEnter: function(){ setTimeout( () => $('#side-menu').metisMenu(), 20); },
-		onExit: function(){ ReactDOM.unmountComponentAtNode(document.getElementById('address-list-content')); }
+		onExit: function(){
+			/* ReactDOM.unmountComponentAtNode(document.getElementById('address-list-content')); */
+		}
 	})
 	.state('profile.store', {
 		url: "/store/{storeid:int}",
@@ -147,8 +149,41 @@ angular
 .controller("_profile", ['$scope', '$timeout', function ($scope, $timeout) {
 
 }])
+.directive('gbModalEditAddress', ['$state', function($state) {
+  return {
+    restrict: 'AE',
+    scope: {
+			modalAddress: "=modalAddress",
+			deleteButton: "=deleteButton",
+			saveButton: "=saveButton"
+		},
+		templateUrl: '_gb_modal_edit_address.html',
+    link: function(scope, element, attrs) {
+			scope.modalId = attrs.modalId;
+		}
+  };
+}])
 .controller("_profile_address", ['$scope', 'common', function ($scope, common) {
-	ReactDOM.render(<GbAddressList ajax={common.xhr}/>, document.getElementById('address-list-content'));
+	// ReactDOM.render(<GbAddressList ajax={common.xhr}/>, document.getElementById('address-list-content'));
+	(async function(){
+		var addresses;
+		try {
+			$scope.addresses = await common.xhr('getAddressList', {});
+		} catch(e){
+			$scope.addresses = [];
+		}
+		$scope.$digest();
+	})();
+	$scope.modalAddr = {};
+/* 	setTimeout(function(){
+		var modalElement = $('#edit-address');
+		modalElement.on('shown.bs.modal', function (e) {
+			console.log("modalAddr: ", $scope.modalAddr);
+		})
+	}, 1000); */
+	$scope.editAddress = function(address){
+		$scope.modalAddr = address;
+	}
 }])
 .controller("_profile_store", ['$scope', 'common', function ($scope, common) {
 

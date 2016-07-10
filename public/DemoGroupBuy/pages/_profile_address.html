@@ -1,10 +1,44 @@
             <div class="row">
                 <div class="col-lg-12">
-                    <h1 class="page-header">Delivery Address</h1>
+                    <h3 class="page-header">Address</h1>
                 </div>
             </div>
             <!-- /.row -->
             <div class="row" id="address-list-content">
-							<!-- React component: GbAddressList -->
+							<div class="col-lg-3 col-md-6" ng-repeat="address in addresses track by $index">
+								<div class="panel panel-primary">
+										<div class="panel-heading">
+												<div>
+													{{address.streetno}} {{address.streetname}},
+												</div>
+												<div>
+													{{address.city}}, {{address.province}}
+												</div>
+												<div>
+													{{address.country}}, {{address.postcode}}
+												</div>
+										</div>
+										<!-- <div ng-click="editAddress(address)" class="gb-cursor-pointer" data-toggle="modal" data-target="#edit-address"> -->
+										<div ng-click="editAddress(address)" class="gb-cursor-pointer" data-toggle="modal" data-target="#edit-address">
+												<div class="panel-footer">
+														<span class="pull-left">Edit</span>
+														<span class="pull-right"><i class="fa fa-edit"></i></span>
+														<div class="clearfix"></div>
+												</div>
+										</div>
+								</div>
+							</div>
+							
+							<div class="col-lg-3 col-md-6" key='-1'>
+									<div class="panel panel-primary">
+											<div ng-click="editAddress({})" class="gb-cursor-pointer" data-toggle="modal" data-target="#edit-address">
+													<div class="panel-footer text-center" style={{padding: '25px'}}>
+														<i class="fa fa-plus-square-o fa-5x"></i>
+													</div>
+											</div>
+									</div>
+							</div>
             </div>
+
+						<gb-modal-edit-address modal-id="edit-address" modal-address="modalAddr" delete-button="" save-button=""/>
             <!-- /.row -->

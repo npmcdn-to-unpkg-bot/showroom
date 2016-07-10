@@ -1,4 +1,6 @@
 import flask, urllib.request, tempfile, json
+import numpy as np
+import CP
 # import skrf as rf
 
 def WriteString2TempFile(text):
@@ -35,7 +37,7 @@ def get_tasks():
 
 @app.route('/<method>', methods=['POST'])
 def get_task(method):
-    if True:
+    if method == "try":
         sFile = WriteString2TempFile("hello sam")
         fileContent = sFile.read()
         sFile.close()
@@ -49,6 +51,15 @@ def get_task(method):
 #        originalFreq = ntwk.frequency.f;
 #        originalS21 = ntwk.s[::, 1, 0];
 #        originalS11 = ntwk.s[::, 0, 0];
+    elif method == "SynthesizeFromTranZeros":
+        reqJson = flask.request.get_json()
+        # print(json.dumps(reqJson, separators = (',', ':')))
+        N = reqJson['N']
+        returnLoss= reqJson['returnLoss']
+        rootP = np.array([x[0] + 1j * x[1] for x in reqJson['rootP']])
+        epsilon, coefP, coefF, coefE = CP.ChebyshevP2EF(rootP, N, returnLoss)
+        resJson = {'epsilon': [epsilon.real, epsilon.imag], 'coefP': [[x.real, x.imag] for x in coefP], 'coefF': [[x.real, x.imag] for x in coefF], 'coefE': [[x.real, x.imag] for x in coefE]}
+        return json.dumps(resJson, separators = (',', ':'))
     else:
         flask.abort(404)
 
