@@ -16,42 +16,49 @@ angular
 
 	$httpBackend.whenRoute('GET', /.+\.html$/).passThrough();
 	$httpBackend.whenRoute('POST', '/python/:method').passThrough();
-	$httpBackend.whenRoute('POST', '/ajax/:method').passThrough();
-
-/*  	$httpBackend.whenRoute('POST', '/ajax/:method')
-	.respond(function(method, url, data, headers, params) {
-		let body = JSON.parse(data), tempUser;
-		switch (params.method){
-			case 'updateUser':
-				user[0].primaryaddr = body.primaryaddr;
-			case 'getUser':
-				tempUser = angular.copy(user[0]);
-				tempUser.password = undefined;
-				return [200, tempUser];
-				break;
-			case 'getAddressList':
-				return [200, address];
-				break;
-			case 'saveAddress':
-				if (body.hasOwnProperty("id")){
-					let tempIndex = address.map(o => o.id).indexOf(body.id);
-					address[tempIndex] = body;
-				} else {
-					address.push({id: _.last(address).id + 1, ...body, user: 0});
-				}
-				return [200, address];
-				break;
-			case 'deleteAddress':
-				if (body.hasOwnProperty("id")){
-					let tempIndex = address.map(o => o.id).indexOf(body.id);
-					address.splice(tempIndex, 1);
-				}
-				return [200, address];
-				break;
-			default:
-				return [200, {}];
-		}
-	}); */
+	
+	if (window.location.hostname.indexOf("localhost") === -1) {
+		$httpBackend.whenRoute('POST', '/ajax/:method').passThrough();
+	} else {
+		console.log("dummy /ajax/:method used")
+		$httpBackend.whenRoute('POST', '/ajax/:method')
+		.respond(function(method, url, data, headers, params) {
+			let body = JSON.parse(data), tempUser;
+			switch (params.method){
+				case 'isLoggedIn':
+					return [200, "success"];
+					break;
+				case 'updateUser':
+					user[0].primaryaddr = body.primaryaddr;
+				case 'getUser':
+					tempUser = angular.copy(user[0]);
+					tempUser.password = undefined;
+					return [200, tempUser];
+					break;
+				case 'getAddressList':
+					return [200, address];
+					break;
+				case 'saveAddress':
+					if (body.hasOwnProperty("id")){
+						let tempIndex = address.map(o => o.id).indexOf(body.id);
+						address[tempIndex] = body;
+					} else {
+						address.push({id: _.last(address).id + 1, ...body, user: 0});
+					}
+					return [200, address];
+					break;
+				case 'deleteAddress':
+					if (body.hasOwnProperty("id")){
+						let tempIndex = address.map(o => o.id).indexOf(body.id);
+						address.splice(tempIndex, 1);
+					}
+					return [200, address];
+					break;
+				default:
+					return [200, {}];
+			}
+		});
+	}
 }]);
 
 angular.element(document).ready(function () {

@@ -11,7 +11,7 @@
 											</button>
 
 											<div class="dropdown-menu list-group">
-												<button type="button" class="list-group-item" ng-repeat="address in addresses track by address.id" ng-click="changePrimAddr(address.id)">
+												<button type="button" class="list-group-item" ng-repeat="address in addresses track by address.id" ng-click="changePrimAddr(address)">
 														<div>
 															{{::address.streetno}} {{::address.streetname}},
 														</div>
@@ -25,7 +25,8 @@
 											</div>
 										</li>
 										<li role="presentation" class="dropdown">
-											<button type="button" class="btn btn-default" data-toggle="modal" data-target="#add-new-address">New address</button>
+											<button type="button" class="btn btn-default" ng-click="modalAddr={}" data-toggle="modal" data-target="#edit-address">New address</button>
+											<gb-modal-edit-address modal-id="edit-address" modal-address="modalAddr" save-button="saveAddress"/>
 										</li>
 									</ul>
 

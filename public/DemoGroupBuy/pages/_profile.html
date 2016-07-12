@@ -15,18 +15,10 @@
                             <!-- /input-group -->
                         </li>
                         <li>
-                            <a ui-sref="profile.address({id: 1})"><i class="fa fa-dashboard fa-fw"></i> Address</a>
+                            <a ui-sref="profile.address({userid: 1})"><i class="fa fa-dashboard fa-fw"></i> Address</a>
                         </li>
                         <li>
-                            <a href="#"><i class="fa fa-bar-chart-o fa-fw"></i> My stores<span class="fa arrow"></span></a>
-                            <ul class="nav nav-second-level">
-                                <li>
-                                    <a href="flot.html">Flot Charts</a>
-                                </li>
-                                <li>
-                                    <a href="morris.html">Morris.js Charts</a>
-                                </li>
-                            </ul>
+                            <a ui-sref="profile.store({userid: 1, storeid: 1})"><i class="fa fa-bar-chart-o fa-fw"></i> My stores<span class="fa arrow"></span></a>
                             <!-- /.nav-second-level -->
                         </li>
                         <li>

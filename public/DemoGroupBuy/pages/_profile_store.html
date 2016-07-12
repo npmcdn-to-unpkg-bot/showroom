@@ -1,32 +1,87 @@
-            <div class="row">
-                <div class="col-lg-12">
-                    <h3 class="page-header">Address</h1>
-                </div>
-            </div>
-            <!-- /.row -->
-            <div class="row" id="address-list-content">
-							<div class="col-lg-3 col-md-6" ng-repeat="address in addresses track by $index">
-								<div class="panel panel-primary">
-										<div class="panel-heading">
-												<div>
-													address.streetno address.streetname,
-												</div>
-												<div>
-													address.city, address.province
-												</div>
-												<div>
-													address.country, address.postcode
-												</div>
-										</div>
-										<div ng-click="editAddress" class="gb-cursor-pointer">
-												<div class="panel-footer">
-														<span class="pull-left">Edit</span>
-														<span class="pull-right"><i class="fa fa-edit"></i></span>
-														<div class="clearfix"></div>
-												</div>
-										</div>
-								</div>
-							</div>
-							<gbModalEditAddress id="edit-address" address="currentAddr" delete-button="" save-button=""/>
-            </div>
-            <!-- /.row -->
+<div class="row">
+		<div class="col-lg-12">
+				<h3>Address</h3>
+		</div>
+</div>
+
+<form>
+	<div class="row">
+		<div class="col-sm-2">
+			<div class="form-group">
+				<label for="streetno" class="control-label">Street number:</label>
+				<input type="text" class="form-control" id="streetno" ng-model="store.streetno"/>
+			</div>
+		</div>
+		<div class="col-sm-3">
+			<div class="form-group">
+				<label for="streetname" class="control-label">Street name:</label>
+				<input type="text" class="form-control" id="streetname" ng-model="store.streetname"/>
+			</div>
+		</div>
+		<div class="col-sm-2">
+			<div class="form-group">
+				<label for="city" class="control-label">City:</label>
+				<input type="text" class="form-control" id="city" ng-model="store.city"/>
+			</div>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-sm-2">
+			<div class="form-group">
+				<label for="province" class="control-label">Province:</label>
+				<input type="text" class="form-control" id="province" ng-model="store.province"/>
+			</div>
+		</div>
+		<div class="col-sm-2">
+			<div class="form-group">
+				<label for="country" class="control-label">Country:</label>
+				<input type="text" class="form-control" id="country" ng-model="store.country"/>
+			</div>
+		</div>
+		<div class="col-sm-2">
+			<div class="form-group">
+				<label for="postcode" class="control-label">Postcode:</label>
+				<input type="text" class="form-control" id="postcode" ng-model="store.postcode"/>
+			</div>
+		</div>
+	</div>
+</form>
+
+<hr>
+
+<div class="row">
+		<div class="col-lg-12">
+				<h3>Description</h3>
+		</div>
+</div>
+<div class="row">
+		<div class="col-sm-6">
+				<textarea class="form-control" rows="3" ng-model="store.description"></textarea>
+		</div>
+</div>
+
+<hr>
+
+<div class="row">
+		<div class="col-lg-12">
+				<h3>Description</h3>
+		</div>
+</div>
+<table class="table table-condensed">
+	<thead>
+		<tr>
+			<th class="label-sm">Real</th>
+			<th class="label-sm">Image</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr ng-repeat="d in data.tranZeros track by $index">
+			<td>
+				<input type="number" class="form-control input-sm" ng-model="d[0]" ng-change="$last && (d[0] !== '') && data.tranZeros.push(['', ''])">
+			</td>
+			<td>
+				<input type="number" class="form-control input-sm" ng-model="d[1]" ng-change="$last && (d[1] !== '') && data.tranZeros.push(['', ''])">
+			</td>
+		</tr>
+	</tbody>
+</table>

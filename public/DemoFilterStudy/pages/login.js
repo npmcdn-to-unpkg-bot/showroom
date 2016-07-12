@@ -23,12 +23,15 @@ angular
 		$urlRouterProvider.otherwise("/signin");
 	}])
   .controller("login_main", ['$scope', 'common', function($scope, common) {
-		common.xhr('isLoggedIn', {}).then(function(msg){
-			if (msg || (window.location.hostname.indexOf("localhost") !== -1)) {
-				window.location.assign("content.html");
-			}
-		});		
-		//window.location.assign("content.html");
+		if (window.location.hostname.indexOf("localhost") === -1) {
+			common.xhr('isLoggedIn', {}).then(function(msg){
+				if (msg) {
+					window.location.assign("content.html");
+				}
+			});
+		} else {
+			window.location.assign("content.html");
+		}
   }])
   .controller("_signin", ['$scope', 'common', function($scope, common) {
 		function setCookie(cname, cvalue, exdays) {

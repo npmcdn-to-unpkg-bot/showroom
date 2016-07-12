@@ -54,7 +54,7 @@ angular
 	})
 	.state('profile', {
 		abstract: true,
-		url: "/profile/{id:int}",
+		url: "/profile/{userid:int}",
     views: {
       'mainpage': {
 				templateUrl: '_profile.html',
@@ -118,30 +118,33 @@ angular
 .controller("_storeList", ['$scope', 'common', '$timeout', function ($scope, common, $timeout) {
 	(async function(){
 		try {
+			let user = await common.xhr('getUser', {});
 			$scope.addresses = await common.xhr('getAddressList', {});
-			$scope.primAddr = _.find($scope.addresses, o => (o.id === store.getState().user.primaryaddr));
+			$scope.primAddr = _.find($scope.addresses, o => (o.id === user.primaryaddr));
 		} catch(e){
 			$scope.addresses = [{}];
 			$scope.primAddr = {};
 		}
-		$scope.$apply();
+		$scope.$digest();
 	})();
-	$scope.changePrimAddr = async function(id){
+	$scope.changePrimAddr = async function(address){
 		try {
-			let user = await common.xhr('updateUser', {primaryaddr: id});
-			store.dispatch({type: "updateUser", user: user});
-			$scope.$apply(function(){$scope.primAddr = _.find($scope.addresses, o => (o.id === store.getState().user.primaryaddr));});
+			let user = await common.xhr('updateUser', {primaryaddr: address.id});
+			$scope.primAddr = address;
 		} catch(e){
 		}
+		$scope.$digest();
 	};
-	$scope.newAddress = {streetno: '', streetname: '', city: '', province: '', country: '', postcode: ''};
-	$scope.addNewAddr = async function(newAddress){
+	$scope.saveAddress = async function(){
 		try {
-			$scope.addresses = await common.xhr('saveAddress', newAddress);
-			$scope.changePrimAddr(_.last($scope.addresses).id);
+			$scope.addresses = await common.xhr('saveAddress', $scope.modalAddr);
+			$scope.changePrimAddr(_.last($scope.addresses));
 		} catch(e){
+			$scope.addresses = [];
 		}
-	};
+		$scope.$digest();
+		$("#edit-address").modal('hide');
+	}
 }])
 .controller("_storeVisit", ['$scope', '$timeout', function ($scope, $timeout) {
 
@@ -160,92 +163,55 @@ angular
 		templateUrl: '_gb_modal_edit_address.html',
     link: function(scope, element, attrs) {
 			scope.modalId = attrs.modalId;
+			scope.showDeleteButton = (typeof scope.deleteButton !== "undefined");
 		}
   };
 }])
-.controller("_profile_address", ['$scope', 'common', function ($scope, common) {
+.controller("_profile_address", ['$scope', '$stateParams', 'common', function ($scope, $stateParams, common) {
 	// ReactDOM.render(<GbAddressList ajax={common.xhr}/>, document.getElementById('address-list-content'));
 	(async function(){
-		var addresses;
 		try {
-			$scope.addresses = await common.xhr('getAddressList', {});
+			$scope.addresses = await common.xhr('getAddressList', {userid: $stateParams.userid});
 		} catch(e){
 			$scope.addresses = [];
 		}
 		$scope.$digest();
 	})();
 	$scope.modalAddr = {};
-/* 	setTimeout(function(){
-		var modalElement = $('#edit-address');
-		modalElement.on('shown.bs.modal', function (e) {
-			console.log("modalAddr: ", $scope.modalAddr);
-		})
-	}, 1000); */
 	$scope.editAddress = function(address){
-		$scope.modalAddr = address;
+		$scope.modalAddr = angular.copy(address);
+	}
+	$scope.saveAddress = async function(){
+		try {
+			$scope.addresses = await common.xhr('saveAddress', $scope.modalAddr);
+		} catch(e){
+			$scope.addresses = [];
+		}
+		$scope.$digest();
+		$("#edit-address").modal('hide');
+	}
+	$scope.deleteAddress = async function(){
+		try {
+			if ($scope.modalAddr.hasOwnProperty("id")){
+				$scope.addresses = await common.xhr('deleteAddress', $scope.modalAddr);
+			}
+		} catch(e){
+			$scope.addresses = [];
+		}
+		$scope.$digest();
+		$("#edit-address").modal('hide');
 	}
 }])
-.controller("_profile_store", ['$scope', 'common', function ($scope, common) {
+.controller("_profile_store", ['$scope', '$stateParams', 'common', function ($scope, $stateParams, common) {
+	(async function(){
+		try {
+			$scope.store = await common.xhr('getStoreInfo', {userid: $stateParams.userid, storeid: $stateParams.storeid});
+		} catch(e){
+			$scope.store = [];
+		}
+		$scope.$digest();
+	})();
 
-}])
-.controller("_newsFeed", ['$scope', '$timeout', 'ChainCloudDb', function ($scope, $timeout, ChainCloudDb) {
-	$scope.postList = ChainCloudDb.fetchPost({posttype: 'all'});
-	$scope.currentMsg = [];
-	$scope.addComment = function(index){
-/* 		ChainCloudDb.addComment(postId, ChainCloudDb.loginUserId, {text: $scope.currentMsg[index]});
-		$scope.postList = ChainCloudDb.fetchPost({posttype: 'all'}); */
-		$scope.postList[index].comments.push({
-			owner: ChainCloudDb.user[$scope.$root.loginUserId],
-			publishtime: '1 min ago',
-			content: {text: $scope.currentMsg[index]}
-		});
-		$scope.currentMsg[index] = '';
-	};
-	var reader = new FileReader();
-	$scope.addPost = function(){
-		var messageImageFile = document.getElementById("messageImage"),
-			messageFileFile = document.getElementById("messageFile"), file, images = [], attachments = [];
-		if ('files' in messageImageFile) {
-			if (messageImageFile.files.length > 0) {
-				for (var i = 0; i < messageImageFile.files.length; i++) {
-					file = messageImageFile.files[i];
-					//console.log(file);
-					reader.onload = function(e) { images.push(e.target.result); };
-					reader.readAsDataURL(file);
-				}
-			}
-		}
-		if ('files' in messageFileFile) {
-			if (messageImageFile.files.length > 0) {
-				for (var i = 0; i < messageFileFile.files.length; i++) {
-					file = messageImageFile.files[i];
-					attachments.push({filename: file.name});
-				}
-			}
-		}
-		$timeout(function(){
-			$scope.postList.unshift({
-				owner: ChainCloudDb.user[$scope.$root.loginUserId],
-				publishtime: '1 min ago',
-				content: {
-					images: images,
-					text: $scope.newPostMsg,
-					attachments: attachments
-				},
-				comments: []
-			});
-			$scope.newPostMsg = '';
-		}, 100);
-		
-	};
-	$scope.clickInput = function(elementId) {
-		document.getElementById(elementId).click();
-	};
-	$scope.linkify = function(inputtext){
-		var result;
-		result = linkifyStr(inputtext, {defaultProtocol: 'https'});
-		return result;
-	};
 }])
 .directive('hideTabs', ['$rootScope', function($rootScope) {
   return {
