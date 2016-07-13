@@ -119,6 +119,9 @@ angular
 				data = [{label: "S11(dB)", data: S11dB}, {label: "S21(dB)", data: S21dB}];
 			
 			linearChart.update(data, true);
+			
+			$scope.data.targetMatrix = numeric.identity(N + 2);
+			$scope.$digest();
 		} catch(e){
 			console.log(e.message);
 		}
@@ -143,20 +146,18 @@ angular
 	linearChart.update(data, false);
 	
 	
-	var M=[
-	[0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-	[1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-	[0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-	[0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0],
-	[0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0],
-	[0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0],
-	[0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0],
-	[0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0],
-	[0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0],
-	[0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0],
-	[0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1],
-	[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0]
-	];
+	$scope.filterOrderChange = function(N){
+		var M = numeric.identity(N + 2);
+		M[0][0] = 0;
+		M[N + 1][N + 1] = 0;
+		for (i = 0; i < N + 1; i++){
+			M[i][i + 1] = 1;		
+			M[i + 1][i] = 1;
+		}
+		store.dispatch({type: 'createTopoM', M: M})
+	}
+	$scope.filterOrderChange($scope.data.filterOrder);
+	
 	function M2Nodeslinks(M, unitStep){
 		var N = M.length - 2, nodes = [], links = [], i, j, k, edgeIndex = 0;
 		for (i = 0; i < N + 2; i++){
@@ -289,10 +290,10 @@ function handleChangeM(){
 		d3.select("#matrix-topology-container").select("svg")
 			.attr("width", document.getElementById("matrix-topology-container").offsetWidth)
 			.attr("height", document.getElementById("matrix-topology-container").offsetHeight);
-		store.dispatch({type: 'createTopoM', M: M});
+		//store.dispatch({type: 'createTopoM', M: M});
 	});
 	var unsubscribe = store.subscribe(handleChangeM);
-	store.dispatch({type: 'createTopoM', M: M})
+	//store.dispatch({type: 'createTopoM', M: M})
 	ReactDOM.render(
 		<ReactRedux.Provider store={store}>
 			<MatrixTopologyContainer />

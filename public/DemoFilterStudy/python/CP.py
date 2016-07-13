@@ -651,7 +651,12 @@ def FPE2M(epsilon, epsilonE, rootF, rootP, rootE, method=1):
     
         r21k, lambdak, k21 = signal.residue(y21n[-1::-1], yd[-1::-1])
         r22k, lambdak, k22 = signal.residue(y22n[-1::-1], yd[-1::-1])
-    
+
+        tempSort = np.argsort(np.imag(lambdak))
+        lambdak = lambdak[tempSort]
+        r21k = r21k[tempSort]
+        r22k = r22k[tempSort]
+
         Mkk = np.zeros((N + 2,), dtype=complex)
         Mkk[1:-1] = 1j * lambdak
         M = np.diag(Mkk)

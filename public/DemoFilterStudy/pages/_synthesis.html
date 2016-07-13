@@ -11,7 +11,7 @@
 													<h5>FILTER ORDER</h5>
 												</div>
 												<div class="panel-body">
-													<input type="number" class="form-control input-sm" placeholder="" ng-model="data.filterOrder">
+													<input type="number" class="form-control input-sm" placeholder="" ng-model="data.filterOrder" ng-change="filterOrderChange(data.filterOrder)" ng-model-options="{ updateOn: 'blur' }">
 												</div>
 											</div>
 										</div>
@@ -21,19 +21,18 @@
 													<h5>FILTER TYPE</h5>
 												</div>
 												<div class="panel-body">
-													<form name="myForm">
-														<input type="radio" id="select-filter-type-BPF" ng-model="data.filterType" value="BPF" checked>
-														<label class="label-sm" for="select-filter-type-BPF"> Band Pass</label>
-														<br>
-														<!-- <label class="radio">
-															<input type="radio" id="select-filter-type-BPF" ng-model="data.filterType" value="BPF"> Band Pass
+													<div class="radio">
+														<label>
+															<input type="radio" id="select-filter-type-BPF" ng-model="data.filterType" value="BPF" checked>
+															Band Pass
 														</label>
-														<label class="radio-inline">
-															<input type="radio" id="select-filter-type-LPF" ng-model="data.filterType" value="LPF"> Low Pass
-														</label> -->
-														<input type="radio" id="select-filter-type-LPF" ng-model="data.filterType" value="LPF">
-														<label class="label-sm" for="select-filter-type-LPF"> Low Pass</label>
-													</form>
+													</div>
+													<div class="radio">
+														<label>
+															<input type="radio" id="select-filter-type-LPF" ng-model="data.filterType" value="LPF" checked>
+															Low Pass
+														</label>
+													</div>
 												</div>
 											</div>
 										</div>
@@ -213,40 +212,45 @@
 							<div class="col-sm-5">
 								<div class="panel panel-primary">
 									<div class="panel-body" style="height: 300px;">
-										<form name="myForm">
-											<div class="row">
-												<div class="col-sm-2">
-													<input type="radio" id="select-matrix-display-M" ng-model="data.matrixDisplay" value="M" checked>
-													<label class="label-sm" for="select-matrix-display-M"> M(i,j)</label>
+										<div class="row">
+											<div class="col-sm-2">
+												<div class="radio">
+													<label>
+														<input type="radio" id="select-matrix-display-M" ng-model="data.matrixDisplay" value="M" checked>
+														M(i,j)
+													</label>
 												</div>
-												<div class="col-sm-2">
-													<input type="radio" id="select-matrix-display-C" ng-model="data.matrixDisplay" value="C">
-													<label class="label-sm" for="select-matrix-display-C"> C(i,j)</label>
+											</div>
+											<div class="col-sm-2">
+												<div class="radio">
+													<label>
+														<input type="radio" id="select-matrix-display-M" ng-model="data.matrixDisplay" value="C" checked>
+														C(i,j)
+													</label>
 												</div>
-												<div class="col-sm-2">
-													<input type="radio" id="select-matrix-display-K" ng-model="data.matrixDisplay" value="K">
-													<label class="label-sm" for="select-matrix-display-K"> K(i,j)</label>
+											</div>
+											<div class="col-sm-2">
+												<div class="radio">
+													<label>
+														<input type="radio" id="select-matrix-display-M" ng-model="data.matrixDisplay" value="K" checked>
+														K(i,j)
+													</label>
 												</div>
-										</form>
+											</div>
+										</div>
+
 										
-										<table class="table table-bordered" style="text-align: center;">
+										<table class="table table-bordered" style="text-align: center; height: 100%;">
 											<thead>
 												<tr>
 													<th class="label-sm" style="text-align: center;"></th>
-													<th class="label-sm" style="text-align: center;">S</th>
-													<th class="label-sm" style="text-align: center;">L</th>
+													<th class="label-sm" style="text-align: center;" ng-repeat="r in data.targetMatrix track by $index">{{($first || $last)? (($first)? 'S' : 'L') : $index}}</th>
 												</tr>
 											</thead>
 											<tbody>
-												<tr>
-													<td>S</td>
-													<td>0.000</td>
-													<td>0.000</td>
-												</tr>
-												<tr>
-													<td>L</td>
-													<td>0.000</td>
-													<td>0.000</td>
+												<tr ng-repeat="r in data.targetMatrix track by $index">
+													<td>{{($first || $last)? (($first)? 'S' : 'L') : $index}}</td>
+													<td ng-repeat="d in r track by $index">{{d}}</td>
 												</tr>
 											</tbody>
 										</table>
