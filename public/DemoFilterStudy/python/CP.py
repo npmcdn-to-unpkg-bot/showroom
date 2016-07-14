@@ -643,7 +643,8 @@ def FPE2M(epsilon, epsilonE, rootF, rootP, rootE, method=1):
             coefP = Polynomial.fromroots(rootP).coef
         else:
             coefP = np.array([1.])
-        y21n = -1j *  coefP / np.abs(epsilonE)
+#        y21n = -1j *  coefP / np.abs(epsilonE)
+        y21n = -1j *  coefP / epsilonE
     
         y21n /= yd[-1]
         y22n /= yd[-1]
@@ -666,12 +667,13 @@ def FPE2M(epsilon, epsilonE, rootF, rootP, rootE, method=1):
     
         Mlk = np.sqrt(r22k)
         Msk = r21k / Mlk
+        
         M[0, 1:-1] = Msk
         M[1:-1, 0] = Msk
         M[-1, 1:-1] = Mlk
         M[1:-1, -1] = Mlk
         
-        return M#np.real(M)
+        return np.real(M)
 
     elif method == 2:
         initM = GetTopology(rootF.shape[0])

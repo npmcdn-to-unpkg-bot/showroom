@@ -71,7 +71,7 @@ angular
 		stopFreq: 1040,
 		numberOfPoints: 1000,
 		filterType: "BPF",
-		tranZeros: [['', 1.5], ['', '']],
+		tranZeros: [['', 1.5], ['', -1.5], ['', '']],
 		matrixDisplay: "M"
 	}
 	$scope.calculate = async function(){
@@ -100,8 +100,9 @@ angular
 				w0 = Math.sqrt(($scope.data.centerFreq - bw / 2) * ($scope.data.centerFreq + bw / 2)),
 				q = $scope.data.unloadedQ,
 				N = $scope.data.filterOrder,
-				normalizedFreq = freqMHz.map(function(d){return numeric.t(1 / q, (w0 / bw) * (d / w0 - w0 / d))}),
-				vanderN = normalizedFreq.map(function(d){
+				normalizedS = freqMHz.map(function(d){return numeric.t(1 / q, (w0 / bw) * (d / w0 - w0 / d))}),
+				normalizedFreq = freqMHz.map(function(d){return numeric.t((w0 / bw) * (d / w0 - w0 / d), -1 / q)}),
+				vanderN = normalizedS.map(function(d){
 					var i, result = [], temp1 = numeric.t(1, 0);
 					for (i = 0; i < N + 1; i++){
 						result.push(temp1);
@@ -114,13 +115,45 @@ angular
 				polyResultE = polyResult(coefE),
 				S11 = freqMHz.map(function(f, i){return [f / 1000, polyResultF[i].div(polyResultE[i])]}),
 				S21 = freqMHz.map(function(f, i){return [f / 1000, polyResultP[i].div(polyResultE[i]).div(epsilon)]}),
-				S11dB = S11.map(function(s){return [s[0], 10 * Math.log(s[1].mul(s[1].conj()).x) / Math.LN10]}),
-				S21dB = S21.map(function(s){return [s[0], 10 * Math.log(s[1].mul(s[1].conj()).x) / Math.LN10]}),
-				data = [{label: "S11(dB)", data: S11dB}, {label: "S21(dB)", data: S21dB}];
-			
-			linearChart.update(data, true);
-			
-			$scope.data.targetMatrix = numeric.identity(N + 2);
+				S11dB = S11.map(function(s){return [s[0], 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10]}),
+				S21dB = S21.map(function(s){return [s[0], 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10]});
+
+			$scope.data.targetMatrix = responce.targetMatrix.map(function(r){
+				return r.map(function(d){
+					return Math.round(d * 1000) / 1000;
+				})
+			})
+			var S11_fromM = [],
+				S21_fromM = [],			
+				minusR = numeric.rep([N + 2], 0);
+			minusR[0] = -1;
+			minusR[N+1] = -1;
+			minusR = numeric.diag(minusR);
+				
+			normalizedFreq.forEach(function(thisFreq, i){
+				var Y, Z,
+					FUX = numeric.rep([N + 2], thisFreq.x),
+					FUY = numeric.rep([N + 2], thisFreq.y);
+				FUX[0] = 0;
+				FUX[N + 1] = 0;
+				FUX = numeric.diag(FUX);
+				FUY[0] = 0;
+				FUY[N + 1] = 0;
+				FUY = numeric.diag(FUY);
+				
+				Z = numeric.t(numeric.add(FUX, responce.targetMatrix), numeric.add(FUY, minusR));
+				
+				Y = Z.inv();
+				
+				S11_fromM.push([freqMHz[i] / 1000 + 0.001, numeric.t(Y.x[0][0], Y.y[0][0]).mul(numeric.t(0, 2)).add(1)]);
+				S21_fromM.push([freqMHz[i] / 1000 + 0.001, numeric.t(Y.x[N+1][0], Y.y[N+1][0]).mul(numeric.t(0, -2))]);
+			});
+			var S11dB_fromM = S11_fromM.map(function(s){return [s[0], 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10]}),
+				S21dB_fromM = S21_fromM.map(function(s){return [s[0], 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10]}),
+				data = [{label: "S11(dB)", data: S11dB}, {label: "S21(dB)", data: S21dB}, {label: "S11fromM(dB)", data: S11dB_fromM}, {label: "S21fromM(dB)", data: S21dB_fromM}];
+
+			linearChart.update(data, true);			
+
 			$scope.$digest();
 		} catch(e){
 			console.log(e.message);

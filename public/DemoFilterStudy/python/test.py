@@ -11,7 +11,7 @@ from numpy.polynomial import Polynomial
 from scipy import optimize, interpolate, signal, sparse
 import matplotlib.pyplot as plt
 
-rootP = np.array([-1.5j, 1.5j]) #np.array([-2j, 2j])
+rootP = np.array([1.5j]) #np.array([-2j, 2j])
 N = 6
 returnLoss= 20.0
 epsilon, coefP, coefF, coefE = CP.ChebyshevP2EF(rootP, N, returnLoss)
@@ -44,7 +44,7 @@ if len(rootP) > 0:
     coefP = Polynomial.fromroots(rootP).coef
 else:
     coefP = np.array([1.])
-y21n = -1j *  coefP / np.abs(epsilonE)
+y21n = -1j *  coefP / epsilonE
 
 y21n /= yd[-1]
 y22n /= yd[-1]
@@ -67,10 +67,13 @@ M[-1, 0] = -k21[0]
 
 Mlk = np.sqrt(r22k)
 Msk = r21k / Mlk
+
 M[0, 1:-1] = Msk
 M[1:-1, 0] = Msk
 M[-1, 1:-1] = Mlk
 M[1:-1, -1] = Mlk
+
+print(np.round(M, 2))
 
 #plt.clf()
 #plt.subplot(1, 2, 1)

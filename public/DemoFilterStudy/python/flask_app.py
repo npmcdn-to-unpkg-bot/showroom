@@ -1,5 +1,6 @@
 import flask, urllib.request, tempfile, json
 import numpy as np
+from numpy.polynomial import Polynomial
 import CP
 # import skrf as rf
 
@@ -58,7 +59,13 @@ def get_task(method):
         returnLoss= reqJson['returnLoss']
         rootP = np.array([x[0] + 1j * x[1] for x in reqJson['rootP']])
         epsilon, coefP, coefF, coefE = CP.ChebyshevP2EF(rootP, N, returnLoss)
-        resJson = {'epsilon': [epsilon.real, epsilon.imag], 'coefP': [[x.real, x.imag] for x in coefP], 'coefF': [[x.real, x.imag] for x in coefF], 'coefE': [[x.real, x.imag] for x in coefE]}
+        epsilonE = epsilon
+        polyF = Polynomial(coefF)
+        polyE = Polynomial(coefE)
+        rootF = polyF.roots()
+        rootE = polyE.roots()
+        targetMatrix = CP.FPE2M(epsilon, epsilonE, rootF, rootP, rootE, method=1)
+        resJson = {'epsilon': [epsilon.real, epsilon.imag], 'coefP': [[x.real, x.imag] for x in coefP], 'coefF': [[x.real, x.imag] for x in coefF], 'coefE': [[x.real, x.imag] for x in coefE], 'targetMatrix': targetMatrix.tolist()}
         return json.dumps(resJson, separators = (',', ':'))
     else:
         flask.abort(404)

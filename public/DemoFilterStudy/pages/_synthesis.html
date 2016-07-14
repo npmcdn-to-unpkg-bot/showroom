@@ -211,7 +211,7 @@
 							</div>
 							<div class="col-sm-5">
 								<div class="panel panel-primary">
-									<div class="panel-body" style="height: 300px;">
+									<div class="panel-body" style="height: 300px; overflow: auto;">
 										<div class="row">
 											<div class="col-sm-2">
 												<div class="radio">
@@ -239,22 +239,22 @@
 											</div>
 										</div>
 
-										
-										<table class="table table-bordered" style="text-align: center; height: 100%;">
-											<thead>
-												<tr>
-													<th class="label-sm" style="text-align: center;"></th>
-													<th class="label-sm" style="text-align: center;" ng-repeat="r in data.targetMatrix track by $index">{{($first || $last)? (($first)? 'S' : 'L') : $index}}</th>
-												</tr>
-											</thead>
-											<tbody>
-												<tr ng-repeat="r in data.targetMatrix track by $index">
-													<td>{{($first || $last)? (($first)? 'S' : 'L') : $index}}</td>
-													<td ng-repeat="d in r track by $index">{{d}}</td>
-												</tr>
-											</tbody>
-										</table>
-										
+										<div class="row">
+											<table class="table table-bordered" style="text-align: center; width: 100%;">
+												<thead>
+													<tr>
+														<th class="label-sm" style="text-align: center;"></th>
+														<th class="label-sm" style="text-align: center;" ng-repeat="r in data.targetMatrix track by $index">{{($first || $last)? (($first)? 'S' : 'L') : $index}}</th>
+													</tr>
+												</thead>
+												<tbody>
+													<tr ng-repeat="r in data.targetMatrix track by $index">
+														<td>{{($first || $last)? (($first)? 'S' : 'L') : $index}}</td>
+														<td ng-repeat="d in r track by $index">{{d}}</td>
+													</tr>
+												</tbody>
+											</table>
+										</div>										
 										
 									</div>
 								</div>
