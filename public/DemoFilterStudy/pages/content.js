@@ -178,6 +178,7 @@ angular
 
 	function M2Nodeslinks(M, unitStep){
 		var N = M.length - 2, nodes = [], links = [], i, j, k, edgeIndex = 0;
+		console.log("N: ", N);
 		for (i = 0; i < N + 2; i++){
 			var label;
 			switch (i) {
@@ -282,8 +283,15 @@ function handleChangeM(){
 			
 			eachNode
 			.append("text")
+      .attr("class", "node-text")
 			.attr("dy", "5px")
 			.attr("text-anchor", "middle")
+			.text(function(d) {
+				return d.label;
+			});
+			
+			selectNodes
+			.select(".node-text")
 			.text(function(d) {
 				return d.label;
 			});
@@ -308,7 +316,6 @@ function handleChangeM(){
 		d3.select("#matrix-topology-container").select("svg")
 			.attr("width", document.getElementById("matrix-topology-container").offsetWidth)
 			.attr("height", document.getElementById("matrix-topology-container").offsetHeight);
-		//store.dispatch({type: 'createTopoM', M: M});
 	});
 	var unsubscribe = store.subscribe(handleChangeM);
 	
