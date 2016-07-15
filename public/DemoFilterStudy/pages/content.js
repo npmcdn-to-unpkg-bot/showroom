@@ -71,7 +71,7 @@ angular
 		stopFreq: 1040,
 		numberOfPoints: 1000,
 		filterType: "BPF",
-		tranZeros: [['', 1.5], ['', -1.5], ['', '']],
+		tranZeros: [['', 1.5], ['', '']],
 		matrixDisplay: "M"
 	}
 	$scope.calculate = async function(){
@@ -118,11 +118,7 @@ angular
 				S11dB = S11.map(function(s){return [s[0], 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10]}),
 				S21dB = S21.map(function(s){return [s[0], 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10]});
 
-			$scope.data.targetMatrix = responce.targetMatrix.map(function(r){
-				return r.map(function(d){
-					return Math.round(d * 1000) / 1000;
-				})
-			})
+			$scope.data.targetMatrix = responce.targetMatrix;
 			var S11_fromM = [],
 				S21_fromM = [],			
 				minusR = numeric.rep([N + 2], 0);
@@ -150,7 +146,8 @@ angular
 			});
 			var S11dB_fromM = S11_fromM.map(function(s){return [s[0], 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10]}),
 				S21dB_fromM = S21_fromM.map(function(s){return [s[0], 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10]}),
-				data = [{label: "S11(dB)", data: S11dB}, {label: "S21(dB)", data: S21dB}, {label: "S11fromM(dB)", data: S11dB_fromM}, {label: "S21fromM(dB)", data: S21dB_fromM}];
+/* 				data = [{label: "S11(dB)", data: S11dB}, {label: "S21(dB)", data: S21dB}, {label: "S11fromM(dB)", data: S11dB_fromM}, {label: "S21fromM(dB)", data: S21dB_fromM}]; */
+				data = [{label: "S11(dB)", data: S11dB_fromM}, {label: "S21(dB)", data: S21dB_fromM}];
 
 			linearChart.update(data, true);			
 
@@ -178,19 +175,7 @@ angular
 	
 	linearChart.update(data, false);
 	
-	
-	$scope.filterOrderChange = function(N){
-		var M = numeric.identity(N + 2);
-		M[0][0] = 0;
-		M[N + 1][N + 1] = 0;
-		for (i = 0; i < N + 1; i++){
-			M[i][i + 1] = 1;		
-			M[i + 1][i] = 1;
-		}
-		store.dispatch({type: 'createTopoM', M: M})
-	}
-	$scope.filterOrderChange($scope.data.filterOrder);
-	
+
 	function M2Nodeslinks(M, unitStep){
 		var N = M.length - 2, nodes = [], links = [], i, j, k, edgeIndex = 0;
 		for (i = 0; i < N + 2; i++){
@@ -326,7 +311,19 @@ function handleChangeM(){
 		//store.dispatch({type: 'createTopoM', M: M});
 	});
 	var unsubscribe = store.subscribe(handleChangeM);
-	//store.dispatch({type: 'createTopoM', M: M})
+	
+	$scope.filterOrderChange = function(N){
+		var M = numeric.identity(N + 2);
+		M[0][0] = 0;
+		M[N + 1][N + 1] = 0;
+		for (i = 0; i < N + 1; i++){
+			M[i][i + 1] = 1;		
+			M[i + 1][i] = 1;
+		}
+		store.dispatch({type: 'createTopoM', M: M})
+	}
+	$scope.filterOrderChange($scope.data.filterOrder);
+
 	ReactDOM.render(
 		<ReactRedux.Provider store={store}>
 			<MatrixTopologyContainer />
