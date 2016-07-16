@@ -13,7 +13,7 @@ from scipy import optimize, interpolate, signal, sparse
 import matplotlib.pyplot as plt
 
 rootP = np.array([1.5j]) #np.array([-2j, 2j])
-N = 14
+N = 12
 returnLoss= 20.0
 epsilon, coefP, coefF, coefE = CP.ChebyshevP2EF(rootP, N, returnLoss)
 
@@ -96,37 +96,6 @@ def SerializeM(M):
             index += 1
     return result
 
-def RotateM(M, i, j, cr, sr):
-    R = np.eye(M.shape[0])
-    R[i, i] = cr
-    R[j, j] = cr
-    R[i, j] = -sr
-    R[j, i] = sr
-    return R.dot(M).dot(R.T)
-#    temp1 = M.copy()
-#    temp1[i, :] = cr * M[i, :] - sr * M[j, :]
-#    temp1[j, :] = sr * M[i, :] + cr * M[j, :]
-#    temp2 = temp1.copy()
-#    temp2[:, i] = cr * temp1[:, i] - sr * temp1[:, i]
-#    temp2[:, j] = sr * temp1[:, j] + cr * temp1[:, j]
-#    return temp2
-    
-
-def RotateMDeriv(M, i, j, cr, sr, sideDeriv = 0):
-    R = np.eye(M.shape[0])
-    R[i, i] = cr
-    R[j, j] = cr
-    R[i, j] = -sr
-    R[j, i] = sr
-    RD = np.zeros(M.shape)
-    RD[i, i] = -sr
-    RD[j, j] = -sr
-    RD[i, j] = -cr
-    RD[j, i] = cr
-    if sideDeriv == 0:
-        return RD.dot(M).dot(R.T)
-    elif sideDeriv == 1:
-        return R.dot(M).dot(RD.T)
     
 topology = np.eye(N + 2)
 topology[0, 0] = 0
@@ -141,15 +110,62 @@ pr = cProfile.Profile()
 pr.enable()
 
 
+#def EvaluateR(M, serializedT, cr, sr):
+#    N = M.shape[0] - 2
+#    numTheta = int(N * (N - 1) / 2)
+#    MRotated = M
+#    indexTheta = numTheta - 1
+#    for i in np.arange(N, 1, -1):
+#        for j in np.arange(i - 1, 0, -1):
+#            MRotated = RotateM(MRotated, j, i, cr[indexTheta], sr[indexTheta])
+#            indexTheta -= 1
+#    r = SerializeM(MRotated)[serializedT == 0]
+#    return r, MRotated
+
+#def EvaluateJ(M, serializedT, cr, sr):
+#    N = M.shape[0] - 2
+#    numR = np.count_nonzero(1 - serializedT)
+#    numTheta = int(N * (N - 1) / 2)
+#    MDeriv1 = np.zeros((numTheta, N + 2, N + 2))
+#    MDeriv2 = np.zeros((numTheta, N + 2, N + 2))
+#    MRotated = M
+#    indexTheta = numTheta - 1
+#    for i in np.arange(N, 1, -1):
+#        for j in np.arange(i - 1, 0, -1):
+#            MDeriv1[indexTheta, :, :] = RotateMDeriv(MRotated, j, i, cr[indexTheta], sr[indexTheta], sideDeriv = 0)
+#            MDeriv2[indexTheta, :, :] = RotateMDeriv(MRotated, j, i, cr[indexTheta], sr[indexTheta], sideDeriv = 1)
+#            MRotated = RotateM(MRotated, j, i, cr[indexTheta], sr[indexTheta])
+#            for k in np.arange(indexTheta + 1, numTheta):
+#                MDeriv1[k, :, :] = RotateM(MDeriv1[k, :, :], j, i, cr[indexTheta], sr[indexTheta])
+#                MDeriv2[k, :, :] = RotateM(MDeriv2[k, :, :], j, i, cr[indexTheta], sr[indexTheta])
+#            indexTheta -= 1
+#    MDeriv = MDeriv1 + MDeriv2    
+#    J = np.zeros((numR, numTheta))
+#    for i in np.arange(numTheta):
+#        J[:, i] = SerializeM(MDeriv[i, :, :])[serializedT == 0]
+#    r = SerializeM(MRotated)[serializedT == 0]
+#    return J, r, MRotated
+
 def EvaluateR(M, serializedT, cr, sr):
     N = M.shape[0] - 2
-    numTheta = int(N * (N - 1) / 2)
-    MRotated = M
-    indexTheta = numTheta - 1
-    for i in np.arange(N, 1, -1):
-        for j in np.arange(i - 1, 0, -1):
-            MRotated = RotateM(MRotated, j, i, cr[indexTheta], sr[indexTheta])
-            indexTheta -= 1
+    tempEye = np.eye(N + 2)
+    tempM = np.eye(N + 2)
+    indexTheta = 0
+    for j in np.arange(2, N + 1):
+        for i in np.arange(1, j):
+            tempEye[i, i] = cr[indexTheta]
+            tempEye[j, j] = cr[indexTheta]
+            tempEye[i, j] = -sr[indexTheta]
+            tempEye[j, i] = sr[indexTheta]
+            tempM = tempM.dot(tempEye)
+            tempEye[i, i] = 1
+            tempEye[j, j] = 1
+            tempEye[i, j] = 0
+            tempEye[j, i] = 0
+            indexTheta += 1
+    R = tempM
+    RT = tempM.T
+    MRotated = R.dot(M).dot(RT)
     r = SerializeM(MRotated)[serializedT == 0]
     return r, MRotated
 
@@ -157,43 +173,95 @@ def EvaluateJ(M, serializedT, cr, sr):
     N = M.shape[0] - 2
     numR = np.count_nonzero(1 - serializedT)
     numTheta = int(N * (N - 1) / 2)
-    MDeriv1 = np.zeros((numTheta, N + 2, N + 2))
-    MDeriv2 = np.zeros((numTheta, N + 2, N + 2))
-    MRotated = M
+    MDeriv = np.zeros((numTheta, N + 2, N + 2))
+
+    tempEye = np.eye(N + 2)
+
+    R1 = np.zeros((numTheta, N + 2, N + 2))
+    R1T = np.zeros((numTheta, N + 2, N + 2))
+    tempM = np.eye(N + 2)
+    indexTheta = 0
+    for j in np.arange(2, N + 1):
+        for i in np.arange(1, j):
+            R1[indexTheta, :, :] = tempM
+            R1T[indexTheta, :, :] = tempM.T
+            tempEye[i, i] = cr[indexTheta]
+            tempEye[j, j] = cr[indexTheta]
+            tempEye[i, j] = -sr[indexTheta]
+            tempEye[j, i] = sr[indexTheta]
+            tempM = tempM.dot(tempEye)
+            tempEye[i, i] = 1
+            tempEye[j, j] = 1
+            tempEye[i, j] = 0
+            tempEye[j, i] = 0
+            indexTheta += 1
+    R = tempM
+    RT = tempM.T
+
+    R2 = np.zeros((numTheta, N + 2, N + 2))
+    R2T = np.zeros((numTheta, N + 2, N + 2))
+    tempM = np.eye(N + 2)
     indexTheta = numTheta - 1
-    for i in np.arange(N, 1, -1):
-        for j in np.arange(i - 1, 0, -1):
-            MDeriv1[indexTheta, :, :] = RotateMDeriv(MRotated, j, i, cr[indexTheta], sr[indexTheta], sideDeriv = 0)
-            MDeriv2[indexTheta, :, :] = RotateMDeriv(MRotated, j, i, cr[indexTheta], sr[indexTheta], sideDeriv = 1)
-            MRotated = RotateM(MRotated, j, i, cr[indexTheta], sr[indexTheta])
-            for k in np.arange(indexTheta + 1, numTheta):
-                MDeriv1[k, :, :] = RotateM(MDeriv1[k, :, :], j, i, cr[indexTheta], sr[indexTheta])
-                MDeriv2[k, :, :] = RotateM(MDeriv2[k, :, :], j, i, cr[indexTheta], sr[indexTheta])
+    for j in np.arange(N, 1, -1):
+        for i in np.arange(j - 1, 0, -1):
+            R2[indexTheta, :, :] = tempM
+            R2T[indexTheta, :, :] = tempM.T
+            tempEye[i, i] = cr[indexTheta]
+            tempEye[j, j] = cr[indexTheta]
+            tempEye[i, j] = -sr[indexTheta]
+            tempEye[j, i] = sr[indexTheta]
+            tempM = tempEye.dot(tempM)
+            tempEye[i, i] = 1
+            tempEye[j, j] = 1
+            tempEye[i, j] = 0
+            tempEye[j, i] = 0
             indexTheta -= 1
-    MDeriv = MDeriv1 + MDeriv2    
+    
+    tempZero = np.zeros((N + 2, N + 2))
+    indexTheta = 0
+    for j in np.arange(2, N + 1):
+        for i in np.arange(1, j):
+            tempZero[i, i] = -sr[indexTheta]
+            tempZero[j, j] = -sr[indexTheta]
+            tempZero[i, j] = -cr[indexTheta]
+            tempZero[j, i] = cr[indexTheta]
+            MDeriv[indexTheta, :, :] = R1[indexTheta, :, :].dot(tempZero).dot(R2[indexTheta, :, :]).dot(M).dot(RT) + R.dot(M).dot(R2T[indexTheta, :, :]).dot(tempZero.T).dot(R1T[indexTheta, :, :])
+            tempZero[i, i] = 0
+            tempZero[j, j] = 0
+            tempZero[i, j] = 0
+            tempZero[j, i] = 0
+            indexTheta += 1
     J = np.zeros((numR, numTheta))
-    for i in np.arange(numTheta):
-        J[:, i] = SerializeM(MDeriv[i, :, :])[serializedT == 0]
-    return J
+    indexT = 0
+    indexR = 0
+    for i in np.arange(N + 2):
+        for j in np.arange(N + 2 - i):
+            if serializedT[indexT] == 0:
+                J[indexR, :] = MDeriv[:, j, i + j]
+                indexR += 1
+            indexT += 1
+
+    MRotated = R.dot(M).dot(RT)
+    r = SerializeM(MRotated)[serializedT == 0]
+    return J, r, MRotated
 
 M = np.real(M)
 serializedT = SerializeM(topology)
 numTheta = int(N * (N - 1) / 2)
 theta = np.random.rand(numTheta) * np.pi
-numIter = 50
+numIter = 150
 cost = np.zeros((numIter, ))
 dumpFactor = 0.1
-v = 2.0
+v = 1.5
 
 for i in np.arange(numIter):
     cr = np.cos(theta)
     sr = np.sin(theta)
-    r, MRotated = EvaluateR(M, serializedT, cr, sr)
+    J, r, MRotated = EvaluateJ(M, serializedT, cr, sr)
     costCurr = r.T.dot(r)
     cost[i] = costCurr
     if costCurr < 1e-8:
         break
-    J = EvaluateJ(M, serializedT, cr, sr)
     
     b = -J.T.dot(r)
     a1 = J.T.dot(J)
@@ -204,7 +272,8 @@ for i in np.arange(numIter):
         r1 = EvaluateR(M, serializedT, np.cos(theta + delta1), np.sin(theta + delta1))[0]
         costCurr1 = r1.T.dot(r1)
         if costCurr1 < costCurr:
-            dumpFactor /= v
+            if dumpFactor > 1e-9:
+                dumpFactor /= v
             theta += delta1
             break
         else:

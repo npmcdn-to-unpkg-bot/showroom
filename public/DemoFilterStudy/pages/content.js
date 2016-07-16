@@ -317,8 +317,8 @@ function handleChangeM(){
 	var unsubscribe = store.subscribe(handleChangeM);
 	
 	$scope.filterOrderChange = function(){
-		if ($scope.data.filterOrder > 8){
-			$scope.data.filterOrder = 8;
+		if ($scope.data.filterOrder > 12){
+			$scope.data.filterOrder = 12;
 		}
 		var N = $scope.data.filterOrder,
 			M = numeric.identity(N + 2);
