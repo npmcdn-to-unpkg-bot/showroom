@@ -71,7 +71,7 @@ angular
 		stopFreq: 1040,
 		numberOfPoints: 1000,
 		filterType: "BPF",
-		tranZeros: [['', 1.5], ['', '']],
+		tranZeros: [['', '']],
 		matrixDisplay: "M"
 	}
 	$scope.calculate = async function(){
@@ -87,7 +87,7 @@ angular
 				.map(function(d){return [Number(d[0]), Number(d[1])]})
 				.filter(function(d){return (d[0] !== 0) || (d[1] !== 0)}),
 			
-				responce = await common.xhr2('SynthesizeFromTranZeros', {rootP: tranZeros, N: $scope.data.filterOrder, returnLoss: $scope.data.returnLoss}),
+				responce = await common.xhr2('SynthesizeFromTranZeros', {rootP: tranZeros, N: $scope.data.filterOrder, returnLoss: $scope.data.returnLoss, topology: store.getState().topoM}),
 
 				epsilon = numeric.t(responce.epsilon[0], responce.epsilon[1]),
 				coefP = responce.coefP.map(function(d){return numeric.t(d[0], d[1])}),
@@ -178,7 +178,6 @@ angular
 
 	function M2Nodeslinks(M, unitStep){
 		var N = M.length - 2, nodes = [], links = [], i, j, k, edgeIndex = 0;
-		console.log("N: ", N);
 		for (i = 0; i < N + 2; i++){
 			var label;
 			switch (i) {
@@ -248,8 +247,7 @@ function handleChangeM(){
 				.attr("y2", function(d) { return d.target.y })
 				.style("stroke", "#666666")
 				.style("stroke-width", "10px")
-				.filter(function(d){return !d.primary})
-				.style("stroke-dasharray", "10, 4");
+				.style("stroke-dasharray", function(d){return (d.primary)? "" : "10, 4"});
 
 			selectLinks
 				.enter()
@@ -260,8 +258,7 @@ function handleChangeM(){
 				.attr("y2", function(d) { return d.target.y })
 				.style("stroke", "#666666")
 				.style("stroke-width", "10px")
-				.filter(function(d){return !d.primary})
-				.style("stroke-dasharray", "10, 4");
+				.style("stroke-dasharray", function(d){return (d.primary)? "" : "10, 4"});
 				
 			selectLinks.exit().remove();
 			
@@ -319,8 +316,12 @@ function handleChangeM(){
 	});
 	var unsubscribe = store.subscribe(handleChangeM);
 	
-	$scope.filterOrderChange = function(N){
-		var M = numeric.identity(N + 2);
+	$scope.filterOrderChange = function(){
+		if ($scope.data.filterOrder > 8){
+			$scope.data.filterOrder = 8;
+		}
+		var N = $scope.data.filterOrder,
+			M = numeric.identity(N + 2);
 		M[0][0] = 0;
 		M[N + 1][N + 1] = 0;
 		for (i = 0; i < N + 1; i++){

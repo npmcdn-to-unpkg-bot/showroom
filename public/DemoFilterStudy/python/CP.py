@@ -769,3 +769,119 @@ def ExhaustiveCouplingMatrix(targetM, topology):
             indexRealM += 1
     
     return resultRealM[:indexRealM, :, :]
+
+def SerializeM(M):
+    N = M.shape[0] - 2
+    result = np.zeros((int((N + 3) * (N + 2) / 2), ))
+    index = 0
+    for i in np.arange(N + 2):
+        for j in np.arange(N + 2 - i):
+            result[index] = M[j, i + j]
+            index += 1
+    return result
+
+def RotateM(M, i, j, cr, sr):
+    R = np.eye(M.shape[0])
+    R[i, i] = cr
+    R[j, j] = cr
+    R[i, j] = -sr
+    R[j, i] = sr
+    return R.dot(M).dot(R.T)
+
+def RotateMDeriv(M, i, j, cr, sr, sideDeriv = 0):
+    R = np.eye(M.shape[0])
+    R[i, i] = cr
+    R[j, j] = cr
+    R[i, j] = -sr
+    R[j, i] = sr
+    RD = np.zeros(M.shape)
+    RD[i, i] = -sr
+    RD[j, j] = -sr
+    RD[i, j] = -cr
+    RD[j, i] = cr
+    if sideDeriv == 0:
+        return RD.dot(M).dot(R.T)
+    elif sideDeriv == 1:
+        return R.dot(M).dot(RD.T)
+
+def EvaluateR(M, serializedT, cr, sr):
+    N = M.shape[0] - 2
+    numTheta = int(N * (N - 1) / 2)
+    MRotated = M
+    indexTheta = numTheta - 1
+    for i in np.arange(N, 1, -1):
+        for j in np.arange(i - 1, 0, -1):
+            MRotated = RotateM(MRotated, j, i, cr[indexTheta], sr[indexTheta])
+            indexTheta -= 1
+    r = SerializeM(MRotated)[serializedT == 0]
+    return r, MRotated
+
+def EvaluateJ(M, serializedT, cr, sr):
+    N = M.shape[0] - 2
+    numR = np.count_nonzero(1 - serializedT)
+    numTheta = int(N * (N - 1) / 2)
+    MDeriv1 = np.zeros((numTheta, N + 2, N + 2))
+    MDeriv2 = np.zeros((numTheta, N + 2, N + 2))
+    MRotated = M
+    indexTheta = numTheta - 1
+    for i in np.arange(N, 1, -1):
+        for j in np.arange(i - 1, 0, -1):
+            MDeriv1[indexTheta, :, :] = RotateMDeriv(MRotated, j, i, cr[indexTheta], sr[indexTheta], sideDeriv = 0)
+            MDeriv2[indexTheta, :, :] = RotateMDeriv(MRotated, j, i, cr[indexTheta], sr[indexTheta], sideDeriv = 1)
+            MRotated = RotateM(MRotated, j, i, cr[indexTheta], sr[indexTheta])
+            for k in np.arange(indexTheta + 1, numTheta):
+                MDeriv1[k, :, :] = RotateM(MDeriv1[k, :, :], j, i, cr[indexTheta], sr[indexTheta])
+                MDeriv2[k, :, :] = RotateM(MDeriv2[k, :, :], j, i, cr[indexTheta], sr[indexTheta])
+            indexTheta -= 1
+    MDeriv = MDeriv1 + MDeriv2    
+    J = np.zeros((numR, numTheta))
+    for i in np.arange(numTheta):
+        J[:, i] = SerializeM(MDeriv[i, :, :])[serializedT == 0]
+    return J
+
+def ReduceMAngleMethod(M, topology):
+    N = M.shape[0] - 2
+    serializedT = SerializeM(topology)
+    numTheta = int(N * (N - 1) / 2)
+    theta = np.random.rand(numTheta) * np.pi
+    numIter = 50
+    cost = np.zeros((numIter, ))
+    dumpFactor = 0.1
+    v = 2.0
+    
+    for i in np.arange(numIter):
+        cr = np.cos(theta)
+        sr = np.sin(theta)
+        r, MRotated = EvaluateR(M, serializedT, cr, sr)
+        costCurr = r.T.dot(r)
+        cost[i] = costCurr
+        if costCurr < 1e-8:
+            break
+        J = EvaluateJ(M, serializedT, cr, sr)
+        
+        b = -J.T.dot(r)
+        a1 = J.T.dot(J)
+        a2 = np.diag(np.diag(a1))
+        
+        for j in np.arange(30):
+            delta1 = np.linalg.solve(a1 + a2 * dumpFactor / v, b)
+            r1 = EvaluateR(M, serializedT, np.cos(theta + delta1), np.sin(theta + delta1))[0]
+            costCurr1 = r1.T.dot(r1)
+            if costCurr1 < costCurr:
+                dumpFactor /= v
+                theta += delta1
+                break
+            else:
+                delta2 = np.linalg.solve(a1 + a2 * dumpFactor, b)
+                r2 = EvaluateR(M, serializedT, np.cos(theta + delta2), np.sin(theta + delta2))[0]
+                costCurr2 = r2.T.dot(r2)
+                if costCurr2 < costCurr:
+                    theta += delta2
+                    break
+            dumpFactor *= v
+    
+    for i in np.arange(N + 1):
+        if MRotated[i, i + 1] < 0:
+            MRotated[i + 1, :] *= -1
+            MRotated[:, i + 1] *= -1
+    return MRotated

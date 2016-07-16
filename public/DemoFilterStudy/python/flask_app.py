@@ -64,7 +64,9 @@ def get_task(method):
         polyE = Polynomial(coefE)
         rootF = polyF.roots()
         rootE = polyE.roots()
-        targetMatrix = CP.FPE2M(epsilon, epsilonE, rootF, rootP, rootE, method=1)
+        fullMatrix = CP.FPE2M(epsilon, epsilonE, rootF, rootP, rootE, method=1)
+        topology = np.array(reqJson['topology'])
+        targetMatrix = CP.ReduceMAngleMethod(fullMatrix, topology)
         resJson = {'epsilon': [epsilon.real, epsilon.imag], 'coefP': [[x.real, x.imag] for x in coefP], 'coefF': [[x.real, x.imag] for x in coefF], 'coefE': [[x.real, x.imag] for x in coefE], 'targetMatrix': targetMatrix.tolist()}
         return json.dumps(resJson, separators = (',', ':'))
     else:

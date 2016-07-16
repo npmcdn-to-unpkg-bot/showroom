@@ -250,7 +250,7 @@
 												<tbody>
 													<tr ng-repeat="r in data.targetMatrix track by $index">
 														<td>{{($first || $last)? (($first)? 'S' : 'L') : $index}}</td>
-														<td ng-repeat="d in r track by $index">{{(d < 1e-6 && d > -1e-6)? '0' : d.toFixed(3)}}</td>
+														<td ng-repeat="d in r track by $index">{{(d < 1e-4 && d > -1e-4)? '0' : d.toFixed(3)}}</td>
 													</tr>
 												</tbody>
 											</table>
