@@ -899,8 +899,9 @@ def ReduceMAngleMethod(M, topology):
     serializedT[-1] = 1
     numTheta = int(N * (N - 1) / 2)
 #    theta = np.random.rand(numTheta) * np.pi
-    theta = np.ones((numTheta, )) * np.pi / 2
-    numIter = 120
+#    theta = np.ones((numTheta, )) * np.pi / 2
+    theta = np.zeros((numTheta, ))
+    numIter = 10 + int(10000 / (N * N))
     cost = np.zeros((numIter, ))
     dumpFactor = 0.1
     v = 1.5
@@ -909,7 +910,7 @@ def ReduceMAngleMethod(M, topology):
         cr = np.cos(theta)
         sr = np.sin(theta)
         J, r, MRotated = EvaluateJ(M, serializedT, cr, sr)
-        costCurr = r.T.dot(r)
+        costCurr = r.dot(r)
         cost[i] = costCurr
         if costCurr < 1e-8:
             break
@@ -921,7 +922,7 @@ def ReduceMAngleMethod(M, topology):
         for j in np.arange(30):
             delta1 = np.linalg.solve(a1 + a2 * dumpFactor / v, b)
             r1 = EvaluateR(M, serializedT, np.cos(theta + delta1), np.sin(theta + delta1))[0]
-            costCurr1 = r1.T.dot(r1)
+            costCurr1 = r1.dot(r1)
             if costCurr1 < costCurr:
                 if dumpFactor > 1e-9:
                     dumpFactor /= v
@@ -930,7 +931,7 @@ def ReduceMAngleMethod(M, topology):
             else:
                 delta2 = np.linalg.solve(a1 + a2 * dumpFactor, b)
                 r2 = EvaluateR(M, serializedT, np.cos(theta + delta2), np.sin(theta + delta2))[0]
-                costCurr2 = r2.T.dot(r2)
+                costCurr2 = r2.dot(r2)
                 if costCurr2 < costCurr:
                     theta += delta2
                     break
@@ -941,4 +942,48 @@ def ReduceMAngleMethod(M, topology):
             MRotated[i + 1, :] *= -1
             MRotated[:, i + 1] *= -1
 
+    return MRotated
+    
+def RotateMReduce(M, pivotI, pivotJ, removeRow, removeCol):
+    if pivotI == removeRow:
+        otherRow = pivotJ
+        otherCol = removeCol
+    elif pivotJ == removeRow:
+        otherRow = pivotI
+        otherCol = removeCol
+    elif pivotI == removeCol:
+        otherRow = removeRow
+        otherCol = pivotJ
+    elif pivotJ == removeCol:
+        otherRow = removeRow
+        otherCol = pivotI
+    if (otherRow < removeRow) or (otherCol < removeCol):
+        tr = -M[removeRow, removeCol] / M[otherRow, otherCol]
+    else:
+        tr = M[removeRow, removeCol] / M[otherRow, otherCol]
+    tr2 = tr * tr
+    sr = np.sqrt(tr2 / (1 + tr2))
+    cr = np.sqrt(1 / (1 + tr2))
+    if tr < 0:
+        cr = -cr
+    
+    N = M.shape[0] - 2
+    tempEye = np.eye(N + 2)
+    tempEye[pivotI, pivotI] = cr
+    tempEye[pivotJ, pivotJ] = cr
+    tempEye[pivotI, pivotJ] = -sr
+    tempEye[pivotJ, pivotI] = sr
+    tempM = tempEye.dot(M).dot(tempEye.T)
+    return tempM
+
+def RotateM2Arrow(M):
+    N = M.shape[0] - 2
+    MRotated = M.copy()
+    for i in np.arange(N):
+        for j in np.arange(N, i + 1, -1):
+            MRotated = RotateMReduce(MRotated, i + 1, j, i, j)
+    for i in np.arange(N + 1):
+        if MRotated[i, i + 1] < 0:
+            MRotated[i + 1, :] *= -1
+            MRotated[:, i + 1] *= -1
     return MRotated

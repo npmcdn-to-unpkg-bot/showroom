@@ -87,7 +87,8 @@ def get_task(method):
         epsilon, epsilonE, Qu, rootF, rootP, rootE = CP.S2FP(freq, S21, S11, filterOrder, w1, w2, wga=1.122*0.0254, method=3)
         fullMatrix = CP.FPE2M(epsilon, epsilonE, rootF, rootP, rootE, method=1)
         topology = np.array(reqJson['topology'])
-        extractedMatrix = CP.ReduceMAngleMethod(fullMatrix, topology)
+        arrowMatrix = CP.RotateM2Arrow(fullMatrix)
+        extractedMatrix = CP.ReduceMAngleMethod(arrowMatrix, topology)
         targetMatrix = np.array(reqJson['targetMatrix'])
         temp1 = targetMatrix.copy()
         temp1[np.abs(targetMatrix) < 1e-4] = 1e9
