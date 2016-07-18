@@ -138,7 +138,7 @@ function simpleD3LinearChart(domElementId, margin, xDomainInit, yDomainInit){
 		.text("Frequency(GHz)");
 	
 	this.yLabel = svg.append("g")
-		.attr("transform", function(d){return "translate(0," + 0 + ")"});
+		.attr("transform", function(d){return "translate(0," + "-10" + ")"});
 	
 	this.zoomoutBox = zoomoutBox;
 	this.svg = svg;

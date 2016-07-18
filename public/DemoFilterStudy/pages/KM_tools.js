@@ -38,6 +38,125 @@
 						return $q.reject(new Error(response.data || "Request failed"));
 					});
 				};
+				this.ParseS2P = function(inputString){
+					var freqMulti, dataFormat, temp1, temp2, temp3, temp4, freq = [], S21_db = [], S21_ang = [], S11_db = [], S11_ang = [];
+					inputString.split("\n").forEach(function(thisLine){
+						thisLine = thisLine.trim();
+						if ((thisLine.length === 0) || (thisLine.charAt(0) === '!')) { return; }
+						temp1 = thisLine.split(/\s{1,}/i);
+						if (temp1[0] === '#') {
+							if (temp1.length < 4) { throw new Error('Syntax error: at least 4 elements required --- ' + thisLine)}
+							dataFormat = temp1[3].toLowerCase();
+							switch (temp1[1].toLowerCase()){
+								case 'thz':
+									freqMulti = 1e6;
+									break;
+								case 'ghz':
+									freqMulti = 1e3;
+									break;
+								case 'mhz':
+									freqMulti = 1;
+									break;
+								case 'khz':
+									freqMulti = 1e-3;
+									break;
+								case 'hz':
+									freqMulti = 1e-6;
+									break;
+								default:
+									freqMulti = 1;
+							}
+						} else {
+							temp2 = temp1.map(Number);
+							freq.push(temp2[0] * freqMulti);
+							switch (dataFormat){
+								case 'db':
+									S11_db.push(temp2[1]);
+									S11_ang.push(temp2[2] * Math.PI / 180);
+									S21_db.push(temp2[3]);
+									S21_ang.push(temp2[4] * Math.PI / 180);
+									break;
+								case 'ma':
+									S11_db.push(20 * Math.log(temp2[1]) / Math.LN10);
+									S11_ang.push(temp2[2] * Math.PI / 180);
+									S21_db.push(20 * Math.log(temp2[3]) / Math.LN10);
+									S21_ang.push(temp2[4] * Math.PI / 180);
+									break;
+								case 'ri':
+									S11_db.push(10 * Math.log(temp2[1] * temp2[1] + temp2[2] * temp2[2]) / Math.LN10);
+									S11_ang.push(Math.atan2(temp2[2], temp2[1]));
+									S21_db.push(10 * Math.log(temp2[3] * temp2[3] + temp2[4] * temp2[4]) / Math.LN10);
+									S21_ang.push(Math.atan2(temp2[4], temp2[3]));
+									break;
+								default:
+									throw new Error('Syntax error: need to be RI, MA or dB --- ' + thisLine);
+							}
+						}
+					})
+					function toFixed3(num){return Math.round(num * 1000) / 1000;}
+					return {freq: freq, S21_db: S21_db.map(toFixed3), S21_angRad: S21_ang.map(toFixed3), S11_db: S11_db.map(toFixed3), S11_angRad: S11_ang.map(toFixed3)}
+				};
+				this.FPE2S = function(epsilon, epsilonE, coefF, coefP, coefE, freqMHz, q, centerFreq, bandwidth){
+					var N = coefF.length,
+						bw = bandwidth,
+						w0 = Math.sqrt((centerFreq - bw / 2) * (centerFreq + bw / 2)),
+						normalizedS = freqMHz.map(function(d){return numeric.t(1 / q, (w0 / bw) * (d / w0 - w0 / d))}),
+						normalizedFreq = freqMHz.map(function(d){return numeric.t((w0 / bw) * (d / w0 - w0 / d), -1 / q)}),
+						vanderN = normalizedS.map(function(d){
+							var i, result = [], temp1 = numeric.t(1, 0);
+							for (i = 0; i < N + 1; i++){
+								result.push(temp1);
+								temp1 = temp1.mul(d);
+							}
+							return result;
+						}),
+						polyResult = function(coef){
+							return vanderN.map(function(v){
+								return coef.reduce(function(t, d, i){
+									return t.add(d.mul(v[i]));
+								}, numeric.t(0, 0))
+							});
+						},
+						polyResultP = polyResult(coefP),
+						polyResultF = polyResult(coefF),
+						polyResultE = polyResult(coefE),
+						S11 = freqMHz.map(function(f, i){return [f / 1000, polyResultF[i].div(polyResultE[i])]}),
+						S21 = freqMHz.map(function(f, i){return [f / 1000, polyResultP[i].div(polyResultE[i]).div(epsilon)]});
+					return {S11: S11, S21: S21}
+				};
+				this.CM2S = function(coupleMatrix, freqMHz, q, centerFreq, bandwidth){
+					var N = coupleMatrix.length - 2,
+						bw = bandwidth,
+						w0 = Math.sqrt((centerFreq - bw / 2) * (centerFreq + bw / 2)),
+						normalizedS = freqMHz.map(function(d){return numeric.t(1 / q, (w0 / bw) * (d / w0 - w0 / d))}),
+						normalizedFreq = freqMHz.map(function(d){return numeric.t((w0 / bw) * (d / w0 - w0 / d), -1 / q)}),
+						S11 = [],
+						S21 = [],			
+						minusR = numeric.rep([N + 2], 0);
+					minusR[0] = -1;
+					minusR[N+1] = -1;
+					minusR = numeric.diag(minusR);
+					
+					normalizedFreq.forEach(function(thisFreq, i){
+						var Y, Z,
+							FUX = numeric.rep([N + 2], thisFreq.x),
+							FUY = numeric.rep([N + 2], thisFreq.y);
+						FUX[0] = 0;
+						FUX[N + 1] = 0;
+						FUX = numeric.diag(FUX);
+						FUY[0] = 0;
+						FUY[N + 1] = 0;
+						FUY = numeric.diag(FUY);
+						
+						Z = numeric.t(numeric.add(FUX, coupleMatrix), numeric.add(FUY, minusR));
+						
+						Y = Z.inv();
+						
+						S11.push([freqMHz[i] / 1000, numeric.t(Y.x[0][0], Y.y[0][0]).mul(numeric.t(0, 2)).add(1)]);
+						S21.push([freqMHz[i] / 1000, numeric.t(Y.x[N+1][0], Y.y[N+1][0]).mul(numeric.t(0, -2))]);
+					});
+					return {S11: S11, S21: S21}
+				};
 				this.WebsiteAvailability = function(websiteUrls){
 					var promises = websiteUrls.map(function(websiteUrl){
 						return $http.head(websiteUrl, {withCredentials: false}).then(function(response){

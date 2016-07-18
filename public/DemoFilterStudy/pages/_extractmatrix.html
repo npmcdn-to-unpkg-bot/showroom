@@ -1,0 +1,60 @@
+<div id="page-wrapper-without-sidemenu" class="container-fluid">
+	<div class="row" style="padding-top: 10px;">
+		<div class="col-sm-2">
+			<input type="file" id="input-s2p-file" style="display: none;">
+			<button type="button" class="btn btn-primary" onclick="document.querySelector('#input-s2p-file').click()">
+				Choose s2p file
+			</button>
+		</div>
+		<div class="col-sm-6">
+			<p id="p1-file"></p>
+		</div>
+	</div>
+
+	<div class="row" style="padding-top: 10px;">
+		<div class="col-sm-6">
+			<div class="panel panel-primary">
+				<div class="panel-body" style="height: 500px; overflow: auto;">
+					<!-- Nav tabs -->
+					<ul class="nav nav-tabs" role="tablist">
+						<li role="presentation" class="active"><a id="s11dbChart" href="" ng-click="showChart('s11db')" aria-controls="home" role="tab" data-toggle="tab">S11(dB)</a></li>
+						<li role="presentation"><a href="" ng-click="showChart('s21db')" aria-controls="profile" role="tab" data-toggle="tab">S21(dB)</a></li>
+						<li role="presentation"><a href="" ng-click="showChart('s11ang')" aria-controls="profile" role="tab" data-toggle="tab">S11(deg)</a></li>
+						<li role="presentation"><a href="" ng-click="showChart('s21ang')" aria-controls="profile" role="tab" data-toggle="tab">S21(deg)</a></li>
+					</ul>
+					<div id="graph-linear-chart1" style="display: inline-block; width: 100%; height: 85%">
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="col-sm-6">
+			<div class="panel panel-primary">
+				<div class="panel-body" style="height: 500px; overflow: auto;">
+					<!-- Nav tabs -->
+					<ul class="nav nav-tabs" role="tablist">
+						<li role="presentation"><a href="" ng-click="showTable('TargetMatrix', 0)" aria-controls="home" role="tab" data-toggle="tab">TargetMatrix</a></li>
+						<li role="presentation"><a href="" ng-click="showTable('ExtractedMatrix', 0)" aria-controls="profile" role="tab" data-toggle="tab">ExtractedMatrix</a></li>
+						<li role="presentation" class="active"><a id="deviationTable" href="" ng-click="showTable('Deviation', 1)" aria-controls="profile" role="tab" data-toggle="tab">Deviation</a></li>
+					</ul>
+					<br>
+					<table class="table table-bordered" style="text-align: center; width: 100%;">
+						<thead>
+							<tr>
+								<th class="label-sm" style="text-align: center;"></th>
+								<th class="label-sm" style="text-align: center;" ng-repeat="r in data.matrixToShow track by $index">{{($first || $last)? (($first)? 'S' : 'L') : $index}}</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr ng-repeat="r in data.matrixToShow track by $index">
+								<td>{{($first || $last)? (($first)? 'S' : 'L') : $index}}</td>
+								<td ng-repeat="d in r track by $index">{{(data.tableDataFormat === 0)? ((d < 1e-4 && d > -1e-4)? '0' : d.toFixed(3)) : ((d < 1e-2 && d > -1e-2)? '0' : d.toFixed(1) + '%')}}</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+
+</div>
+<!-- /#page-wrapper -->

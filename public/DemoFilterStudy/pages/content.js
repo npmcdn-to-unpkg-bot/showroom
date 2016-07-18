@@ -17,6 +17,15 @@ angular
     },
 		onExit: function(){ ReactDOM.unmountComponentAtNode(document.getElementById('matrix-topology-table'));}
 	})
+	.state('extractmatrix', {
+		url: "/extractmatrix",
+    views: {
+      'mainpage': {
+				templateUrl: '_extractmatrix.html',
+				controller: '_extractmatrix'
+			}
+    }
+	})
 	.state('optimize', {
 		url: "/optimize",
     views: {
@@ -52,28 +61,91 @@ angular
 	};
 }])
 .controller("_synthesis", ['$scope', 'common', '$timeout', '$http', function ($scope, common, $timeout, $http) {
-/* 	(async function(){
-		try {
-			var temp1 = await common.xhr2('try', {myval: "hello from browser!", myval2: "hello from browser!"});
-			$scope.python = JSON.stringify(temp1);
-		} catch(e){
-			$scope.python = e.message;
+	var vis = d3.select("#matrix-topology-container")
+			.append("svg:svg")
+				.attr("class", "stage")
+				.attr("width", document.getElementById("matrix-topology-container").offsetWidth)
+				.attr("height", document.getElementById("matrix-topology-container").offsetHeight);
+
+	vis
+		.append("g")
+		.attr("id", "group-links");
+	vis
+		.append("g")
+		.attr("id", "group-nodes");
+
+	$('#matrix-topology-modal').on('shown.bs.modal', function (e) {
+		d3.select("#matrix-topology-container").select("svg")
+			.attr("width", document.getElementById("matrix-topology-container").offsetWidth)
+			.attr("height", document.getElementById("matrix-topology-container").offsetHeight);
+	});
+
+	var linearChart;
+	$timeout(function(){
+		var i,
+			margin = {
+				top: 40,
+				right: 40,
+				bottom: 50,
+				left: 60
+			},
+			data = [], data1 = [], data2 = [];
+		linearChart = new simpleD3LinearChart("graph-linear-chart", margin, [0, 5], [-10, 50]);
+
+		for (i = 0; i < 500; i++) {
+			data1.push([i/100, Math.sin(i/100) * 20 + 10]);
+			data2.push([i/120, Math.cos(i/120) * 10 + 10]);
 		}
-		$scope.$digest();
-	})(); */
-	$scope.data = {
-		filterOrder: 6,
-		returnLoss: 20,
-		centerFreq: 1000,
-		bandwidth: 20,
-		unloadedQ: 2000,
-		startFreq: 960,
-		stopFreq: 1040,
-		numberOfPoints: 1000,
-		filterType: "BPF",
-		tranZeros: [['', '']],
-		matrixDisplay: "M"
+
+		data.push({label: "S11(dB)", data: data1});
+		data.push({label: "S21(dB)", data: data2});
+		
+		linearChart.update(data, false);
+	}, 50);
+
+	$scope.filterOrderChange = function(){
+		if ($scope.data.filterOrder > 12){
+			$scope.data.filterOrder = 12;
+		}
+		var N = $scope.data.filterOrder,
+			M = numeric.identity(N + 2), i;
+		M[0][0] = 0;
+		M[N + 1][N + 1] = 0;
+		for (i = 0; i < N + 1; i++){
+			M[i][i + 1] = 1;		
+			M[i + 1][i] = 1;
+		}
+		store.dispatch({type: 'createTopoM', M: M})
 	}
+
+	var tempStoreState = store.getState();
+	
+	if (tempStoreState.hasOwnProperty("savedSynthesisData")){
+		$scope.data = tempStoreState.savedSynthesisData;
+	} else {
+		$scope.data = {
+			filterOrder: 6,
+			returnLoss: 20,
+			centerFreq: 1000,
+			bandwidth: 20,
+			unloadedQ: 2000,
+			startFreq: 960,
+			stopFreq: 1040,
+			numberOfPoints: 1000,
+			filterType: "BPF",
+			/* tranZeros: [['', 1.5], ['', '']], */
+			tranZeros: [['', '']],
+			matrixDisplay: "M"
+		}
+	}	
+
+	var unsubscribe = store.subscribe(handleChangeM);
+	if (tempStoreState.hasOwnProperty("topoM")){
+		handleChangeM();
+	} else {
+		$scope.filterOrderChange();		
+	}
+
 	$scope.calculate = async function(){
 		function polyResult(coef){
 			return vanderN.map(function(v){
@@ -86,95 +158,48 @@ angular
 			var tranZeros = $scope.data.tranZeros
 				.map(function(d){return [Number(d[0]), Number(d[1])]})
 				.filter(function(d){return (d[0] !== 0) || (d[1] !== 0)}),
-			
-				responce = await common.xhr2('SynthesizeFromTranZeros', {rootP: tranZeros, N: $scope.data.filterOrder, returnLoss: $scope.data.returnLoss, topology: store.getState().topoM}),
-
-				epsilon = numeric.t(responce.epsilon[0], responce.epsilon[1]),
-				coefP = responce.coefP.map(function(d){return numeric.t(d[0], d[1])}),
-				coefF = responce.coefF.map(function(d){return numeric.t(d[0], d[1])}),
-				coefE = responce.coefE.map(function(d){return numeric.t(d[0], d[1])}),
 				numberOfPoints = ($scope.data.numberOfPoints < 5000)? $scope.data.numberOfPoints : 5000,
 				stopFreq = ($scope.data.startFreq < $scope.data.stopFreq)? $scope.data.stopFreq : $scope.data.startFreq + $scope.data.bandwidth * 8,
 				freqMHz = numeric.linspace($scope.data.startFreq, stopFreq, numberOfPoints),
-				bw = $scope.data.bandwidth,
-				w0 = Math.sqrt(($scope.data.centerFreq - bw / 2) * ($scope.data.centerFreq + bw / 2)),
-				q = $scope.data.unloadedQ,
-				N = $scope.data.filterOrder,
-				normalizedS = freqMHz.map(function(d){return numeric.t(1 / q, (w0 / bw) * (d / w0 - w0 / d))}),
-				normalizedFreq = freqMHz.map(function(d){return numeric.t((w0 / bw) * (d / w0 - w0 / d), -1 / q)}),
-				vanderN = normalizedS.map(function(d){
-					var i, result = [], temp1 = numeric.t(1, 0);
-					for (i = 0; i < N + 1; i++){
-						result.push(temp1);
-						temp1 = temp1.mul(d);
-					}
-					return result;
-				}),
-				polyResultP = polyResult(coefP),
-				polyResultF = polyResult(coefF),
-				polyResultE = polyResult(coefE),
-				S11 = freqMHz.map(function(f, i){return [f / 1000, polyResultF[i].div(polyResultE[i])]}),
-				S21 = freqMHz.map(function(f, i){return [f / 1000, polyResultP[i].div(polyResultE[i]).div(epsilon)]}),
-				S11dB = S11.map(function(s){return [s[0], 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10]}),
-				S21dB = S21.map(function(s){return [s[0], 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10]});
+			
+				response = await common.xhr2('SynthesizeFromTranZeros', {rootP: tranZeros, N: $scope.data.filterOrder, returnLoss: $scope.data.returnLoss, topology: store.getState().topoM}),
 
-			$scope.data.targetMatrix = responce.targetMatrix;
-			var S11_fromM = [],
-				S21_fromM = [],			
-				minusR = numeric.rep([N + 2], 0);
-			minusR[0] = -1;
-			minusR[N+1] = -1;
-			minusR = numeric.diag(minusR);
+				epsilon = numeric.t(response.epsilon[0], response.epsilon[1]),
+				epsilonE = epsilon,
+				coefP = response.coefP.map(function(d){return numeric.t(d[0], d[1])}),
+				coefF = response.coefF.map(function(d){return numeric.t(d[0], d[1])}),
+				coefE = response.coefE.map(function(d){return numeric.t(d[0], d[1])}),
+				sFromFPE = common.FPE2S(epsilon, epsilonE, coefF, coefP, coefE, freqMHz, $scope.data.unloadedQ, $scope.data.centerFreq, $scope.data.bandwidth),
+				S11dB = sFromFPE.S11.map(function(s){return [s[0], 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10]}),
+				S21dB = sFromFPE.S21.map(function(s){return [s[0], 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10]}),
+				sFromM = common.CM2S(response.targetMatrix, freqMHz, $scope.data.unloadedQ, $scope.data.centerFreq, $scope.data.bandwidth),
+				S11dB_fromM = sFromM.S11.map(function(s){return [s[0], 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10]}),
+				S21dB_fromM = sFromM.S21.map(function(s){return [s[0], 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10]}),
 				
-			normalizedFreq.forEach(function(thisFreq, i){
-				var Y, Z,
-					FUX = numeric.rep([N + 2], thisFreq.x),
-					FUY = numeric.rep([N + 2], thisFreq.y);
-				FUX[0] = 0;
-				FUX[N + 1] = 0;
-				FUX = numeric.diag(FUX);
-				FUY[0] = 0;
-				FUY[N + 1] = 0;
-				FUY = numeric.diag(FUY);
-				
-				Z = numeric.t(numeric.add(FUX, responce.targetMatrix), numeric.add(FUY, minusR));
-				
-				Y = Z.inv();
-				
-				S11_fromM.push([freqMHz[i] / 1000 + 0.001, numeric.t(Y.x[0][0], Y.y[0][0]).mul(numeric.t(0, 2)).add(1)]);
-				S21_fromM.push([freqMHz[i] / 1000 + 0.001, numeric.t(Y.x[N+1][0], Y.y[N+1][0]).mul(numeric.t(0, -2))]);
-			});
-			var S11dB_fromM = S11_fromM.map(function(s){return [s[0], 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10]}),
-				S21dB_fromM = S21_fromM.map(function(s){return [s[0], 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10]}),
-/* 				data = [{label: "S11(dB)", data: S11dB}, {label: "S21(dB)", data: S21dB}, {label: "S11fromM(dB)", data: S11dB_fromM}, {label: "S21fromM(dB)", data: S21dB_fromM}]; */
 				data = [{label: "S11(dB)", data: S11dB_fromM}, {label: "S21(dB)", data: S21dB_fromM}];
 
 			linearChart.update(data, true);			
 
+			$scope.data.targetMatrix = response.targetMatrix;
 			$scope.$digest();
+			
+			var tempString = "# GHZ S DB R 50";
+			sFromM.S11.forEach(function(s, i){
+				var S11_dB = 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10,
+					S11_phase = Math.atan2(s[1].y, s[1].x) * 180 / Math.PI,
+					t = sFromM.S21[i],
+					S21_dB = 10 * Math.log(t[1].x * t[1].x + t[1].y * t[1].y) / Math.LN10,
+					S21_phase = Math.atan2(t[1].y, t[1].x) * 180 / Math.PI;
+				tempString += "\n" + s[0] + " " + S11_dB + " " + S11_phase + " " + S21_dB + " " + S21_phase + " " + S21_dB + " " + S21_phase + " " + S11_dB + " " + S11_phase;
+			});
+			store.dispatch({type: 'updateTempString', tempString: tempString});			
+			/* console.log(tempString.slice(0)); */
 		} catch(e){
 			console.log(e.message);
 		}
 	}
-	var margin = {
-		top: 40,
-		right: 40,
-		bottom: 50,
-		left: 60
-	}
-	var linearChart = new simpleD3LinearChart("graph-linear-chart", margin, [0, 5], [-10, 50]);
-	var data = [], data1 = [], data2 = [];
 
-	for (var i = 0; i < 500; i++) {
-		data1.push([i/100, Math.sin(i/100) * 20 + 10]);
-		data2.push([i/120, Math.cos(i/120) * 10 + 10]);
-	}
-
-	data.push({label: "S11(dB)", data: data1});
-	data.push({label: "S21(dB)", data: data2});
-	
-	linearChart.update(data, false);
-	
+	$timeout(function(){$scope.calculate()}, 200);
 
 	function M2Nodeslinks(M, unitStep){
 		var N = M.length - 2, nodes = [], links = [], i, j, k, edgeIndex = 0;
@@ -296,41 +321,6 @@ function handleChangeM(){
 			selectNodes.exit().remove();
 }
 
-	var vis = d3.select("#matrix-topology-container")
-			.append("svg:svg")
-				.attr("class", "stage")
-				.attr("width", document.getElementById("matrix-topology-container").offsetWidth)
-				.attr("height", document.getElementById("matrix-topology-container").offsetHeight);
-
-	vis
-		.append("g")
-		.attr("id", "group-links");
-	vis
-		.append("g")
-		.attr("id", "group-nodes");
-
-	$('#matrix-topology-modal').on('shown.bs.modal', function (e) {
-		d3.select("#matrix-topology-container").select("svg")
-			.attr("width", document.getElementById("matrix-topology-container").offsetWidth)
-			.attr("height", document.getElementById("matrix-topology-container").offsetHeight);
-	});
-	var unsubscribe = store.subscribe(handleChangeM);
-	
-	$scope.filterOrderChange = function(){
-		if ($scope.data.filterOrder > 12){
-			$scope.data.filterOrder = 12;
-		}
-		var N = $scope.data.filterOrder,
-			M = numeric.identity(N + 2);
-		M[0][0] = 0;
-		M[N + 1][N + 1] = 0;
-		for (i = 0; i < N + 1; i++){
-			M[i][i + 1] = 1;		
-			M[i + 1][i] = 1;
-		}
-		store.dispatch({type: 'createTopoM', M: M})
-	}
-	$scope.filterOrderChange($scope.data.filterOrder);
 
 	ReactDOM.render(
 		<ReactRedux.Provider store={store}>
@@ -338,8 +328,134 @@ function handleChangeM(){
 		</ReactRedux.Provider>,
 		document.getElementById('matrix-topology-table')
 	);
-	$scope.$on("$destroy", unsubscribe);
-	$timeout(function(){$("#button-calculate").click()}, 200);
+
+	$scope.$on("$destroy", function(){
+		unsubscribe();
+		store.dispatch({type: 'savedSynthesisData', data: $scope.data})
+	});
+}])
+.controller("_extractmatrix", ['$scope', '$timeout', 'common', function ($scope, $timeout, common) {
+	var linearChart1;
+	$timeout(function(){
+		var margin = {
+			top: 40,
+			right: 40,
+			bottom: 50,
+			left: 60
+		};
+		linearChart1 = new simpleD3LinearChart("graph-linear-chart1", margin, [0, 5], [-10, 50]);
+	}, 50);
+
+	$scope.data = {};
+	
+	$timeout(function(){
+		var tempStoreState = store.getState();
+		if (tempStoreState.hasOwnProperty("tempString")){
+			var sFile = common.ParseS2P(tempStoreState.tempString);
+			extractMatrix(sFile);
+		}
+	}, 100);
+	async function extractMatrix(sFile){
+		try {
+			var synStoreState = store.getState().savedSynthesisData,
+				topoM = store.getState().topoM,
+				tranZeros = synStoreState.tranZeros
+				.map(function(d){return [Number(d[0]), Number(d[1])]})
+				.filter(function(d){return (d[0] !== 0) || (d[1] !== 0)}),
+				response = await common.xhr2('ExtractMatrix', {...sFile, ...synStoreState, tranZeros: tranZeros, topology: topoM}),
+				numberOfPoints = (synStoreState.numberOfPoints < 5000)? synStoreState.numberOfPoints : 5000,
+				stopFreq = (synStoreState.startFreq < synStoreState.stopFreq)? synStoreState.stopFreq : synStoreState.startFreq + synStoreState.bandwidth * 8,
+				freqMHz = numeric.linspace(synStoreState.startFreq, stopFreq, numberOfPoints),
+				
+				sFromTargetM = common.CM2S(synStoreState.targetMatrix, freqMHz, synStoreState.unloadedQ, synStoreState.centerFreq, synStoreState.bandwidth),
+				
+				sFromExtractM = common.CM2S(response.extractedMatrix, freqMHz, synStoreState.unloadedQ, synStoreState.centerFreq, synStoreState.bandwidth);
+				
+			$scope.S11dB_fromTargetM = sFromTargetM.S11.map(function(s){return [s[0], 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10]});
+			$scope.S21dB_fromTargetM = sFromTargetM.S21.map(function(s){return [s[0], 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10]});
+			$scope.S11ang_fromTargetM = sFromTargetM.S11.map(function(s){return [s[0], Math.atan2(s[1].y, s[1].x) * 180 / Math.PI]});
+			$scope.S21ang_fromTargetM = sFromTargetM.S21.map(function(s){return [s[0], Math.atan2(s[1].y, s[1].x) * 180 / Math.PI]});
+			
+			$scope.S11dB_fromExtractM = sFromExtractM.S11.map(function(s){return [s[0], 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10]});
+			$scope.S21dB_fromExtractM = sFromExtractM.S21.map(function(s){return [s[0], 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10]});
+			$scope.S11ang_fromExtractM = sFromExtractM.S11.map(function(s){return [s[0], Math.atan2(s[1].y, s[1].x) * 180 / Math.PI]});
+			$scope.S21ang_fromExtractM = sFromExtractM.S21.map(function(s){return [s[0], Math.atan2(s[1].y, s[1].x) * 180 / Math.PI]});
+
+			$scope.S11dB_fromSFile = sFile.freq.map(function(f, i){return [f / 1000, sFile.S11_db[i]]});
+			$scope.S21dB_fromSFile = sFile.freq.map(function(f, i){return [f / 1000, sFile.S21_db[i]]});
+			$scope.S11ang_fromSFile = sFile.freq.map(function(f, i){return [f / 1000, sFile.S11_angRad[i] * 180 / Math.PI]});
+			$scope.S21ang_fromSFile = sFile.freq.map(function(f, i){return [f / 1000, sFile.S21_angRad[i] * 180 / Math.PI]});
+
+			document.querySelector('#s11dbChart').click();
+			$scope.data.extractedMatrix = response.extractedMatrix;
+			$scope.data.deviateMatrix = response.deviateMatrix;
+			document.querySelector('#deviationTable').click();
+			$scope.$digest();
+		} catch(e) {
+			document.getElementById("p1-file").innerHTML = e.message;
+		}
+	}
+
+	$scope.showChart = function(select){
+		var data;
+		switch (select.toLowerCase()){
+			case "s21ang":
+				data = [{label: "S21(deg)", data: $scope.S21ang_fromSFile}, {label: "S21e(deg)", data: $scope.S21ang_fromExtractM}];
+				break;
+			case "s11ang":
+				data = [{label: "S11(deg)", data: $scope.S11ang_fromSFile}, {label: "S11e(deg)", data: $scope.S11ang_fromExtractM}];
+				break;
+			case "s21db":
+				data = [{label: "S21(dB)", data: $scope.S21dB_fromSFile}, {label: "S21e(dB)", data: $scope.S21dB_fromExtractM}];
+				break;
+			case "s11db":
+			default:
+				data = [{label: "S11(dB)", data: $scope.S11dB_fromSFile}, {label: "S11e(dB)", data: $scope.S11dB_fromExtractM}];
+		}
+		linearChart1.update(data, true);
+	}
+
+	$scope.showTable = function(select, tableDataFormat){
+		var data, synStoreState = store.getState().savedSynthesisData;
+		if (typeof select === "undefined"){
+			$scope.data.matrixToShow = $scope.data.deviateMatrix;
+		} else {
+			switch (select.toLowerCase()){
+				case "targetmatrix":
+					$scope.data.matrixToShow = synStoreState.targetMatrix;
+					break;
+				case "extractedmatrix":
+					$scope.data.matrixToShow = $scope.data.extractedMatrix;
+					break;
+				case "deviation":
+				default:
+					$scope.data.matrixToShow = $scope.data.deviateMatrix;
+			}
+		}
+		if (typeof tableDataFormat === "undefined"){
+			$scope.data.tableDataFormat = 0;
+		} else {
+				$scope.data.tableDataFormat = tableDataFormat;
+		}
+	}
+
+	var reader = new FileReader();
+	reader.onload = function(evt){
+		var sFile;
+		try {
+			sFile = common.ParseS2P(evt.target.result);
+			document.getElementById("p1-file").innerHTML = "S parameter file parsed successfully!";
+			extractMatrix(sFile);
+		} catch(e) {
+			document.getElementById("p1-file").innerHTML = e.message;
+		}
+	};
+	var inputElement = document.getElementById("input-s2p-file");
+	inputElement.addEventListener("change", handleFiles, false);
+	function handleFiles() {
+	 var fileList = this.files; /* now you can work with the file list */
+	 reader.readAsText(fileList[0])
+	}
 }])
 .controller("_optimize", ['$scope', '$timeout', function ($scope, $timeout) {
 

@@ -612,12 +612,12 @@ def S2FP(inFreq, inS21, inS11, filterOrder, w1, w2, wga, wgb=0.1, method=0):
 
 #        epsilon, epsilonE, rootE = GetEpsilonRootE(rootF, rootP, S11, S21, normalizedFreq, Qu)
     Qu = GetQu(epsilon, epsilonE, Qu, rootF, rootP, rootE, S11, S21, normalizedFreq)
-    print('epsilon:', epsilon)
-    print('epsilonE:', epsilonE)
-    print('Qu:', Qu)
-    print('rootF:', rootF)
-    print('rootP:', rootP)
-    print('rootE:', rootE)
+#    print('epsilon:', epsilon)
+#    print('epsilonE:', epsilonE)
+#    print('Qu:', Qu)
+#    print('rootF:', rootF)
+#    print('rootP:', rootP)
+#    print('rootE:', rootE)
     return epsilon, epsilonE, Qu, rootF, rootP, rootE
 
 def FPE2M(epsilon, epsilonE, rootF, rootP, rootE, method=1):
@@ -645,6 +645,7 @@ def FPE2M(epsilon, epsilonE, rootF, rootP, rootE, method=1):
             coefP = np.array([1.])
 #        y21n = -1j *  coefP / np.abs(epsilonE)
         y21n = -1j *  coefP / epsilonE
+#        y21n = -coefP / np.abs(epsilonE) + 0j
     
         y21n /= yd[-1]
         y22n /= yd[-1]
@@ -667,6 +668,9 @@ def FPE2M(epsilon, epsilonE, rootF, rootP, rootE, method=1):
     
         Mlk = np.sqrt(r22k)
         Msk = r21k / Mlk
+        
+        if np.abs(np.imag(Msk[0])) > np.abs(np.real(Msk[0])):
+            Msk *= 1j
         
         M[0, 1:-1] = Msk
         M[1:-1, 0] = Msk
@@ -890,6 +894,9 @@ def EvaluateJ(M, serializedT, cr, sr):
 def ReduceMAngleMethod(M, topology):
     N = M.shape[0] - 2
     serializedT = SerializeM(topology)
+    serializedT[0] = 1
+    serializedT[N + 1] = 1
+    serializedT[-1] = 1
     numTheta = int(N * (N - 1) / 2)
 #    theta = np.random.rand(numTheta) * np.pi
     theta = np.ones((numTheta, )) * np.pi / 2

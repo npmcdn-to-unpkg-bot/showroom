@@ -90,7 +90,7 @@ preloaded.ParseS2P = function(inputString){
 		}
 	})
 	function toFixed3(num){return Math.round(num * 1000) / 1000;}
-	return {freq: freq, S21_db: S21_db.map(toFixed3), S21_ang: S21_ang.map(toFixed3), S11_db: S11_db.map(toFixed3), S11_ang: S11_ang.map(toFixed3)}
+	return {freq: freq, S21_db: S21_db.map(toFixed3), S21_angRad: S21_ang.map(toFixed3), S11_db: S11_db.map(toFixed3), S11_angRad: S11_ang.map(toFixed3)}
 }
 	
 process.once('loaded', () => {

@@ -1,4 +1,4 @@
-function reducer(state = {targetM: [], topoM: []}, action) {
+function reducer(state = {}, action) {
 var tempState = {...state};
   switch (action.type) {
     case "createTopoM":
@@ -11,6 +11,12 @@ var tempState = {...state};
 			tempState.topoM[action.col] = [...state.topoM[action.col]];
 			tempState.topoM[action.col][action.row] = action.value;
 			//console.log("updateTopoM triggered: ", action, tempState);
+      break;
+    case "savedSynthesisData":
+			tempState.savedSynthesisData = action.data;
+      break;
+    case "updateTempString":
+			tempState.tempString = action.tempString;
       break;
 		default:
   }

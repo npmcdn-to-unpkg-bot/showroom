@@ -69,6 +69,31 @@ def get_task(method):
         targetMatrix = CP.ReduceMAngleMethod(fullMatrix, topology)
         resJson = {'epsilon': [epsilon.real, epsilon.imag], 'coefP': [[x.real, x.imag] for x in coefP], 'coefF': [[x.real, x.imag] for x in coefF], 'coefE': [[x.real, x.imag] for x in coefE], 'targetMatrix': targetMatrix.tolist()}
         return json.dumps(resJson, separators = (',', ':'))
+    elif method == "ExtractMatrix":
+        reqJson = flask.request.get_json()
+        #np.save("tempData", np.array([reqJson]))
+        #print(json.dumps(reqJson, separators = (',', ':')))
+        freq = np.array(reqJson['freq']) * 1e6
+        S21_amp = 10 ** (np.array(reqJson['S21_db']) / 20)
+        S21 = S21_amp * (np.cos(np.array(reqJson['S21_angRad'])) + 1j * np.sin(np.array(reqJson['S21_angRad'])))
+        S11_amp = 10 ** (np.array(reqJson['S11_db']) / 20)
+        S11 = S11_amp * (np.cos(np.array(reqJson['S11_angRad'])) + 1j * np.sin(np.array(reqJson['S11_angRad'])))
+        N = reqJson['filterOrder']
+        numZeros = len(reqJson['tranZeros'])
+        filterOrder = np.hstack((np.zeros((N, )), 2 * np.ones((numZeros, ))))
+        w1 = (reqJson['centerFreq'] - reqJson['bandwidth'] / 2) * 1e6
+        w2 = (reqJson['centerFreq'] + reqJson['bandwidth'] / 2) * 1e6
+        print(N, numZeros, filterOrder, w1, w2)
+        epsilon, epsilonE, Qu, rootF, rootP, rootE = CP.S2FP(freq, S21, S11, filterOrder, w1, w2, wga=1.122*0.0254, method=3)
+        fullMatrix = CP.FPE2M(epsilon, epsilonE, rootF, rootP, rootE, method=1)
+        topology = np.array(reqJson['topology'])
+        extractedMatrix = CP.ReduceMAngleMethod(fullMatrix, topology)
+        targetMatrix = np.array(reqJson['targetMatrix'])
+        temp1 = targetMatrix.copy()
+        temp1[np.abs(targetMatrix) < 1e-4] = 1e9
+        deviateMatrix = 100 * (extractedMatrix - targetMatrix) / temp1
+        resJson = {'extractedMatrix': extractedMatrix.tolist(), 'deviateMatrix': deviateMatrix.tolist()}
+        return json.dumps(resJson, separators = (',', ':'))
     else:
         flask.abort(404)
 
