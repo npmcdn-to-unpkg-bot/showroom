@@ -82,15 +82,17 @@ def get_task(method):
         filterOrder = np.hstack((np.zeros((N, )), 2 * np.ones((numZeros, ))))
         w1 = (reqJson['centerFreq'] - reqJson['bandwidth'] / 2) * 1e6
         w2 = (reqJson['centerFreq'] + reqJson['bandwidth'] / 2) * 1e6
-        print(N, numZeros, filterOrder, w1, w2)
-        epsilon, epsilonE, Qu, rootF, rootP, rootE = CP.S2FP(freq, S21, S11, filterOrder, w1, w2, wga=1.122*0.0254, method=3)
+#        print(N, numZeros, filterOrder, w1, w2)
+        startFreq = reqJson['captureStartFreqMHz'] * 1e6
+        stopFreq = reqJson['captureStopFreqMHz'] * 1e6
+        epsilon, epsilonE, Qu, rootF, rootP, rootE = CP.S2FP(freq, S21, S11, filterOrder, w1, w2, wga=1.122*0.0254, method=3, startFreq=startFreq, stopFreq=stopFreq)
         topology = np.array(reqJson['topology'])
         extractedMatrix = CP.FPE2MComprehensive(epsilon, epsilonE, rootF, rootP, rootE, topology)
         targetMatrix = np.array(reqJson['targetMatrix'])
         temp1 = targetMatrix.copy()
         temp1[np.abs(targetMatrix) < 1e-4] = 1e9
         deviateMatrix = 100 * (extractedMatrix - targetMatrix) / temp1
-        resJson = {'extractedMatrix': extractedMatrix.tolist(), 'deviateMatrix': deviateMatrix.tolist()}
+        resJson = {'q': Qu, 'extractedMatrix': extractedMatrix.tolist(), 'deviateMatrix': deviateMatrix.tolist()}
         return json.dumps(resJson, separators = (',', ':'))
     else:
         flask.abort(404)

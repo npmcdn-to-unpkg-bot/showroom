@@ -352,6 +352,7 @@ function handleChangeM(){
 		var tempStoreState = store.getState();
 		if (tempStoreState.hasOwnProperty("tempString")){
 			var sFile = common.ParseS2P(tempStoreState.tempString);
+			store.dispatch({type: 'saveSFile', data: sFile});
 			extractMatrix(sFile);
 		}
 	}, 100);

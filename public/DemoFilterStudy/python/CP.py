@@ -321,28 +321,33 @@ def S2CM(freq, S21, S11, initM, w1, w2, wga, wgb=0.1):
 
     return resultM, normalizedFreq;
 
-def S2FP(inFreq, inS21, inS11, filterOrder, w1, w2, wga, wgb=0.1, method=0):
+def S2FP(inFreq, inS21, inS11, filterOrder, w1, w2, wga, wgb=0.1, method=0, startFreq=0, stopFreq=0):
     def RectifyInputData(inFreq, inS21, inS11):
-        widths = np.arange(5, 45)
-        sig = -20. * np.log10(np.abs(inS11))
-        sig[sig<3.] = 0.
-        peakIndS11Inv = signal.find_peaks_cwt(sig, widths, min_length=widths.shape[0] - 1)
-        sig = -20. * np.log10(np.abs(inS21))
-        peakIndS21Inv = signal.find_peaks_cwt(sig, widths, min_length=widths.shape[0] - 1)
-        sig = 20. * np.log10(np.abs(inS21))
-        peakIndS21 = signal.find_peaks_cwt(sig, widths, min_length=widths.shape[0] - 1)
-#        bandIndS21 = np.nonzero((np.abs(np.gradient(np.abs(inS11))) / (inFreq[1] - inFreq[0])) > 1.7e-8)[0]
-        bandIndS21 = FindEdge(inS21)
-#        print(inFreq[int(bandIndS21[:])])
-        temp1 = np.hstack((peakIndS11Inv, peakIndS21Inv, peakIndS21, bandIndS21))
-        temp2 = temp1[(temp1 > 10) & (temp1 < inFreq.shape[0] - 10)]
-        indexMin = int(np.max([np.min(temp2) - 5, 0]))
-        indexMax = int(np.min([np.max(temp2) + 5, inFreq.shape[0]-1]))
-#        indexMin, indexMax = 880, 3500
-        step = np.max([int((indexMax - indexMin) / 400), 1])
-        temp1 = np.arange(indexMin, indexMax, step, dtype=int)
-#        temp1 = np.arange(0, 400)
-        print(inFreq[temp1[0]], inFreq[temp1[-1]])
+        if (startFreq == 0) or (stopFreq == 0):
+            widths = np.arange(5, 45)
+            sig = -20. * np.log10(np.abs(inS11))
+            sig[sig<3.] = 0.
+            peakIndS11Inv = signal.find_peaks_cwt(sig, widths, min_length=widths.shape[0] - 1)
+            sig = -20. * np.log10(np.abs(inS21))
+            peakIndS21Inv = signal.find_peaks_cwt(sig, widths, min_length=widths.shape[0] - 1)
+            sig = 20. * np.log10(np.abs(inS21))
+            peakIndS21 = signal.find_peaks_cwt(sig, widths, min_length=widths.shape[0] - 1)
+    #        bandIndS21 = np.nonzero((np.abs(np.gradient(np.abs(inS11))) / (inFreq[1] - inFreq[0])) > 1.7e-8)[0]
+            bandIndS21 = FindEdge(inS21)
+    #        print(inFreq[int(bandIndS21[:])])
+            temp1 = np.hstack((peakIndS11Inv, peakIndS21Inv, peakIndS21, bandIndS21))
+            temp2 = temp1[(temp1 > 10) & (temp1 < inFreq.shape[0] - 10)]
+            indexMin = int(np.max([np.min(temp2) - 5, 0]))
+            indexMax = int(np.min([np.max(temp2) + 5, inFreq.shape[0]-1]))
+    #        indexMin, indexMax = 880, 3500
+            step = np.max([int((indexMax - indexMin) / 400), 1])
+            temp1 = np.arange(indexMin, indexMax, step, dtype=int)
+    #        temp1 = np.arange(0, 400)
+    #        print(inFreq[temp1[0]], inFreq[temp1[-1]])
+        else:
+            indexMin = np.argmin(np.abs(startFreq - inFreq))
+            indexMax = np.argmin(np.abs(stopFreq - inFreq))
+            temp1 = np.arange(indexMin, indexMax, dtype=int)
         freq, S21, S11 = inFreq[temp1], inS21[temp1], inS11[temp1]
         return freq, S21, S11
         
