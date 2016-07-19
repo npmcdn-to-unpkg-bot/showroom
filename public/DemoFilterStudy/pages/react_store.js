@@ -18,6 +18,9 @@ var tempState = {...state};
     case "updateTempString":
 			tempState.tempString = action.tempString;
       break;
+    case "saveSFile":
+			tempState.sFile = action.data;
+      break;
 		default:
   }
   return tempState;

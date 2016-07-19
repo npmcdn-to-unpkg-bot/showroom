@@ -12,8 +12,8 @@ from numpy.polynomial import Polynomial
 from scipy import optimize, interpolate, signal, sparse
 import matplotlib.pyplot as plt
 
-rootP = np.array([1.5j]) #np.array([-2j, 2j])
-N = 6
+rootP = np.array([-1.2j, 1.5j, 1.2j]) #np.array([-2j, 2j])
+N = 10
 returnLoss= 20.0
 epsilon, coefP, coefF, coefE = CP.ChebyshevP2EF(rootP, N, returnLoss)
 
@@ -37,6 +37,11 @@ for i in np.arange(N + 1):
     topology[i + 1, i] = 1
 #topology[2, 5] = 1
 topology[3, 5] = 1
+topology[5, 3] = 1
+topology[3, 6] = 1
+topology[6, 3] = 1
+topology[7, 9] = 1
+topology[9, 7] = 1
 
 EF = Polynomial.fromroots(rootE).coef + np.abs(epsilon / epsilonE) * Polynomial.fromroots(rootF).coef
 realEF = np.real(EF)
@@ -236,7 +241,9 @@ def RotateMReduce(M, pivotI, pivotJ, removeRow, removeCol):
     elif pivotJ == removeCol:
         otherRow = removeRow
         otherCol = pivotI
-    if (otherRow < removeRow) or (otherCol < removeCol):
+    if np.abs(M[otherRow, otherCol]) < 1e-9:
+        tr = 1e9
+    elif (otherRow < removeRow) or (otherCol < removeCol):
         tr = -M[removeRow, removeCol] / M[otherRow, otherCol]
     else:
         tr = M[removeRow, removeCol] / M[otherRow, otherCol]
@@ -267,27 +274,36 @@ def RotateM2Arrow(M):
             MRotated[:, i + 1] *= -1
     return MRotated
 
+def AdjustPrimaryCouple(M):
+    N = M.shape[0] - 2
+    MRotated = M.copy()
+    for i in np.arange(N + 1):
+        if MRotated[i, i + 1] < 0:
+            MRotated[i + 1, :] *= -1
+            MRotated[:, i + 1] *= -1
+    return MRotated
+            
 def RotateArrow2Folded(M, topology):
     N = M.shape[0] - 2
     MRotated = M
     tempM = M
-    point = (N + 2.0) * (N + 2.0)
-    allOnes = np.ones((N + 2, N + 2))
-    allZeros = np.zeros((N + 2, N + 2))
+    point = np.sum(np.abs(tempM[topology == 0]))
+    if np.abs(point) < 1e-4:
+        return MRotated, point
     for i in np.arange(N - 1, -(N - 2), -1):
-        for j in np.arange(int(1 + (N - 1 - i) / 2), 0, -1):
-            row = i + j - 1
-            col = N + 2 - j
-            if row > 0:
+        for j in np.arange(int(1 + (N - 1 - i) / 2)):
+            row = i + j
+            col = N + 1 - j
+            if (row > 0) and (np.abs(tempM[row, col]) > 1e-6):
                 tempM = RotateMReduce(tempM, row, col - 1, row, col)
-                temp1 = np.where(np.abs(tempM) > 1e-4, allOnes, allZeros)
-                newpoint = np.sum(np.sum(temp1 - topology))
-                if np.abs(newpoint) < 1e-4:
-                    return MRotated, newpoint
-                elif newpoint < point:
+                newpoint = np.sum(np.abs(tempM[topology == 0]))
+                if newpoint < point:
                     point = newpoint
                     MRotated = tempM
-    return MRotated, point
+                if np.abs(newpoint) < 1e-4:
+                    return AdjustPrimaryCouple(MRotated), newpoint
+
+    return AdjustPrimaryCouple(MRotated), point
     
 M = np.real(M)
 
@@ -295,63 +311,67 @@ M = np.real(M)
 pr = cProfile.Profile()
 pr.enable()
 
+resultM = CP.FPE2MComprehensive(epsilon, epsilonE, rootF, rootP, rootE, topology)
+print(np.round(resultM, 2), "\n")
+
 M = RotateM2Arrow(M)
 foldedM, point = RotateArrow2Folded(M, topology)
+print(np.round(M, 2), "\n")
 print(np.round(foldedM, 2))
-print(np.round(M, 4), "\n")
-serializedT = SerializeM(topology)
-serializedT[0] = 1
-serializedT[N + 1] = 1
-serializedT[-1] = 1
-numTheta = int(N * (N - 1) / 2)
-theta = np.zeros((numTheta, ))
-numIter = 10 + int(10000 / (N * N))
-cost = np.zeros((numIter, ))
-dumpFactor = 0.1
-v = 1.5
-
-for i in np.arange(numIter):
-    cr = np.cos(theta)
-    sr = np.sin(theta)
-    J, r, MRotated = EvaluateJ(M, serializedT, cr, sr)
-    costCurr = r.dot(r)
-    cost[i] = costCurr
-    if costCurr < 1e-8:
-        break
+if np.abs(point) < 1e-4:
+    MRotated = foldedM
+    print("folded M found")
+else:
+    serializedT = SerializeM(topology)
+    serializedT[0] = 1
+    serializedT[N + 1] = 1
+    serializedT[-1] = 1
+    numTheta = int(N * (N - 1) / 2)
+    theta = np.zeros((numTheta, ))
+    numIter = 10 + int(3600 / (N * N))
+    cost = np.zeros((numIter, ))
+    dumpFactor = 0.1
+    v = 1.5
     
-    b = -J.T.dot(r)
-    a1 = J.T.dot(J)
-    a2 = np.diag(np.diag(a1))
-    
-    for j in np.arange(30):
-        delta1 = np.linalg.solve(a1 + a2 * dumpFactor / v, b)
-        r1 = EvaluateR(M, serializedT, np.cos(theta + delta1), np.sin(theta + delta1))[0]
-        costCurr1 = r1.dot(r1)
-        if costCurr1 < costCurr:
-            if dumpFactor > 1e-9:
-                dumpFactor /= v
-            theta += delta1
+    for i in np.arange(numIter):
+        cr = np.cos(theta)
+        sr = np.sin(theta)
+        J, r, MRotated = EvaluateJ(M, serializedT, cr, sr)
+        costCurr = r.dot(r)
+        cost[i] = costCurr
+        if costCurr < 1e-8:
             break
-        else:
-            delta2 = np.linalg.solve(a1 + a2 * dumpFactor, b)
-            r2 = EvaluateR(M, serializedT, np.cos(theta + delta2), np.sin(theta + delta2))[0]
-            costCurr2 = r2.dot(r2)
-            if costCurr2 < costCurr:
-                theta += delta2
+        
+        b = -J.T.dot(r)
+        a1 = J.T.dot(J)
+        a2 = np.diag(np.diag(a1))
+        
+        for j in np.arange(30):
+            delta1 = np.linalg.solve(a1 + a2 * dumpFactor / v, b)
+            r1 = EvaluateR(M, serializedT, np.cos(theta + delta1), np.sin(theta + delta1))[0]
+            costCurr1 = r1.dot(r1)
+            if costCurr1 < costCurr:
+                if dumpFactor > 1e-9:
+                    dumpFactor /= v
+                theta += delta1
                 break
-        dumpFactor *= v
-
-for i in np.arange(N + 1):
-    if MRotated[i, i + 1] < 0:
-        MRotated[i + 1, :] *= -1
-        MRotated[:, i + 1] *= -1
+            else:
+                delta2 = np.linalg.solve(a1 + a2 * dumpFactor, b)
+                r2 = EvaluateR(M, serializedT, np.cos(theta + delta2), np.sin(theta + delta2))[0]
+                costCurr2 = r2.dot(r2)
+                if costCurr2 < costCurr:
+                    theta += delta2
+                    break
+            dumpFactor *= v
+    
+    MRotated = AdjustPrimaryCouple(MRotated)
 
 pr.disable()
 s = io.StringIO()
 sortby = 'cumulative'
 ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
 ps.print_stats()
-print(s.getvalue())
+#print(s.getvalue())
 
 print(np.round(MRotated, 2))
 plt.clf()

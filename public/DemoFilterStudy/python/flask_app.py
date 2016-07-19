@@ -64,9 +64,8 @@ def get_task(method):
         polyE = Polynomial(coefE)
         rootF = polyF.roots()
         rootE = polyE.roots()
-        fullMatrix = CP.FPE2M(epsilon, epsilonE, rootF, rootP, rootE, method=1)
         topology = np.array(reqJson['topology'])
-        targetMatrix = CP.ReduceMAngleMethod(fullMatrix, topology)
+        targetMatrix = CP.FPE2MComprehensive(epsilon, epsilonE, rootF, rootP, rootE, topology)
         resJson = {'epsilon': [epsilon.real, epsilon.imag], 'coefP': [[x.real, x.imag] for x in coefP], 'coefF': [[x.real, x.imag] for x in coefF], 'coefE': [[x.real, x.imag] for x in coefE], 'targetMatrix': targetMatrix.tolist()}
         return json.dumps(resJson, separators = (',', ':'))
     elif method == "ExtractMatrix":
@@ -85,10 +84,8 @@ def get_task(method):
         w2 = (reqJson['centerFreq'] + reqJson['bandwidth'] / 2) * 1e6
         print(N, numZeros, filterOrder, w1, w2)
         epsilon, epsilonE, Qu, rootF, rootP, rootE = CP.S2FP(freq, S21, S11, filterOrder, w1, w2, wga=1.122*0.0254, method=3)
-        fullMatrix = CP.FPE2M(epsilon, epsilonE, rootF, rootP, rootE, method=1)
         topology = np.array(reqJson['topology'])
-        arrowMatrix = CP.RotateM2Arrow(fullMatrix)
-        extractedMatrix = CP.ReduceMAngleMethod(arrowMatrix, topology)
+        extractedMatrix = CP.FPE2MComprehensive(epsilon, epsilonE, rootF, rootP, rootE, topology)
         targetMatrix = np.array(reqJson['targetMatrix'])
         temp1 = targetMatrix.copy()
         temp1[np.abs(targetMatrix) < 1e-4] = 1e9

@@ -898,10 +898,8 @@ def ReduceMAngleMethod(M, topology):
     serializedT[N + 1] = 1
     serializedT[-1] = 1
     numTheta = int(N * (N - 1) / 2)
-#    theta = np.random.rand(numTheta) * np.pi
-#    theta = np.ones((numTheta, )) * np.pi / 2
     theta = np.zeros((numTheta, ))
-    numIter = 10 + int(10000 / (N * N))
+    numIter = 10 + int(3600 / (N * N))
     cost = np.zeros((numIter, ))
     dumpFactor = 0.1
     v = 1.5
@@ -937,11 +935,7 @@ def ReduceMAngleMethod(M, topology):
                     break
             dumpFactor *= v
     
-    for i in np.arange(N + 1):
-        if MRotated[i, i + 1] < 0:
-            MRotated[i + 1, :] *= -1
-            MRotated[:, i + 1] *= -1
-
+    MRotated = AdjustPrimaryCouple(MRotated)
     return MRotated
     
 def RotateMReduce(M, pivotI, pivotJ, removeRow, removeCol):
@@ -957,7 +951,9 @@ def RotateMReduce(M, pivotI, pivotJ, removeRow, removeCol):
     elif pivotJ == removeCol:
         otherRow = removeRow
         otherCol = pivotI
-    if (otherRow < removeRow) or (otherCol < removeCol):
+    if np.abs(M[otherRow, otherCol]) < 1e-9:
+        tr = 1e9
+    elif (otherRow < removeRow) or (otherCol < removeCol):
         tr = -M[removeRow, removeCol] / M[otherRow, otherCol]
     else:
         tr = M[removeRow, removeCol] / M[otherRow, otherCol]
@@ -982,8 +978,46 @@ def RotateM2Arrow(M):
     for i in np.arange(N):
         for j in np.arange(N, i + 1, -1):
             MRotated = RotateMReduce(MRotated, i + 1, j, i, j)
+    MRotated = AdjustPrimaryCouple(MRotated)
+    return MRotated
+
+def AdjustPrimaryCouple(M):
+    N = M.shape[0] - 2
+    MRotated = M.copy()
     for i in np.arange(N + 1):
         if MRotated[i, i + 1] < 0:
             MRotated[i + 1, :] *= -1
             MRotated[:, i + 1] *= -1
+    return MRotated
+            
+def RotateArrow2Folded(M, topology):
+    N = M.shape[0] - 2
+    MRotated = M
+    tempM = M
+    point = np.sum(np.abs(tempM[topology == 0]))
+    if np.abs(point) < 1e-4:
+        return MRotated, point
+    for i in np.arange(N - 1, -(N - 2), -1):
+        for j in np.arange(int(1 + (N - 1 - i) / 2)):
+            row = i + j
+            col = N + 1 - j
+            if (row > 0) and (np.abs(tempM[row, col]) > 1e-6):
+                tempM = RotateMReduce(tempM, row, col - 1, row, col)
+                newpoint = np.sum(np.abs(tempM[topology == 0]))
+                if newpoint < point:
+                    point = newpoint
+                    MRotated = tempM
+                if np.abs(newpoint) < 1e-4:
+                    return AdjustPrimaryCouple(MRotated), newpoint
+
+    return AdjustPrimaryCouple(MRotated), point
+
+def FPE2MComprehensive(epsilon, epsilonE, rootF, rootP, rootE, topology):
+    fullMatrix = FPE2M(epsilon, epsilonE, rootF, rootP, rootE, method=1)
+    arrowMatrix = RotateM2Arrow(fullMatrix)
+    foldedMatrix, point = RotateArrow2Folded(arrowMatrix, topology)
+    if np.abs(point) < 1e-4:
+        MRotated = foldedMatrix
+    else:
+        MRotated = ReduceMAngleMethod(foldedMatrix, topology)
     return MRotated

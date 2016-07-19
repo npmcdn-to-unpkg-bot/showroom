@@ -101,7 +101,7 @@ angular
 		data.push({label: "S21(dB)", data: data2});
 		
 		linearChart.update(data, false);
-	}, 50);
+	}, 100);
 
 	$scope.filterOrderChange = function(){
 		if ($scope.data.filterOrder > 16){
@@ -199,7 +199,7 @@ angular
 		}
 	}
 
-	$timeout(function(){$scope.calculate()}, 200);
+	$timeout(function(){$scope.calculate()}, 500);
 
 	function M2Nodeslinks(M, unitStep){
 		var N = M.length - 2, nodes = [], links = [], i, j, k, edgeIndex = 0;
@@ -331,7 +331,7 @@ function handleChangeM(){
 
 	$scope.$on("$destroy", function(){
 		unsubscribe();
-		store.dispatch({type: 'savedSynthesisData', data: $scope.data})
+		store.dispatch({type: 'savedSynthesisData', data: $scope.data});
 	});
 }])
 .controller("_extractmatrix", ['$scope', '$timeout', 'common', function ($scope, $timeout, common) {
@@ -344,7 +344,7 @@ function handleChangeM(){
 			left: 60
 		};
 		linearChart1 = new simpleD3LinearChart("graph-linear-chart1", margin, [0, 5], [-10, 50]);
-	}, 50);
+	}, 80);
 
 	$scope.data = {};
 	
@@ -362,19 +362,21 @@ function handleChangeM(){
 				tranZeros = synStoreState.tranZeros
 				.map(function(d){return [Number(d[0]), Number(d[1])]})
 				.filter(function(d){return (d[0] !== 0) || (d[1] !== 0)}),
-				response = await common.xhr2('ExtractMatrix', {...sFile, ...synStoreState, tranZeros: tranZeros, topology: topoM}),
+				captureStartFreqMHz = $scope.captureStartFreqMHz || 0,
+				captureStopFreqMHz = $scope.captureStopFreqMHz || 0,
+				response = await common.xhr2('ExtractMatrix', {...sFile, ...synStoreState, tranZeros: tranZeros, topology: topoM, captureStartFreqMHz: captureStartFreqMHz, captureStopFreqMHz: captureStopFreqMHz}),
 				numberOfPoints = (synStoreState.numberOfPoints < 5000)? synStoreState.numberOfPoints : 5000,
 				stopFreq = (synStoreState.startFreq < synStoreState.stopFreq)? synStoreState.stopFreq : synStoreState.startFreq + synStoreState.bandwidth * 8,
 				freqMHz = numeric.linspace(synStoreState.startFreq, stopFreq, numberOfPoints),
 				
-				sFromTargetM = common.CM2S(synStoreState.targetMatrix, freqMHz, synStoreState.unloadedQ, synStoreState.centerFreq, synStoreState.bandwidth),
+/* 				sFromTargetM = common.CM2S(synStoreState.targetMatrix, freqMHz, synStoreState.unloadedQ, synStoreState.centerFreq, synStoreState.bandwidth), */
 				
 				sFromExtractM = common.CM2S(response.extractedMatrix, freqMHz, synStoreState.unloadedQ, synStoreState.centerFreq, synStoreState.bandwidth);
 				
-			$scope.S11dB_fromTargetM = sFromTargetM.S11.map(function(s){return [s[0], 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10]});
+/* 			$scope.S11dB_fromTargetM = sFromTargetM.S11.map(function(s){return [s[0], 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10]});
 			$scope.S21dB_fromTargetM = sFromTargetM.S21.map(function(s){return [s[0], 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10]});
 			$scope.S11ang_fromTargetM = sFromTargetM.S11.map(function(s){return [s[0], Math.atan2(s[1].y, s[1].x) * 180 / Math.PI]});
-			$scope.S21ang_fromTargetM = sFromTargetM.S21.map(function(s){return [s[0], Math.atan2(s[1].y, s[1].x) * 180 / Math.PI]});
+			$scope.S21ang_fromTargetM = sFromTargetM.S21.map(function(s){return [s[0], Math.atan2(s[1].y, s[1].x) * 180 / Math.PI]}); */
 			
 			$scope.S11dB_fromExtractM = sFromExtractM.S11.map(function(s){return [s[0], 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10]});
 			$scope.S21dB_fromExtractM = sFromExtractM.S21.map(function(s){return [s[0], 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10]});
@@ -400,17 +402,17 @@ function handleChangeM(){
 		var data;
 		switch (select.toLowerCase()){
 			case "s21ang":
-				data = [{label: "S21(deg)", data: $scope.S21ang_fromSFile}, {label: "S21e(deg)", data: $scope.S21ang_fromExtractM}];
+				data = [{label: "S file", data: $scope.S21ang_fromSFile}, {label: "Extracted", data: $scope.S21ang_fromExtractM}];
 				break;
 			case "s11ang":
-				data = [{label: "S11(deg)", data: $scope.S11ang_fromSFile}, {label: "S11e(deg)", data: $scope.S11ang_fromExtractM}];
+				data = [{label: "S file", data: $scope.S11ang_fromSFile}, {label: "Extracted", data: $scope.S11ang_fromExtractM}];
 				break;
 			case "s21db":
-				data = [{label: "S21(dB)", data: $scope.S21dB_fromSFile}, {label: "S21e(dB)", data: $scope.S21dB_fromExtractM}];
+				data = [{label: "S file", data: $scope.S21dB_fromSFile}, {label: "Extracted", data: $scope.S21dB_fromExtractM}];
 				break;
 			case "s11db":
 			default:
-				data = [{label: "S11(dB)", data: $scope.S11dB_fromSFile}, {label: "S11e(dB)", data: $scope.S11dB_fromExtractM}];
+				data = [{label: "S file", data: $scope.S11dB_fromSFile}, {label: "Extracted", data: $scope.S11dB_fromExtractM}];
 		}
 		linearChart1.update(data, true);
 	}
@@ -438,13 +440,22 @@ function handleChangeM(){
 				$scope.data.tableDataFormat = tableDataFormat;
 		}
 	}
+	
+	$scope.capture = function(){
+		var tempStoreState = store.getState();
+		if (tempStoreState.hasOwnProperty("sFile")){
+			var sFile = tempStoreState.sFile;
+			extractMatrix(sFile);
+		}
+	}
 
 	var reader = new FileReader();
 	reader.onload = function(evt){
 		var sFile;
 		try {
 			sFile = common.ParseS2P(evt.target.result);
-			document.getElementById("p1-file").innerHTML = "S parameter file parsed successfully!";
+			document.getElementById("p1-file").innerHTML = "S parameter file parsed successfully!";			
+			store.dispatch({type: 'saveSFile', data: sFile})
 			extractMatrix(sFile);
 		} catch(e) {
 			document.getElementById("p1-file").innerHTML = e.message;
