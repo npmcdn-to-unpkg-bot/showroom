@@ -34,6 +34,7 @@ node_modules
 .DS_Store
 
 # python cache files, numpy data files
-__pycache__
+python/__pycache__
 *.pyc
 *.npy
+CP.cpython-35.pyc

@@ -100,8 +100,8 @@
 					var N = coefF.length,
 						bw = bandwidth,
 						w0 = Math.sqrt((centerFreq - bw / 2) * (centerFreq + bw / 2)),
-						normalizedS = freqMHz.map(function(d){return numeric.t(1 / q, (w0 / bw) * (d / w0 - w0 / d))}),
-						normalizedFreq = freqMHz.map(function(d){return numeric.t((w0 / bw) * (d / w0 - w0 / d), -1 / q)}),
+						normalizedS = freqMHz.map(function(d){return numeric.t(w0 / (q * bw), (w0 / bw) * (d / w0 - w0 / d))}),
+						normalizedFreq = freqMHz.map(function(d){return numeric.t((w0 / bw) * (d / w0 - w0 / d), -w0 / (q * bw))}),
 						vanderN = normalizedS.map(function(d){
 							var i, result = [], temp1 = numeric.t(1, 0);
 							for (i = 0; i < N + 1; i++){
@@ -128,8 +128,8 @@
 					var N = coupleMatrix.length - 2,
 						bw = bandwidth,
 						w0 = Math.sqrt((centerFreq - bw / 2) * (centerFreq + bw / 2)),
-						normalizedS = freqMHz.map(function(d){return numeric.t(1 / q, (w0 / bw) * (d / w0 - w0 / d))}),
-						normalizedFreq = freqMHz.map(function(d){return numeric.t((w0 / bw) * (d / w0 - w0 / d), -1 / q)}),
+						normalizedS = freqMHz.map(function(d){return numeric.t(w0 / (q * bw), (w0 / bw) * (d / w0 - w0 / d))}),
+						normalizedFreq = freqMHz.map(function(d){return numeric.t((w0 / bw) * (d / w0 - w0 / d), -w0 / (q * bw))}),
 						S11 = [],
 						S21 = [],			
 						minusR = numeric.rep([N + 2], 0);
