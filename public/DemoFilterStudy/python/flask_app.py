@@ -78,7 +78,8 @@ def get_task(method):
         S11_amp = 10 ** (np.array(reqJson['S11_db']) / 20)
         S11 = S11_amp * (np.cos(np.array(reqJson['S11_angRad'])) + 1j * np.sin(np.array(reqJson['S11_angRad'])))
         N = reqJson['filterOrder']
-        numZeros = len(reqJson['tranZeros'])
+        tranZeros = [x[0] + 1j * x[1] for x in reqJson['tranZeros']]
+        numZeros = len(tranZeros)
         filterOrder = np.hstack((np.zeros((N, )), 2 * np.ones((numZeros, ))))
         w1 = (reqJson['centerFreq'] - reqJson['bandwidth'] / 2) * 1e6
         w2 = (reqJson['centerFreq'] + reqJson['bandwidth'] / 2) * 1e6

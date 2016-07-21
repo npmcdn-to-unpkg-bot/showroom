@@ -649,15 +649,15 @@ def FPE2M(epsilon, epsilonE, rootF, rootP, rootE, method=1):
         else:
             coefP = np.array([1.])
 #        y21n = -1j *  coefP / np.abs(epsilonE)
-        y21n = -1j *  coefP / epsilonE
-#        y21n = -coefP / np.abs(epsilonE) + 0j
+#        y21n = -1j *  coefP / epsilonE
+        y21n = -coefP / np.abs(epsilonE) + 0j
     
         y21n /= yd[-1]
         y22n /= yd[-1]
         yd /= yd[-1]
     
-        r21k, lambdak, k21 = signal.residue(y21n[-1::-1], yd[-1::-1])
-        r22k, lambdak, k22 = signal.residue(y22n[-1::-1], yd[-1::-1])
+        r21k, lambdak, k21 = signal.residue(y21n[-1::-1], yd[-1::-1], tol=1e-9)
+        r22k, lambdak, k22 = signal.residue(y22n[-1::-1], yd[-1::-1], tol=1e-9)
 
         tempSort = np.argsort(np.imag(lambdak))
         lambdak = lambdak[tempSort]
@@ -943,7 +943,10 @@ def ReduceMAngleMethod(M, topology):
     MRotated = AdjustPrimaryCouple(MRotated)
     return MRotated
     
-def RotateMReduce(M, pivotI, pivotJ, removeRow, removeCol):
+def RotateMReduce(M, pivotI, pivotJ, removeRow, removeCol, isComplex = False):
+    if np.abs(M[removeRow, removeCol]) < 1e-9:
+        return M
+
     if pivotI == removeRow:
         otherRow = pivotJ
         otherCol = removeCol
@@ -962,14 +965,14 @@ def RotateMReduce(M, pivotI, pivotJ, removeRow, removeCol):
         tr = -M[removeRow, removeCol] / M[otherRow, otherCol]
     else:
         tr = M[removeRow, removeCol] / M[otherRow, otherCol]
-    tr2 = tr * tr
-    sr = np.sqrt(tr2 / (1 + tr2))
-    cr = np.sqrt(1 / (1 + tr2))
-    if tr < 0:
-        cr = -cr
+    cr = 1 / np.sqrt(1 + tr * tr)
+    sr = tr * cr
     
     N = M.shape[0] - 2
-    tempEye = np.eye(N + 2)
+    if isComplex == True:
+        tempEye = np.eye(N + 2, dtype = complex)
+    else:
+        tempEye = np.eye(N + 2)
     tempEye[pivotI, pivotI] = cr
     tempEye[pivotJ, pivotJ] = cr
     tempEye[pivotI, pivotJ] = -sr
@@ -1017,12 +1020,83 @@ def RotateArrow2Folded(M, topology):
 
     return AdjustPrimaryCouple(MRotated), point
 
-def FPE2MComprehensive(epsilon, epsilonE, rootF, rootP, rootE, topology):
-    fullMatrix = FPE2M(epsilon, epsilonE, rootF, rootP, rootE, method=1)
-    arrowMatrix = RotateM2Arrow(fullMatrix)
-    foldedMatrix, point = RotateArrow2Folded(arrowMatrix, topology)
-    if np.abs(point) < 1e-4:
-        MRotated = foldedMatrix
+def MoveZero(M, startRow, stopRow, w):
+    N = M.shape[0] - 2
+    MRotated = M.astype(complex)
+    tempEye = np.eye(N + 2, dtype = complex)
+
+    if np.abs(w + M[startRow + 1, startRow + 1]) < 1e-9:
+        tr = 1e9
     else:
-        MRotated = ReduceMAngleMethod(foldedMatrix, topology)
+        tr = M[startRow, startRow + 1] / (w + M[startRow + 1, startRow + 1])
+    cr = 1 / np.sqrt(1 + tr * tr)
+    sr = tr * cr
+    tempEye[startRow, startRow] = cr
+    tempEye[startRow + 1, startRow + 1] = cr
+    tempEye[startRow, startRow + 1] = -sr
+    tempEye[startRow + 1, startRow] = sr
+    MRotated = tempEye.dot(MRotated).dot(tempEye.T)
+    for i in np.arange(startRow - 1, stopRow, -1):
+        MRotated = RotateMReduce(MRotated, i, i + 1, i, i + 2, isComplex = True)
+    return MRotated
+
+def RotateArrow2CTCQ(M, topology, tranZeros):
+    N = M.shape[0] - 2
+    indexZeros = 0
+    MRotated = M.copy()
+    point = np.sum(np.abs(MRotated[topology == 0]))
+    for i in np.arange(N):
+        if (i + 4 < N + 2) and np.any(topology[i, i + 4:]) :
+            break
+        if (i + 3 < N + 2) and (topology[i, i + 3] == 1):
+            if (i > 0) and np.any(topology[i - 1, i + 1:]):
+                break
+            if (i + 4 < N + 2) and (np.any(topology[i, i + 4:]) or np.any(topology[i + 1, i + 4:])):
+                break
+            if (i + 2 < N) and (i + 4 < N + 2) and np.any(topology[i + 2, i + 4:]):
+                break
+            if indexZeros < len(tranZeros):
+                MRotated = MoveZero(MRotated, N - 1, i, -1j * tranZeros[indexZeros])
+                point = np.sum(np.abs(MRotated[topology == 0]))
+                indexZeros += 1
+            if indexZeros < len(tranZeros):
+                MRotated = MoveZero(MRotated, N - 1, i + 1, -1j * tranZeros[indexZeros])
+                point = np.sum(np.abs(MRotated[topology == 0]))
+                indexZeros += 1
+            if topology[i, i + 2] == 0:
+                MRotated = RotateMReduce(MRotated, i + 1, i + 2, i, i + 2, isComplex = True)
+                point = np.sum(np.abs(MRotated[topology == 0]))
+            if topology[i + 1, i + 3] == 0:
+                MRotated = RotateMReduce(MRotated, i + 1, i + 2, i + 1, i + 3, isComplex = True)
+                point = np.sum(np.abs(MRotated[topology == 0]))
+            if indexZeros > len(tranZeros) - 1:
+                break
+        if (i + 2 < N + 2) and (topology[i, i + 2] == 1):
+            if (i > 0) and np.any(topology[i - 1, i + 1:]):
+                break
+            if (i + 3 < N + 2) and np.any(topology[i, i + 3:]):
+                break
+            if (i + 1 < N) and (i + 3 < N + 2) and np.any(topology[i + 1, i + 3:]):
+                break
+            MRotated = MoveZero(MRotated, N - 1, i, -1j * tranZeros[indexZeros])
+            point = np.sum(np.abs(MRotated[topology == 0]))
+            indexZeros += 1
+            if indexZeros > len(tranZeros) - 1:
+                break
+    return AdjustPrimaryCouple(np.real(MRotated)), point
+
+def FPE2MComprehensive(epsilon, epsilonE, rootF, rootP, rootE, topology):
+    fullMatrix = FPE2M(epsilon, epsilonE, rootF, rootP, rootE, method = 1)
+    arrowMatrix = RotateM2Arrow(fullMatrix)
+    ctcqMatrix, ctcqPoint = RotateArrow2CTCQ(arrowMatrix, topology, rootP)
+    if np.abs(ctcqPoint) < 1e-4:
+        MRotated = ctcqMatrix
+    else:
+        foldedMatrix, foldedPoint = RotateArrow2Folded(arrowMatrix, topology)
+        if np.abs(foldedPoint) < 1e-4:
+            MRotated = foldedMatrix
+        elif ctcqPoint < foldedPoint:
+            MRotated = ReduceMAngleMethod(ctcqMatrix, topology)
+        else:
+            MRotated = ReduceMAngleMethod(foldedMatrix, topology)
     return MRotated

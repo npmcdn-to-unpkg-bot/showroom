@@ -12,8 +12,8 @@ from numpy.polynomial import Polynomial
 from scipy import optimize, interpolate, signal, sparse
 import matplotlib.pyplot as plt
 
-rootP = np.array([-1.2j, 1.5j, 1.2j]) #np.array([-2j, 2j])
-N = 10
+rootP = np.array([1.083j, 1.3j, 1.6j]) #np.array([-2j, 2j])
+N = 16
 returnLoss= 20.0
 epsilon, coefP, coefF, coefE = CP.ChebyshevP2EF(rootP, N, returnLoss)
 
@@ -35,13 +35,14 @@ topology[-1, -1] = 0
 for i in np.arange(N + 1):
     topology[i, i + 1] = 1
     topology[i + 1, i] = 1
-#topology[2, 5] = 1
+topology[1, 3] = 1
+topology[3, 1] = 1
 topology[3, 5] = 1
 topology[5, 3] = 1
 topology[3, 6] = 1
 topology[6, 3] = 1
-topology[7, 9] = 1
-topology[9, 7] = 1
+#topology[7, 9] = 1
+#topology[9, 7] = 1
 
 EF = Polynomial.fromroots(rootE).coef + np.abs(epsilon / epsilonE) * Polynomial.fromroots(rootF).coef
 realEF = np.real(EF)
@@ -70,8 +71,13 @@ y21n /= yd[-1]
 y22n /= yd[-1]
 yd /= yd[-1]
 
-r21k, lambdak, k21 = signal.residue(y21n[-1::-1], yd[-1::-1])
-r22k, lambdak, k22 = signal.residue(y22n[-1::-1], yd[-1::-1])
+#rootYd = Polynomial(yd).roots()
+#rootYd[0] += 0.001j + 1.51089316e-03
+#rootYd[-1] -= 0.001j - 1.51089316e-03
+#yd = Polynomial.fromroots(rootYd)
+
+r21k, lambdak, k21 = signal.residue(y21n[-1::-1], yd[-1::-1], tol=1e-9)
+r22k, lambdak, k22 = signal.residue(y22n[-1::-1], yd[-1::-1], tol=1e-9)
 
 tempSort = np.argsort(np.imag(lambdak))
 lambdak = lambdak[tempSort]
@@ -96,16 +102,21 @@ M[1:-1, 0] = Msk
 M[-1, 1:-1] = Mlk
 M[1:-1, -1] = Mlk
 
-#print(np.round(np.real(M), 2))
+#M = np.real(M)
+print(np.round(np.real(M), 2), "\n")
 
-#plt.clf()
-#plt.subplot(1, 2, 1)
-#plt.plot(normalizedFreq, 20*np.log10(np.abs(S11)), 'o');
-#plt.title('S11(dB)')
-#plt.subplot(1, 2, 2)
-#plt.plot(normalizedFreq, 20*np.log10(np.abs(S21)), 'o');
-#plt.title('S21(dB)')
-#plt.draw()
+S21, S11 = CP.CM2S(M, normalizedFreq)
+
+plt.clf()
+plt.subplot(1, 2, 1)
+plt.plot(normalizedFreq, 20*np.log10(np.abs(S11_old)), 'o');
+plt.plot(normalizedFreq, 20*np.log10(np.abs(S11)), '*');
+plt.title('S11(dB)')
+plt.subplot(1, 2, 2)
+plt.plot(normalizedFreq, 20*np.log10(np.abs(S21_old)), 'o');
+plt.plot(normalizedFreq, 20*np.log10(np.abs(S21)), '*');
+plt.title('S21(dB)')
+plt.draw()
 
 
 def SerializeM(M):
@@ -228,7 +239,10 @@ def EvaluateJ(M, serializedT, cr, sr):
     return J, r, MRotated
 
 
-def RotateMReduce(M, pivotI, pivotJ, removeRow, removeCol):
+def RotateMReduce(M, pivotI, pivotJ, removeRow, removeCol, isComplex = False):
+    if np.abs(M[removeRow, removeCol]) < 1e-9:
+        return M
+
     if pivotI == removeRow:
         otherRow = pivotJ
         otherCol = removeCol
@@ -247,14 +261,14 @@ def RotateMReduce(M, pivotI, pivotJ, removeRow, removeCol):
         tr = -M[removeRow, removeCol] / M[otherRow, otherCol]
     else:
         tr = M[removeRow, removeCol] / M[otherRow, otherCol]
-    tr2 = tr * tr
-    sr = np.sqrt(tr2 / (1 + tr2))
-    cr = np.sqrt(1 / (1 + tr2))
-    if tr < 0:
-        cr = -cr
+    cr = 1 / np.sqrt(1 + tr * tr)
+    sr = tr * cr
     
     N = M.shape[0] - 2
-    tempEye = np.eye(N + 2)
+    if isComplex == True:
+        tempEye = np.eye(N + 2, dtype = complex)
+    else:
+        tempEye = np.eye(N + 2)
     tempEye[pivotI, pivotI] = cr
     tempEye[pivotJ, pivotJ] = cr
     tempEye[pivotI, pivotJ] = -sr
@@ -304,67 +318,139 @@ def RotateArrow2Folded(M, topology):
                     return AdjustPrimaryCouple(MRotated), newpoint
 
     return AdjustPrimaryCouple(MRotated), point
-    
+
+
+def MoveZero(M, startRow, stopRow, w):
+    N = M.shape[0] - 2
+    MRotated = M.astype(complex)
+    tempEye = np.eye(N + 2, dtype = complex)
+
+    if np.abs(w + M[startRow + 1, startRow + 1]) < 1e-9:
+        tr = 1e9
+    else:
+        tr = M[startRow, startRow + 1] / (w + M[startRow + 1, startRow + 1])
+    cr = 1 / np.sqrt(1 + tr * tr)
+    sr = tr * cr
+    tempEye[startRow, startRow] = cr
+    tempEye[startRow + 1, startRow + 1] = cr
+    tempEye[startRow, startRow + 1] = -sr
+    tempEye[startRow + 1, startRow] = sr
+    MRotated = tempEye.dot(MRotated).dot(tempEye.T)
+    for i in np.arange(startRow - 1, stopRow, -1):
+        MRotated = RotateMReduce(MRotated, i, i + 1, i, i + 2, isComplex = True)
+    return MRotated
+
+def RotateArrow2CTCQ(M, topology, tranZeros):
+    N = M.shape[0] - 2
+    indexZeros = 0
+    MRotated = M.copy()
+    point = np.sum(np.abs(MRotated[topology == 0]))
+    for i in np.arange(N):
+        if (i + 4 < N + 2) and np.any(topology[i, i + 4:]) :
+            break
+        if (i + 3 < N + 2) and (topology[i, i + 3] == 1):
+            if (i > 0) and np.any(topology[i - 1, i + 1:]):
+                break
+            if (i + 4 < N + 2) and (np.any(topology[i, i + 4:]) or np.any(topology[i + 1, i + 4:])):
+                break
+            if (i + 2 < N) and (i + 4 < N + 2) and np.any(topology[i + 2, i + 4:]):
+                break
+            if indexZeros < len(tranZeros):
+                MRotated = MoveZero(MRotated, N - 1, i, -1j * tranZeros[indexZeros])
+                point = np.sum(np.abs(MRotated[topology == 0]))
+                indexZeros += 1
+            if indexZeros < len(tranZeros):
+                MRotated = MoveZero(MRotated, N - 1, i + 1, -1j * tranZeros[indexZeros])
+                point = np.sum(np.abs(MRotated[topology == 0]))
+                indexZeros += 1
+            if topology[i, i + 2] == 0:
+                MRotated = RotateMReduce(MRotated, i + 1, i + 2, i, i + 2, isComplex = True)
+                point = np.sum(np.abs(MRotated[topology == 0]))
+            if topology[i + 1, i + 3] == 0:
+                MRotated = RotateMReduce(MRotated, i + 1, i + 2, i + 1, i + 3, isComplex = True)
+                point = np.sum(np.abs(MRotated[topology == 0]))
+            if indexZeros > len(tranZeros) - 1:
+                break
+        if (i + 2 < N + 2) and (topology[i, i + 2] == 1):
+            if (i > 0) and np.any(topology[i - 1, i + 1:]):
+                break
+            if (i + 3 < N + 2) and np.any(topology[i, i + 3:]):
+                break
+            if (i + 1 < N) and (i + 3 < N + 2) and np.any(topology[i + 1, i + 3:]):
+                break
+            MRotated = MoveZero(MRotated, N - 1, i, -1j * tranZeros[indexZeros])
+            point = np.sum(np.abs(MRotated[topology == 0]))
+            indexZeros += 1
+            if indexZeros > len(tranZeros) - 1:
+                break
+    return AdjustPrimaryCouple(np.real(MRotated)), point
+
+
+
 M = np.real(M)
 
 
 pr = cProfile.Profile()
 pr.enable()
 
-resultM = CP.FPE2MComprehensive(epsilon, epsilonE, rootF, rootP, rootE, topology)
-print(np.round(resultM, 2), "\n")
+#resultM = CP.FPE2MComprehensive(epsilon, epsilonE, rootF, rootP, rootE, topology)
+#print(np.round(resultM, 2), "\n")
 
-M = RotateM2Arrow(M)
-foldedM, point = RotateArrow2Folded(M, topology)
-print(np.round(M, 2), "\n")
-print(np.round(foldedM, 2))
-if np.abs(point) < 1e-4:
-    MRotated = foldedM
-    print("folded M found")
-else:
-    serializedT = SerializeM(topology)
-    serializedT[0] = 1
-    serializedT[N + 1] = 1
-    serializedT[-1] = 1
-    numTheta = int(N * (N - 1) / 2)
-    theta = np.zeros((numTheta, ))
-    numIter = 10 + int(3600 / (N * N))
-    cost = np.zeros((numIter, ))
-    dumpFactor = 0.1
-    v = 1.5
-    
-    for i in np.arange(numIter):
-        cr = np.cos(theta)
-        sr = np.sin(theta)
-        J, r, MRotated = EvaluateJ(M, serializedT, cr, sr)
-        costCurr = r.dot(r)
-        cost[i] = costCurr
-        if costCurr < 1e-8:
-            break
-        
-        b = -J.T.dot(r)
-        a1 = J.T.dot(J)
-        a2 = np.diag(np.diag(a1))
-        
-        for j in np.arange(30):
-            delta1 = np.linalg.solve(a1 + a2 * dumpFactor / v, b)
-            r1 = EvaluateR(M, serializedT, np.cos(theta + delta1), np.sin(theta + delta1))[0]
-            costCurr1 = r1.dot(r1)
-            if costCurr1 < costCurr:
-                if dumpFactor > 1e-9:
-                    dumpFactor /= v
-                theta += delta1
-                break
-            else:
-                delta2 = np.linalg.solve(a1 + a2 * dumpFactor, b)
-                r2 = EvaluateR(M, serializedT, np.cos(theta + delta2), np.sin(theta + delta2))[0]
-                costCurr2 = r2.dot(r2)
-                if costCurr2 < costCurr:
-                    theta += delta2
-                    break
-            dumpFactor *= v
-    
-    MRotated = AdjustPrimaryCouple(MRotated)
+arrowM = RotateM2Arrow(M)
+tranZeros = rootP
+ctcqM, ctcqPoint = RotateArrow2CTCQ(arrowM, topology, tranZeros)
+print(np.round(np.real(ctcqM), 2), ctcqPoint, "\n")
+foldedM, point = RotateArrow2Folded(arrowM, topology)
+#print(np.round(M, 2), "\n")
+#print(np.round(foldedM, 2))
+#if np.abs(point) < 1e-4:
+#    MRotated = foldedM
+#    print("folded M found")
+#else:
+#    M = np.real(foldedM)
+#    serializedT = SerializeM(topology)
+#    serializedT[0] = 1
+#    serializedT[N + 1] = 1
+#    serializedT[-1] = 1
+#    numTheta = int(N * (N - 1) / 2)
+#    theta = np.zeros((numTheta, ))
+#    numIter = 10 + int(3600 / (N * N))
+#    cost = np.zeros((numIter, ))
+#    dumpFactor = 0.1
+#    v = 1.5
+#    
+#    for i in np.arange(numIter):
+#        cr = np.cos(theta)
+#        sr = np.sin(theta)
+#        J, r, MRotated = EvaluateJ(M, serializedT, cr, sr)
+#        costCurr = r.dot(r)
+#        cost[i] = costCurr
+#        if costCurr < 1e-8:
+#            break
+#        
+#        b = -J.T.dot(r)
+#        a1 = J.T.dot(J)
+#        a2 = np.diag(np.diag(a1))
+#        
+#        for j in np.arange(30):
+#            delta1 = np.linalg.solve(a1 + a2 * dumpFactor / v, b)
+#            r1 = EvaluateR(M, serializedT, np.cos(theta + delta1), np.sin(theta + delta1))[0]
+#            costCurr1 = r1.dot(r1)
+#            if costCurr1 < costCurr:
+#                if dumpFactor > 1e-9:
+#                    dumpFactor /= v
+#                theta += delta1
+#                break
+#            else:
+#                delta2 = np.linalg.solve(a1 + a2 * dumpFactor, b)
+#                r2 = EvaluateR(M, serializedT, np.cos(theta + delta2), np.sin(theta + delta2))[0]
+#                costCurr2 = r2.dot(r2)
+#                if costCurr2 < costCurr:
+#                    theta += delta2
+#                    break
+#            dumpFactor *= v
+#    
+#    MRotated = AdjustPrimaryCouple(MRotated)
 
 pr.disable()
 s = io.StringIO()
@@ -373,9 +459,9 @@ ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
 ps.print_stats()
 #print(s.getvalue())
 
-print(np.round(MRotated, 2))
-plt.clf()
-plt.plot(cost)
+#print(np.round(MRotated, 2))
+#plt.clf()
+#plt.plot(cost)
 
 
 #reqJson = np.load('tempData.npy')[0]

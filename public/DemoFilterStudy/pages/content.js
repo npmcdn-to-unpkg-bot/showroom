@@ -146,6 +146,20 @@ angular
 		$scope.filterOrderChange();		
 	}
 
+
+	$scope.showChart = function(select){
+		var data;
+		switch (select.toLowerCase()){
+			case "groupdelay":
+				data = [{label: "Group delay (ns)", data: $scope.GroupDelay_fromM}];
+				break;
+			case "s":
+			default:
+				data = [{label: "S11(dB)", data: $scope.S11dB_fromM}, {label: "S21(dB)", data: $scope.S21dB_fromM}];
+		}
+		linearChart.update(data, true);
+	}
+	
 	$scope.calculate = async function(){
 		function polyResult(coef){
 			return vanderN.map(function(v){
@@ -169,16 +183,22 @@ angular
 				coefP = response.coefP.map(function(d){return numeric.t(d[0], d[1])}),
 				coefF = response.coefF.map(function(d){return numeric.t(d[0], d[1])}),
 				coefE = response.coefE.map(function(d){return numeric.t(d[0], d[1])}),
-				sFromFPE = common.FPE2S(epsilon, epsilonE, coefF, coefP, coefE, freqMHz, $scope.data.unloadedQ, $scope.data.centerFreq, $scope.data.bandwidth),
+/* 				sFromFPE = common.FPE2S(epsilon, epsilonE, coefF, coefP, coefE, freqMHz, $scope.data.unloadedQ, $scope.data.centerFreq, $scope.data.bandwidth),
 				S11dB = sFromFPE.S11.map(function(s){return [s[0], 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10]}),
-				S21dB = sFromFPE.S21.map(function(s){return [s[0], 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10]}),
-				sFromM = common.CM2S(response.targetMatrix, freqMHz, $scope.data.unloadedQ, $scope.data.centerFreq, $scope.data.bandwidth),
-				S11dB_fromM = sFromM.S11.map(function(s){return [s[0], 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10]}),
-				S21dB_fromM = sFromM.S21.map(function(s){return [s[0], 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10]}),
+				S21dB = sFromFPE.S21.map(function(s){return [s[0], 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10]}), */
+				sFromM = common.CM2S(response.targetMatrix, freqMHz, $scope.data.unloadedQ, $scope.data.centerFreq, $scope.data.bandwidth);
 				
-				data = [{label: "S11(dB)", data: S11dB_fromM}, {label: "S21(dB)", data: S21dB_fromM}];
+			$scope.S11dB_fromM = sFromM.S11.map(function(s){return [s[0], 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10]});
+			$scope.S21dB_fromM = sFromM.S21.map(function(s){return [s[0], 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10]});
+			$scope.GroupDelay_fromM = sFromM.S21.map(function(s, i, o){
+				var freqStep = (i === o.length - 1)? o[i][0] - o[i - 1][0] : o[i + 1][0] - o[i][0],
+					phase1 = Math.atan2(o[i][1].y, o[i][1].x),
+					phase2 = (i === o.length - 1)? 2 * Math.atan2(o[i][1].y, o[i][1].x) - Math.atan2(o[i - 1][1].y, o[i - 1][1].x) : Math.atan2(o[i + 1][1].y, o[i + 1][1].x),
+					phaseStep = phase2 - phase1;
+				phaseStep = phaseStep - Math.round(phaseStep / Math.PI) * Math.PI;
+				return [s[0], -phaseStep / (2 * Math.PI * freqStep)]});
 
-			linearChart.update(data, true);			
+			document.querySelector('#s11dbChart').click();
 
 			$scope.data.targetMatrix = response.targetMatrix;
 			$scope.$digest();
