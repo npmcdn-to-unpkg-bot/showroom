@@ -119,6 +119,9 @@
 											<h5>TRANSMISSION ZEROS</h5>
 										</div>
 										<div class="panel-body" style="max-height: 240px; overflow: auto;">
+											<a href="" ng-click="switchPosition(data.focusZero, data.focusZero-1)">&nbsp;&nbsp;<i class="fa fa-arrow-up fa-lg fa-border"></i>&nbsp;</a>
+											&nbsp;
+											<a href="" ng-click="switchPosition(data.focusZero, data.focusZero+1)">&nbsp;&nbsp;<i class="fa fa-arrow-down fa-lg fa-border"></i>&nbsp;</a>
 											<table class="table table-condensed">
 												<thead>
 													<tr>
@@ -129,10 +132,10 @@
 												<tbody>
 													<tr ng-repeat="d in data.tranZeros track by $index">
 														<td>
-															<input type="number" class="form-control input-sm" ng-model="d[0]" ng-change="$last && (d[0] !== '') && data.tranZeros.push(['', ''])">
+															<input type="number" class="form-control input-sm" ng-model="d[0]" ng-change="$last && (d[0] !== '') && data.tranZeros.push(['', ''])" ng-focus="data.focusZero = $index">
 														</td>
 														<td>
-															<input type="number" class="form-control input-sm" ng-model="d[1]" ng-change="$last && (d[1] !== '') && data.tranZeros.push(['', ''])">
+															<input type="number" class="form-control input-sm" ng-model="d[1]" ng-change="$last && (d[1] !== '') && data.tranZeros.push(['', ''])" ng-focus="data.focusZero = $index">
 														</td>
 													</tr>
 												</tbody>
@@ -197,7 +200,7 @@
             <div class="row last-row-fullheight">
 							<div class="col-sm-6">
 								<div class="panel panel-primary">
-									<div class="panel-body" style="height: 500px;">
+									<div class="panel-body" style="height: 550px;">
 										<!-- Nav tabs -->
 										<ul class="nav nav-tabs" role="tablist">
 											<li role="presentation" class="active"><a id="s11dbChart" href="" ng-click="showChart('s')" aria-controls="home" role="tab" data-toggle="tab">S Parameter</a></li>
@@ -211,7 +214,7 @@
 							</div>
 							<div class="col-sm-6">
 								<div class="panel panel-primary">
-									<div class="panel-body" style="height: 500px; overflow: auto;">
+									<div class="panel-body" style="height: 550px; overflow: auto;">
 										<div class="row">
 											<div class="col-sm-2">
 												<div class="radio">

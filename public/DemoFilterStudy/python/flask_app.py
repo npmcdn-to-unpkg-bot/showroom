@@ -1,4 +1,5 @@
 import flask, urllib.request, tempfile, json
+import itertools
 import numpy as np
 from numpy.polynomial import Polynomial
 import CP
@@ -87,6 +88,10 @@ def get_task(method):
         startFreq = reqJson['captureStartFreqMHz'] * 1e6
         stopFreq = reqJson['captureStopFreqMHz'] * 1e6
         epsilon, epsilonE, Qu, rootF, rootP, rootE = CP.S2FP(freq, S21, S11, filterOrder, w1, w2, wga=1.122*0.0254, method=3, startFreq=startFreq, stopFreq=stopFreq)
+#        print(Qu)
+        rootP_perm = np.array([x for x in itertools.permutations(rootP)])
+        deltaRootP = np.sum(np.abs(rootP_perm - tranZeros), axis=1)
+        rootP = rootP_perm[np.argmin(deltaRootP)]
         topology = np.array(reqJson['topology'])
         extractedMatrix = CP.FPE2MComprehensive(epsilon, epsilonE, rootF, rootP, rootE, topology)
         targetMatrix = np.array(reqJson['targetMatrix'])

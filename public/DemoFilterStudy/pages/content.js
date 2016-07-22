@@ -118,6 +118,17 @@ angular
 		store.dispatch({type: 'createTopoM', M: M})
 	}
 
+	$scope.switchPosition = function(curr, target){
+		var tranZeros = $scope.data.tranZeros;
+		if ((target >= 0) && (target < tranZeros.length)){
+			var temp1 = [tranZeros[target][0], tranZeros[target][1]];
+			tranZeros[target][0] = tranZeros[curr][0];
+			tranZeros[target][1] = tranZeros[curr][1];
+			tranZeros[curr][0] = temp1[0];
+			tranZeros[curr][1] = temp1[1];
+		}
+	}
+
 	var tempStoreState = store.getState();
 	
 	if (tempStoreState.hasOwnProperty("savedSynthesisData")){
@@ -135,7 +146,8 @@ angular
 			filterType: "BPF",
 			/* tranZeros: [['', 1.5], ['', '']], */
 			tranZeros: [['', '']],
-			matrixDisplay: "M"
+			matrixDisplay: "M",
+			focusZero: 0
 		}
 	}	
 

@@ -454,7 +454,7 @@ def S2FP(inFreq, inS21, inS11, filterOrder, w1, w2, wga, wgb=0.1, method=0, star
 #        tempIndex = np.argmin(np.abs(normalizedFreq - 0))
         tempIndex = np.argmin(np.abs(S11))
 #        tempIndex = np.argmax(np.abs(S21))
-        tempEqn = lambda x: np.abs(polyP(1j * normalizedFreq[tempIndex] + 1. / x)) - np.abs(S21[tempIndex] * epsilonE * polyE(1j * normalizedFreq[tempIndex] + 1. / x))
+        tempEqn = lambda x: np.abs(polyP(1j * normalizedFreq[tempIndex] + np.sqrt(w2 * w1) / (x * (w2 - w1)))) - np.abs(S21[tempIndex] * epsilonE * polyE(1j * normalizedFreq[tempIndex] + np.sqrt(w2 * w1) / (x * (w2 - w1))))
 #        plt.clf()
 #        aaa = np.arange(10, 10000, 10)
 #        plt.plot(aaa, tempEqn(aaa))
@@ -580,8 +580,9 @@ def S2FP(inFreq, inS21, inS11, filterOrder, w1, w2, wga, wgb=0.1, method=0, star
         rootF, rootP = DeserializeFP(np.arange(filterOrder.shape[0] * 2), filterOrder)
         nF = rootF.shape[0]
         nP = len(rootP)
+        normalizedS = 1j * normalizedFreq + np.sqrt(w2 * w1) / (Qu * (w2 - w1))
         for i in np.arange(0, 2):
-            M = np.hstack((np.vander(1j * normalizedFreq + 1./Qu, nF+1, increasing=True), -np.diag(S11 / S21).dot(np.vander(1j * normalizedFreq + 1./Qu, nP+1, increasing=True))))
+            M = np.hstack((np.vander(normalizedS, nF+1, increasing=True), -np.diag(S11 / S21).dot(np.vander(normalizedS, nP+1, increasing=True))))
 #            M = np.hstack((np.diag(S21).dot(np.vander(1j * normalizedFreq + 1./Qu, nF+1, increasing=True)), -np.diag(S11).dot(np.vander(1j * normalizedFreq + 1./Qu, nP+1, increasing=True))))
             Q, R = np.linalg.qr(M, mode='complete')
             R11 = R[:nF+1, :nF+1]
@@ -601,14 +602,14 @@ def S2FP(inFreq, inS21, inS11, filterOrder, w1, w2, wga, wgb=0.1, method=0, star
 #            for j in rootP:
 #                tempIndex = np.argmin(np.abs(normalizedFreq - np.imag(j)))
 #                temp1[tempIndex - 10 : tempIndex + 10] = 0.2e-4 / np.abs(S21[tempIndex])
-            M = np.diag(temp1).dot(np.hstack((np.diag(S21).dot(np.vander(1j * normalizedFreq + 1./Qu, nF+1, increasing=True)), -np.diag(S11).dot(np.vander(1j * normalizedFreq + 1./Qu, nP+1, increasing=True).dot(np.array([coefP]).T)))))
+            M = np.diag(temp1).dot(np.hstack((np.diag(S21).dot(np.vander(normalizedS, nF+1, increasing=True)), -np.diag(S11).dot(np.vander(normalizedS, nP+1, increasing=True).dot(np.array([coefP]).T)))))
             V = np.linalg.svd(M)[2]
             temp1 = np.conj(V[-1, :]) # b
             coefF = temp1[:-1]
             rootF = Polynomial(coefF).roots()
             coefP = temp1[-1] * coefP
             if np.all((np.real(rootF) < 0.01) & (np.real(rootF) > -0.01)): 
-                Qu = 1. / (1. / Qu - np.median(np.real(rootF)))
+                Qu = 1. / (1. / Qu - np.median(np.real(rootF)) * (w2 - w1) / np.sqrt(w2 * w1))
             else:
                 break
         epsilon = coefF[-1] / coefP[-1]
@@ -617,6 +618,7 @@ def S2FP(inFreq, inS21, inS11, filterOrder, w1, w2, wga, wgb=0.1, method=0, star
 
 #        epsilon, epsilonE, rootE = GetEpsilonRootE(rootF, rootP, S11, S21, normalizedFreq, Qu)
     Qu = GetQu(epsilon, epsilonE, Qu, rootF, rootP, rootE, S11, S21, normalizedFreq)
+    Qu = Qu
 #    print('epsilon:', epsilon)
 #    print('epsilonE:', epsilonE)
 #    print('Qu:', Qu)
@@ -1091,10 +1093,12 @@ def FPE2MComprehensive(epsilon, epsilonE, rootF, rootP, rootE, topology):
     ctcqMatrix, ctcqPoint = RotateArrow2CTCQ(arrowMatrix, topology, rootP)
     if np.abs(ctcqPoint) < 1e-4:
         MRotated = ctcqMatrix
+#        print("CTCQ detected")
     else:
         foldedMatrix, foldedPoint = RotateArrow2Folded(arrowMatrix, topology)
         if np.abs(foldedPoint) < 1e-4:
             MRotated = foldedMatrix
+#            print("Folded detected")
         elif ctcqPoint < foldedPoint:
             MRotated = ReduceMAngleMethod(ctcqMatrix, topology)
         else:
