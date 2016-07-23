@@ -104,8 +104,8 @@ angular
 	}, 100);
 
 	$scope.filterOrderChange = function(){
-		if ($scope.data.filterOrder > 16){
-			$scope.data.filterOrder = 16;
+		if ($scope.data.filterOrder > 20){
+			$scope.data.filterOrder = 20;
 		}
 		var N = $scope.data.filterOrder,
 			M = numeric.identity(N + 2), i;
