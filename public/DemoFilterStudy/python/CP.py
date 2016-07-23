@@ -108,6 +108,14 @@ def CM2S(M, normalizedFreq):
         S11[k] = 1. + 2j * R1 * Y[0, 0];
         S21[k] = -2j * np.sqrt(R1 * RN) * Y[-1, 0];
 
+#        Y00 = np.linalg.det(Z[1:, 1:]) / np.linalg.det(Z)
+#        if N % 2 == 0:
+#            Y10 = -np.linalg.det(Z[:-1, 1:]) / np.linalg.det(Z)
+#        else:            
+#            Y10 = np.linalg.det(Z[:-1, 1:]) / np.linalg.det(Z)
+#        S11[k] = 1. + 2j * R1 * Y00;
+#        S21[k] = -2j * np.sqrt(R1 * RN) * Y10;
+        
 #        Y1, info = sparse.linalg.gmres(Z, np.append(np.array([1.]), np.zeros((N - 1,))))
 #        S11[k] = 1. + 2j * R1 * Y1[0];
 #        S21[k] = -2j * np.sqrt(R1 * RN) * Y1[-1];

@@ -12,14 +12,42 @@ from numpy.polynomial import Polynomial
 from scipy import optimize, interpolate, signal, sparse
 import matplotlib.pyplot as plt
 
-rootP = np.array([1.083j, 1.3j, 1.6j]) #np.array([-2j, 2j])
+rootP = np.array([1.9j]) #np.array([-2j, 2j])
 N = 16
-returnLoss= 20.0
-epsilon, coefP, coefF, coefE = CP.ChebyshevP2EF(rootP, N, returnLoss)
+returnLoss= 30.0
+#epsilon, coefP, coefF, coefE = CP.ChebyshevP2EF(rootP, N, returnLoss)
+
+U = 1.
+V = 0.
+
+for k in np.arange(0, N):
+    tempU = U;
+    tempV = V;
+    if k < len(rootP):
+        a = Polynomial([-1j / rootP[k], 1])
+        b = np.sqrt(1 + 1 / (rootP[k] * rootP[k]))
+    else:
+        a = Polynomial([0., 1.])
+        b = 1.
+    U = a * tempU + b * Polynomial([-1, 0, 1]) * tempV;
+    V = a * tempV + b * tempU;
+
+rootF = U.roots() * 1j; # w domain to s domain
+polyF = Polynomial.fromroots(rootF)
+
+if len(rootP) == 0:
+    polyP = Polynomial([1])
+else:
+    polyP = Polynomial.fromroots(rootP)
+
+epsilon = polyP(1j) / (polyF(1j) * np.sqrt(10 ** (np.abs(returnLoss) / 10) - 1))
+rootE = CP.FP2E(epsilon, rootF, rootP);
+polyE = Polynomial.fromroots(rootE);
+
 
 normalizedFreq = np.arange(-5.5, 5.5, 0.01)
-polyF = Polynomial(coefF)
-polyE = Polynomial(coefE)
+#polyF = Polynomial(coefF)
+#polyE = Polynomial(coefE)
 rootF = polyF.roots()
 rootE = polyE.roots()
 epsilonE = epsilon
@@ -29,22 +57,23 @@ S11_old, S21_old = CP.FPE2S(epsilon, epsilonE, rootF, rootP, rootE, normalizedFr
 #print(rootE)
 
 
-topology = np.eye(N + 2)
+topology = np.eye(N + 2, dtype=int)
 topology[0, 0] = 0
 topology[-1, -1] = 0
 for i in np.arange(N + 1):
     topology[i, i + 1] = 1
     topology[i + 1, i] = 1
-topology[1, 3] = 1
-topology[3, 1] = 1
-topology[3, 5] = 1
-topology[5, 3] = 1
-topology[3, 6] = 1
-topology[6, 3] = 1
-#topology[7, 9] = 1
-#topology[9, 7] = 1
+#topology[1, 3] = 1
+#topology[3, 1] = 1
+#topology[3, 5] = 1
+#topology[5, 3] = 1
+#topology[3, 6] = 1
+#topology[6, 3] = 1
+topology[7, 9] = 1
+topology[9, 7] = 1
 
-EF = Polynomial.fromroots(rootE).coef + np.abs(epsilon / epsilonE) * Polynomial.fromroots(rootF).coef
+#EF = Polynomial.fromroots(rootE).coef + np.abs(epsilon / epsilonE) * Polynomial.fromroots(rootF).coef
+EF = polyE.coef + np.abs(epsilon / epsilonE) * polyF.coef
 realEF = np.real(EF)
 imagEF = np.imag(EF)
 
@@ -65,13 +94,15 @@ if len(rootP) > 0:
 else:
     coefP = np.array([1.])
 #y21n = -1j *  coefP / epsilonE
+coefP = polyP.coef
 y21n = -coefP / np.abs(epsilonE) + 0j
 
 y21n /= yd[-1]
 y22n /= yd[-1]
 yd /= yd[-1]
 
-#rootYd = Polynomial(yd).roots()
+polyYd = Polynomial(yd)
+rootYd = polyYd.roots()
 #rootYd[0] += 0.001j + 1.51089316e-03
 #rootYd[-1] -= 0.001j - 1.51089316e-03
 #yd = Polynomial.fromroots(rootYd)
@@ -84,6 +115,9 @@ lambdak = lambdak[tempSort]
 r21k = r21k[tempSort]
 r22k = r22k[tempSort]
 
+
+lambdak = 1j * np.imag(lambdak)
+
 Mkk = np.zeros((N + 2,), dtype=complex)
 Mkk[1:-1] = 1j * lambdak
 M = np.diag(Mkk)
@@ -94,6 +128,9 @@ M[-1, 0] = -k21[0]
 Mlk = np.sqrt(r22k)
 Msk = r21k / Mlk
 
+Mlk = np.real(Mlk)
+Msk = np.real(Msk)
+
 if np.abs(np.imag(Msk[0])) > np.abs(np.real(Msk[0])):
     Msk *= 1j
             
@@ -103,7 +140,7 @@ M[-1, 1:-1] = Mlk
 M[1:-1, -1] = Mlk
 
 #M = np.real(M)
-print(np.round(np.real(M), 2), "\n")
+print(np.round((M), 2), "\n")
 
 S21, S11 = CP.CM2S(M, normalizedFreq)
 
@@ -399,7 +436,7 @@ pr.enable()
 arrowM = RotateM2Arrow(M)
 tranZeros = rootP
 ctcqM, ctcqPoint = RotateArrow2CTCQ(arrowM, topology, tranZeros)
-print(np.round(np.real(ctcqM), 2), ctcqPoint, "\n")
+print(np.round(np.real(ctcqM), 2), "ctcq point:", ctcqPoint, "\n")
 foldedM, point = RotateArrow2Folded(arrowM, topology)
 #print(np.round(M, 2), "\n")
 #print(np.round(foldedM, 2))
@@ -464,39 +501,39 @@ ps.print_stats()
 #plt.plot(cost)
 
 
-#reqJson = np.load('tempData.npy')[0]
-#freq = np.array(reqJson['freq']) * 1e6
-#S11_amp = 10 ** (np.array(reqJson['S21_db']) / 20)
-#S11 = S11_amp * (np.cos(np.array(reqJson['S21_angRad'])) + 1j * np.sin(np.array(reqJson['S21_angRad'])))
-#S21_amp = 10 ** (np.array(reqJson['S11_db']) / 20)
-#S21 = S21_amp * (np.cos(np.array(reqJson['S11_angRad'])) + 1j * np.sin(np.array(reqJson['S11_angRad'])))
-#N = reqJson['filterOrder']
-#numZeros = len(reqJson['tranZeros'])
-#filterOrder = np.hstack((np.zeros((N, )), 2 * np.ones((numZeros, ))))
-#w1 = (reqJson['centerFreq'] - reqJson['bandwidth'] / 2) * 1e6
-#w2 = (reqJson['centerFreq'] + reqJson['bandwidth'] / 2) * 1e6
-#
-#epsilon, epsilonE, Qu, rootF, rootP, rootE = CP.S2FP(freq, S21, S11, filterOrder, w1, w2, wga=1.122*0.0254, method=3)
-#S11_new, S21_new = CP.FPE2S(epsilon, epsilonE, rootF, rootP, rootE, normalizedFreq)
-#
-#plt.clf()
-#plt.subplot(2, 2, 1)
-#plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), 20*np.log10(np.abs(S11_old)), 'o');
-#plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), 20*np.log10(np.abs(S11_new)), '*');
-#plt.title('S11(dB)')
-#plt.subplot(2, 2, 3)
-#plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), np.angle(S11_old, deg=True), 'o');
-#plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), np.angle(S11_new, deg=True), '*');
-#plt.title('S11(degree)')
-#plt.subplot(2, 2, 2)
-#plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), 20*np.log10(np.abs(S21_old)), 'o');
-#plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), 20*np.log10(np.abs(S21_new)), '*');
-#plt.title('S21(dB)')
-#plt.subplot(2, 2, 4)
-#plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), np.angle(S21_old, deg=True), 'o');
-#plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), np.angle(S21_new, deg=True), '*');
-##plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), np.angle(resultS21, deg=True) - np.angle(S21, deg=True), '*');
-#plt.title('S21(degree)')
+reqJson = np.load('tempData.npy')[0]
+freq = np.array(reqJson['freq']) * 1e6
+S11_amp = 10 ** (np.array(reqJson['S21_db']) / 20)
+S11 = S11_amp * (np.cos(np.array(reqJson['S21_angRad'])) + 1j * np.sin(np.array(reqJson['S21_angRad'])))
+S21_amp = 10 ** (np.array(reqJson['S11_db']) / 20)
+S21 = S21_amp * (np.cos(np.array(reqJson['S11_angRad'])) + 1j * np.sin(np.array(reqJson['S11_angRad'])))
+N = reqJson['filterOrder']
+numZeros = len(reqJson['tranZeros'])
+filterOrder = np.hstack((np.zeros((N, )), 2 * np.ones((numZeros, ))))
+w1 = (reqJson['centerFreq'] - reqJson['bandwidth'] / 2) * 1e6
+w2 = (reqJson['centerFreq'] + reqJson['bandwidth'] / 2) * 1e6
+
+epsilon, epsilonE, Qu, rootF, rootP, rootE = CP.S2FP(freq, S21, S11, filterOrder, w1, w2, wga=1.122*0.0254, method=3)
+S11_new, S21_new = CP.FPE2S(epsilon, epsilonE, rootF, rootP, rootE, normalizedFreq)
+
+plt.clf()
+plt.subplot(2, 2, 1)
+plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), 20*np.log10(np.abs(S11_old)), 'o');
+plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), 20*np.log10(np.abs(S11_new)), '*');
+plt.title('S11(dB)')
+plt.subplot(2, 2, 3)
+plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), np.angle(S11_old, deg=True), 'o');
+plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), np.angle(S11_new, deg=True), '*');
+plt.title('S11(degree)')
+plt.subplot(2, 2, 2)
+plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), 20*np.log10(np.abs(S21_old)), 'o');
+plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), 20*np.log10(np.abs(S21_new)), '*');
+plt.title('S21(dB)')
+plt.subplot(2, 2, 4)
+plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), np.angle(S21_old, deg=True), 'o');
+plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), np.angle(S21_new, deg=True), '*');
+#plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), np.angle(resultS21, deg=True) - np.angle(S21, deg=True), '*');
+plt.title('S21(degree)')
 #
 #fullMatrix = CP.FPE2M(epsilon, epsilonE, rootF, rootP, rootE, method=1)
 #topology = np.array(reqJson['topology'])

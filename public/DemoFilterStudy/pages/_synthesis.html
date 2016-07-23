@@ -198,7 +198,7 @@
             </div>
 						
             <div class="row last-row-fullheight">
-							<div class="col-sm-6">
+							<div class="col-sm-5">
 								<div class="panel panel-primary">
 									<div class="panel-body" style="height: 550px;">
 										<!-- Nav tabs -->
@@ -212,7 +212,7 @@
 									</div>
 								</div>
 							</div>
-							<div class="col-sm-6">
+							<div class="col-sm-7">
 								<div class="panel panel-primary">
 									<div class="panel-body" style="height: 550px; overflow: auto;">
 										<div class="row">
@@ -253,7 +253,7 @@
 												<tbody>
 													<tr ng-repeat="r in data.targetMatrix track by $index">
 														<td>{{($first || $last)? (($first)? 'S' : 'L') : $index}}</td>
-														<td ng-repeat="d in r track by $index">{{(d < 1e-4 && d > -1e-4)? '0' : d.toFixed(3)}}</td>
+														<td ng-repeat="d in r track by $index">{{(d < 1e-4 && d > -1e-4)? '0' : d.toFixed(5)}}</td>
 													</tr>
 												</tbody>
 											</table>
