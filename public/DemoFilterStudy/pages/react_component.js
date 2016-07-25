@@ -34,7 +34,7 @@ w.MatrixTopology = React.createClass({
 								row.map( (eleM, index_col) => {
 									return (
 										<td style={tdStyle} onClick={() => {
-											if (Math.abs(index_col - index_row) > 1.5){
+											if (Math.abs(index_col - index_row) > 0.5){
 												this.props.clickM(index_row, index_col, 1 - eleM)
 											}
 										}}>

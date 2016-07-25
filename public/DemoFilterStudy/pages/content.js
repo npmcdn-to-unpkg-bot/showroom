@@ -213,6 +213,7 @@ angular
 			document.querySelector('#s11dbChart').click();
 
 			$scope.data.targetMatrix = response.targetMatrix;
+			$scope.data.message = response.message;
 			$scope.$digest();
 			
 			var tempString = "# GHZ S DB R 50";
@@ -250,8 +251,10 @@ angular
 			nodes.push({id: i, label: label, x: (i + 0.5) * unitStep, y: unitStep, size: 3});
 		}
 		for (i = 0; i < N + 1; i++){
-			links.push({id: edgeIndex, source: nodes[i], target: nodes[i + 1], size: 3, primary: true});
-			edgeIndex++;
+			if (M[i][i + 1] === 1){
+				links.push({id: edgeIndex, source: nodes[i], target: nodes[i + 1], size: 3, primary: true});
+				edgeIndex++;
+			}
 		}
 		for (i = 0; i < N; i++){
 			for (j = N + 1; j > i + 1; j--){

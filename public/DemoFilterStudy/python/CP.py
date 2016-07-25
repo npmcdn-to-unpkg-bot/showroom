@@ -124,28 +124,37 @@ def CM2S(M, normalizedFreq):
     return S21, S11
 
 def FP2E(epsilon, rootF, rootP):
+#    polyF = Polynomial.fromroots(rootF)
+#    if rootF.shape[0] % 2 == 0:
+#        polyFminus = Polynomial.fromroots(-np.conj(rootF)) # polyF(-s)
+##        polyFminus = Polynomial.fromroots(-rootF) # polyF(-s)
+#    else:
+#        polyFminus = -Polynomial.fromroots(-np.conj(rootF))
+##        polyFminus = -Polynomial.fromroots(-rootF)
+#    if len(rootP) == 0:
+#        polyP = Polynomial([1])
+#        polyPminus = Polynomial([1])
+#    else:
+#        polyP = Polynomial.fromroots(rootP)
+#        if len(rootP) % 2 == 0:
+#            polyPminus = Polynomial.fromroots(-np.conj(rootP))
+##            polyPminus = Polynomial.fromroots(-rootP)
+#        else:
+#            polyPminus = -Polynomial.fromroots(-np.conj(rootP))
+##            polyPminus = -Polynomial.fromroots(-rootP)
+#    E2 = polyF * polyFminus + polyP * polyPminus / (np.abs(epsilon) * np.abs(epsilon))
+#    rootE2 = E2.roots()
+#    rootE = rootE2[np.real(rootE2) < -1.e-9]
+
     polyF = Polynomial.fromroots(rootF)
-    if rootF.shape[0] % 2 == 0:
-        polyFminus = Polynomial.fromroots(-np.conj(rootF)) # polyF(-s)
-#        polyFminus = Polynomial.fromroots(-rootF) # polyF(-s)
-    else:
-        polyFminus = -Polynomial.fromroots(-np.conj(rootF))
-#        polyFminus = -Polynomial.fromroots(-rootF)
     if len(rootP) == 0:
         polyP = Polynomial([1])
-        polyPminus = Polynomial([1])
     else:
         polyP = Polynomial.fromroots(rootP)
-        if len(rootP) % 2 == 0:
-            polyPminus = Polynomial.fromroots(-np.conj(rootP))
-#            polyPminus = Polynomial.fromroots(-rootP)
-        else:
-            polyPminus = -Polynomial.fromroots(-np.conj(rootP))
-#            polyPminus = -Polynomial.fromroots(-rootP)
-    E2 = polyF * polyFminus + polyP * polyPminus / (np.abs(epsilon) * np.abs(epsilon))
-    rootE2 = E2.roots()
-#    rootE = rootE2[(np.real(rootE2) < 0) & (np.abs(np.real(rootE2)) > 1.e-9)]
-    rootE = rootE2[np.real(rootE2) < -1.e-9]
+    temp1 = (len(polyF) + len(polyP) + 1) % 4
+    temp2 = polyF + (1j) ** temp1 * polyP / np.abs(epsilon)
+    rootE = temp2.roots()
+    rootE = -np.abs(np.real(rootE)) + 1j * np.imag(rootE)
     return rootE
 
 def FPE2S(epsilon, epsilonE, rootF, rootP, rootE, normalizedFreq):
@@ -588,8 +597,8 @@ def S2FP(inFreq, inS21, inS11, filterOrder, w1, w2, wga, wgb=0.1, method=0, star
         rootF, rootP = DeserializeFP(np.arange(filterOrder.shape[0] * 2), filterOrder)
         nF = rootF.shape[0]
         nP = len(rootP)
-        normalizedS = 1j * normalizedFreq + np.sqrt(w2 * w1) / (Qu * (w2 - w1))
-        for i in np.arange(0, 2):
+        for i in np.arange(0, 1):
+            normalizedS = 1j * normalizedFreq + np.sqrt(w2 * w1) / (Qu * (w2 - w1))
             M = np.hstack((np.vander(normalizedS, nF+1, increasing=True), -np.diag(S11 / S21).dot(np.vander(normalizedS, nP+1, increasing=True))))
 #            M = np.hstack((np.diag(S21).dot(np.vander(1j * normalizedFreq + 1./Qu, nF+1, increasing=True)), -np.diag(S11).dot(np.vander(1j * normalizedFreq + 1./Qu, nP+1, increasing=True))))
             Q, R = np.linalg.qr(M, mode='complete')
@@ -616,17 +625,36 @@ def S2FP(inFreq, inS21, inS11, filterOrder, w1, w2, wga, wgb=0.1, method=0, star
             coefF = temp1[:-1]
             rootF = Polynomial(coefF).roots()
             coefP = temp1[-1] * coefP
-            if np.all((np.real(rootF) < 0.01) & (np.real(rootF) > -0.01)): 
-                Qu = 1. / (1. / Qu - np.median(np.real(rootF)) * (w2 - w1) / np.sqrt(w2 * w1))
+            epsilon = coefF[-1] / coefP[-1]
+            if np.all((np.real(rootF) < 1) & (np.real(rootF) > -1)):
+                deviateRootF = np.median(np.real(rootF))
+                Qu = 1. / (1. / Qu - deviateRootF * (w2 - w1) / np.sqrt(w2 * w1))
+#                print('i: ', i, ', rootF:', rootF, Qu, deviateRootF)
+#                print('i: ', i, ', rootP:', rootP)
+                rootF -= deviateRootF
+                coefF = Polynomial.fromroots(rootF).coef
+                if len(rootP) == 0:
+                    polyP = Polynomial([1])
+                else:
+                    rootP -= deviateRootF
+                    polyP = Polynomial.fromroots(rootP)
+                coefP = polyP.coef
             else:
                 break
-        epsilon = coefF[-1] / coefP[-1]
+        for i in np.arange(len(rootP)):
+            if np.abs(np.real(rootP[i])) < 1e-2:
+                rootP[i] -= np.real(rootP[i])
+            else:
+                for j in np.arange(i, len(rootP)):
+                    if (i != j) and (np.abs(np.real(rootP[i] + rootP[j])) < 1e-2) and (np.abs(np.imag(rootP[i] - rootP[j])) < 1e-2):
+                        rootP[i] = (np.real(rootP[i] - rootP[j]) + 1j * np.imag(rootP[i] + rootP[j])) / 2
+                        rootP[j] = -rootP[i].conj()
+        rootF -= np.real(rootF)
         epsilon, epsilonE, rootE = GetEpsilonRootE(rootF, rootP, S11, S21, normalizedFreq, Qu, epsilon)
 #        epsilon, epsilonE, rootE = GetEpsilonRootE(rootF, rootP, S11, S21, normalizedFreq, Qu)
 
 #        epsilon, epsilonE, rootE = GetEpsilonRootE(rootF, rootP, S11, S21, normalizedFreq, Qu)
     Qu = GetQu(epsilon, epsilonE, Qu, rootF, rootP, rootE, S11, S21, normalizedFreq)
-    Qu = Qu
 #    print('epsilon:', epsilon)
 #    print('epsilonE:', epsilonE)
 #    print('Qu:', Qu)
@@ -948,7 +976,8 @@ def ReduceMAngleMethod(M, topology):
                 if costCurr2 < costCurr:
                     theta += delta2
                     break
-            dumpFactor *= v
+            if (dumpFactor < 1e9):
+                dumpFactor *= v
     
     MRotated = AdjustPrimaryCouple(MRotated)
     return MRotated
@@ -1082,15 +1111,18 @@ def RotateArrow2CTCQ(M, topology, tranZeros):
             if indexZeros > len(tranZeros) - 1:
                 break
         if (i + 2 < N + 2) and (topology[i, i + 2] == 1):
-            if (i > 0) and np.any(topology[i - 1, i + 1:]):
+            if (i > 0) and np.any(topology[i - 1, i + 3:]):
                 break
-            if (i + 3 < N + 2) and np.any(topology[i, i + 3:]):
+            if (i + 4 < N + 2) and np.any(topology[i, i + 4:]):
                 break
             if (i + 1 < N) and (i + 3 < N + 2) and np.any(topology[i + 1, i + 3:]):
                 break
-            MRotated = MoveZero(MRotated, N - 1, i, -1j * tranZeros[indexZeros])
-            point = np.sum(np.abs(MRotated[topology == 0]))
-            indexZeros += 1
+            if (i > 0) and (topology[i - 1, i + 2] == 1):
+                continue
+            if indexZeros < len(tranZeros):
+                MRotated = MoveZero(MRotated, N - 1, i, -1j * tranZeros[indexZeros])
+                point = np.sum(np.abs(MRotated[topology == 0]))
+                indexZeros += 1
             if indexZeros > len(tranZeros) - 1:
                 break
     return AdjustPrimaryCouple(np.real(MRotated)), point
@@ -1101,14 +1133,16 @@ def FPE2MComprehensive(epsilon, epsilonE, rootF, rootP, rootE, topology):
     ctcqMatrix, ctcqPoint = RotateArrow2CTCQ(arrowMatrix, topology, rootP)
     if np.abs(ctcqPoint) < 1e-4:
         MRotated = ctcqMatrix
-#        print("CTCQ detected")
+        message = "CTCQ detected!"
     else:
         foldedMatrix, foldedPoint = RotateArrow2Folded(arrowMatrix, topology)
         if np.abs(foldedPoint) < 1e-4:
             MRotated = foldedMatrix
-#            print("Folded detected")
+            message = "Folded detected!"
         elif ctcqPoint < foldedPoint:
             MRotated = ReduceMAngleMethod(ctcqMatrix, topology)
+            message = "Optimized."
         else:
             MRotated = ReduceMAngleMethod(foldedMatrix, topology)
-    return MRotated
+            message = "Optimized."
+    return MRotated, message

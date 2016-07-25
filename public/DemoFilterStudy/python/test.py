@@ -12,9 +12,9 @@ from numpy.polynomial import Polynomial
 from scipy import optimize, interpolate, signal, sparse
 import matplotlib.pyplot as plt
 
-rootP = np.array([1.9j]) #np.array([-2j, 2j])
+rootP = np.array([1.5j, 1.2j]) #np.array([-2j, 2j])
 N = 16
-returnLoss= 30.0
+returnLoss= 31
 #epsilon, coefP, coefF, coefE = CP.ChebyshevP2EF(rootP, N, returnLoss)
 
 U = 1.
@@ -32,7 +32,7 @@ for k in np.arange(0, N):
     U = a * tempU + b * Polynomial([-1, 0, 1]) * tempV;
     V = a * tempV + b * tempU;
 
-rootF = U.roots() * 1j; # w domain to s domain
+rootF = np.real(U.roots()) * 1j; # w domain to s domain
 polyF = Polynomial.fromroots(rootF)
 
 if len(rootP) == 0:
@@ -41,17 +41,44 @@ else:
     polyP = Polynomial.fromroots(rootP)
 
 epsilon = polyP(1j) / (polyF(1j) * np.sqrt(10 ** (np.abs(returnLoss) / 10) - 1))
+#epsilon = np.abs(epsilon)
+
+#temp1 = (len(polyF) + len(polyP) + 1) % 4
+#temp2 = polyF + (1j) ** temp1 * polyP / np.abs(epsilon)
+#rootE = temp2.roots()
+#rootE = -np.abs(np.real(rootE)) + 1j * np.imag(rootE)
 rootE = CP.FP2E(epsilon, rootF, rootP);
+
+aaa = np.arange(0.1, 3, 0.1) * 1j
+iter = 14
+cost = np.zeros((iter,))
+rootE1 = rootE.copy()
+tempJ = np.zeros((len(aaa), len(rootE1)), dtype=complex)
+for i in np.arange(iter):
+    polyE1 = Polynomial.fromroots(rootE1)
+    polyEResult = polyE1(aaa)
+    r = polyEResult * polyEResult.conj() - polyF(aaa) * polyF(aaa).conj() - polyP(aaa) * polyP(aaa).conj() / (epsilon * epsilon.conj())
+    r = np.real(r)
+    for m in np.arange(len(aaa)):
+        for n in np.arange(len(rootE1)):
+            tempJ[m, n] = -polyE1(aaa[m]) * polyE1(aaa[m]).conj() / (aaa[m] - rootE1[n])
+    J = 2 * np.hstack((np.real(tempJ), -np.imag(tempJ)))
+    delta = -0.8 * np.linalg.solve(J.T.dot(J), J.T.dot(r))
+    rootE1 += delta[:N] + 1j * delta[N:]
+    rootE1 = -np.abs(np.real(rootE1)) + 1j * np.imag(rootE1)
+    cost[i] = r.dot(r)
+
+#rootE = rootE1.copy()
 polyE = Polynomial.fromroots(rootE);
 
 
 normalizedFreq = np.arange(-5.5, 5.5, 0.01)
 #polyF = Polynomial(coefF)
 #polyE = Polynomial(coefE)
-rootF = polyF.roots()
-rootE = polyE.roots()
+#rootF = polyF.roots()
+#rootE = polyE.roots()
 epsilonE = epsilon
-S11_old, S21_old = CP.FPE2S(epsilon, epsilonE, rootF, rootP, rootE, normalizedFreq)
+S11_old, S21_old = CP.FPE2S(epsilon, epsilonE, rootF, rootP, rootE, normalizedFreq - 50j / 100000)
 #print(rootF)
 #print(rootP)
 #print(rootE)
@@ -63,14 +90,18 @@ topology[-1, -1] = 0
 for i in np.arange(N + 1):
     topology[i, i + 1] = 1
     topology[i + 1, i] = 1
-#topology[1, 3] = 1
-#topology[3, 1] = 1
-#topology[3, 5] = 1
-#topology[5, 3] = 1
-#topology[3, 6] = 1
-#topology[6, 3] = 1
-topology[7, 9] = 1
-topology[9, 7] = 1
+topology[1, 3] = 1
+topology[3, 1] = 1
+#topology[4, 7] = 1
+#topology[7, 4] = 1
+topology[5, 7] = 1
+topology[7, 5] = 1
+#topology[8, 11] = 1
+#topology[11, 8] = 1
+#topology[9, 11] = 1
+#topology[11, 9] = 1
+#topology[7, 9] = 1
+#topology[9, 7] = 1
 
 #EF = Polynomial.fromroots(rootE).coef + np.abs(epsilon / epsilonE) * Polynomial.fromroots(rootF).coef
 EF = polyE.coef + np.abs(epsilon / epsilonE) * polyF.coef
@@ -97,39 +128,58 @@ else:
 coefP = polyP.coef
 y21n = -coefP / np.abs(epsilonE) + 0j
 
-y21n /= yd[-1]
-y22n /= yd[-1]
-yd /= yd[-1]
+#y21n /= yd[-1]
+#y22n /= yd[-1]
+#yd /= yd[-1]
 
 polyYd = Polynomial(yd)
 rootYd = polyYd.roots()
+print(rootYd[0], rootYd[-1])
+yd2 = yd.copy()
+for i in np.arange(len(yd)):
+    yd2[i] *= (1j) ** (i + N % 2)
+yd2 = np.real(yd2)
+rootYd = 1j * Polynomial(yd2).roots()
+polyYd2 = Polynomial.fromroots(rootYd)
+polyYdDer = polyYd.deriv()
+polyY21n = Polynomial(y21n)
+polyY22n = Polynomial(y22n)
+lambdak = rootYd
+r21k = polyY21n(rootYd) / polyYdDer(rootYd)
+r22k = polyY22n(rootYd) / polyYdDer(rootYd)
 #rootYd[0] += 0.001j + 1.51089316e-03
 #rootYd[-1] -= 0.001j - 1.51089316e-03
 #yd = Polynomial.fromroots(rootYd)
 
-r21k, lambdak, k21 = signal.residue(y21n[-1::-1], yd[-1::-1], tol=1e-9)
-r22k, lambdak, k22 = signal.residue(y22n[-1::-1], yd[-1::-1], tol=1e-9)
+#r21k, lambdak, k21 = signal.residue(y21n[-1::-1], yd[-1::-1], tol=1e-9)
+#r22k, lambdak, k22 = signal.residue(y22n[-1::-1], yd[-1::-1], tol=1e-9)
 
 tempSort = np.argsort(np.imag(lambdak))
 lambdak = lambdak[tempSort]
 r21k = r21k[tempSort]
 r22k = r22k[tempSort]
 
+#r21k[-1] = -r22k[-1]
+#r21k[-2] = r22k[-2]
+#r22k[-1] = -r21k[-1]
+#r22k[-2] = r21k[-2]
 
-lambdak = 1j * np.imag(lambdak)
+#lambdak = 1j * np.imag(lambdak)
 
 Mkk = np.zeros((N + 2,), dtype=complex)
 Mkk[1:-1] = 1j * lambdak
 M = np.diag(Mkk)
 
-M[0, -1] = -k21[0]
-M[-1, 0] = -k21[0]
+#M[0, -1] = -k21[0]
+#M[-1, 0] = -k21[0]
 
 Mlk = np.sqrt(r22k)
 Msk = r21k / Mlk
 
-Mlk = np.real(Mlk)
-Msk = np.real(Msk)
+#Msk[-1] = -Mlk[-1]
+#Msk[-2] = Mlk[-2]
+#Mlk = np.real(Mlk)
+#Msk = np.real(Msk)
 
 if np.abs(np.imag(Msk[0])) > np.abs(np.real(Msk[0])):
     Msk *= 1j
@@ -140,7 +190,7 @@ M[-1, 1:-1] = Mlk
 M[1:-1, -1] = Mlk
 
 #M = np.real(M)
-print(np.round((M), 2), "\n")
+#print(np.round((M), 2), "\n")
 
 S21, S11 = CP.CM2S(M, normalizedFreq)
 
@@ -409,12 +459,14 @@ def RotateArrow2CTCQ(M, topology, tranZeros):
             if indexZeros > len(tranZeros) - 1:
                 break
         if (i + 2 < N + 2) and (topology[i, i + 2] == 1):
-            if (i > 0) and np.any(topology[i - 1, i + 1:]):
+            if (i > 0) and np.any(topology[i - 1, i + 3:]):
                 break
-            if (i + 3 < N + 2) and np.any(topology[i, i + 3:]):
+            if (i + 4 < N + 2) and np.any(topology[i, i + 4:]):
                 break
             if (i + 1 < N) and (i + 3 < N + 2) and np.any(topology[i + 1, i + 3:]):
                 break
+            if (i > 0) and (topology[i - 1, i + 2] == 1):
+                continue
             MRotated = MoveZero(MRotated, N - 1, i, -1j * tranZeros[indexZeros])
             point = np.sum(np.abs(MRotated[topology == 0]))
             indexZeros += 1
@@ -436,7 +488,8 @@ pr.enable()
 arrowM = RotateM2Arrow(M)
 tranZeros = rootP
 ctcqM, ctcqPoint = RotateArrow2CTCQ(arrowM, topology, tranZeros)
-print(np.round(np.real(ctcqM), 2), "ctcq point:", ctcqPoint, "\n")
+#print(np.round(np.real(ctcqM), 2), "ctcq point:", ctcqPoint, "\n")
+print("ctcq point:", ctcqPoint, "\n")
 foldedM, point = RotateArrow2Folded(arrowM, topology)
 #print(np.round(M, 2), "\n")
 #print(np.round(foldedM, 2))
@@ -501,39 +554,39 @@ ps.print_stats()
 #plt.plot(cost)
 
 
-reqJson = np.load('tempData.npy')[0]
-freq = np.array(reqJson['freq']) * 1e6
-S11_amp = 10 ** (np.array(reqJson['S21_db']) / 20)
-S11 = S11_amp * (np.cos(np.array(reqJson['S21_angRad'])) + 1j * np.sin(np.array(reqJson['S21_angRad'])))
-S21_amp = 10 ** (np.array(reqJson['S11_db']) / 20)
-S21 = S21_amp * (np.cos(np.array(reqJson['S11_angRad'])) + 1j * np.sin(np.array(reqJson['S11_angRad'])))
-N = reqJson['filterOrder']
-numZeros = len(reqJson['tranZeros'])
-filterOrder = np.hstack((np.zeros((N, )), 2 * np.ones((numZeros, ))))
-w1 = (reqJson['centerFreq'] - reqJson['bandwidth'] / 2) * 1e6
-w2 = (reqJson['centerFreq'] + reqJson['bandwidth'] / 2) * 1e6
-
-epsilon, epsilonE, Qu, rootF, rootP, rootE = CP.S2FP(freq, S21, S11, filterOrder, w1, w2, wga=1.122*0.0254, method=3)
-S11_new, S21_new = CP.FPE2S(epsilon, epsilonE, rootF, rootP, rootE, normalizedFreq)
-
-plt.clf()
-plt.subplot(2, 2, 1)
-plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), 20*np.log10(np.abs(S11_old)), 'o');
-plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), 20*np.log10(np.abs(S11_new)), '*');
-plt.title('S11(dB)')
-plt.subplot(2, 2, 3)
-plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), np.angle(S11_old, deg=True), 'o');
-plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), np.angle(S11_new, deg=True), '*');
-plt.title('S11(degree)')
-plt.subplot(2, 2, 2)
-plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), 20*np.log10(np.abs(S21_old)), 'o');
-plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), 20*np.log10(np.abs(S21_new)), '*');
-plt.title('S21(dB)')
-plt.subplot(2, 2, 4)
-plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), np.angle(S21_old, deg=True), 'o');
-plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), np.angle(S21_new, deg=True), '*');
-#plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), np.angle(resultS21, deg=True) - np.angle(S21, deg=True), '*');
-plt.title('S21(degree)')
+#reqJson = np.load('tempData.npy')[0]
+#freq = np.array(reqJson['freq']) * 1e6
+#S11_amp = 10 ** (np.array(reqJson['S21_db']) / 20)
+#S11 = S11_amp * (np.cos(np.array(reqJson['S21_angRad'])) + 1j * np.sin(np.array(reqJson['S21_angRad'])))
+#S21_amp = 10 ** (np.array(reqJson['S11_db']) / 20)
+#S21 = S21_amp * (np.cos(np.array(reqJson['S11_angRad'])) + 1j * np.sin(np.array(reqJson['S11_angRad'])))
+#N = reqJson['filterOrder']
+#numZeros = len(reqJson['tranZeros'])
+#filterOrder = np.hstack((np.zeros((N, )), 2 * np.ones((numZeros, ))))
+#w1 = (reqJson['centerFreq'] - reqJson['bandwidth'] / 2) * 1e6
+#w2 = (reqJson['centerFreq'] + reqJson['bandwidth'] / 2) * 1e6
+#
+#epsilon, epsilonE, Qu, rootF, rootP, rootE = CP.S2FP(freq, S21, S11, filterOrder, w1, w2, wga=1.122*0.0254, method=3)
+#S11_new, S21_new = CP.FPE2S(epsilon, epsilonE, rootF, rootP, rootE, normalizedFreq)
+#
+#plt.clf()
+#plt.subplot(2, 2, 1)
+#plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), 20*np.log10(np.abs(S11_old)), 'o');
+#plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), 20*np.log10(np.abs(S11_new)), '*');
+#plt.title('S11(dB)')
+#plt.subplot(2, 2, 3)
+#plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), np.angle(S11_old, deg=True), 'o');
+#plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), np.angle(S11_new, deg=True), '*');
+#plt.title('S11(degree)')
+#plt.subplot(2, 2, 2)
+#plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), 20*np.log10(np.abs(S21_old)), 'o');
+#plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), 20*np.log10(np.abs(S21_new)), '*');
+#plt.title('S21(dB)')
+#plt.subplot(2, 2, 4)
+#plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), np.angle(S21_old, deg=True), 'o');
+#plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), np.angle(S21_new, deg=True), '*');
+##plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), np.angle(resultS21, deg=True) - np.angle(S21, deg=True), '*');
+#plt.title('S21(degree)')
 #
 #fullMatrix = CP.FPE2M(epsilon, epsilonE, rootF, rootP, rootE, method=1)
 #topology = np.array(reqJson['topology'])

@@ -66,8 +66,8 @@ def get_task(method):
         rootF = polyF.roots()
         rootE = polyE.roots()
         topology = np.array(reqJson['topology'])
-        targetMatrix = CP.FPE2MComprehensive(epsilon, epsilonE, rootF, rootP, rootE, topology)
-        resJson = {'epsilon': [epsilon.real, epsilon.imag], 'coefP': [[x.real, x.imag] for x in coefP], 'coefF': [[x.real, x.imag] for x in coefF], 'coefE': [[x.real, x.imag] for x in coefE], 'targetMatrix': targetMatrix.tolist()}
+        targetMatrix, msg = CP.FPE2MComprehensive(epsilon, epsilonE, rootF, rootP, rootE, topology)
+        resJson = {'epsilon': [epsilon.real, epsilon.imag], 'coefP': [[x.real, x.imag] for x in coefP], 'coefF': [[x.real, x.imag] for x in coefF], 'coefE': [[x.real, x.imag] for x in coefE], 'targetMatrix': targetMatrix.tolist(), 'message': msg}
         return json.dumps(resJson, separators = (',', ':'))
     elif method == "ExtractMatrix":
         reqJson = flask.request.get_json()
@@ -93,12 +93,12 @@ def get_task(method):
         deltaRootP = np.sum(np.abs(rootP_perm - tranZeros), axis=1)
         rootP = rootP_perm[np.argmin(deltaRootP)]
         topology = np.array(reqJson['topology'])
-        extractedMatrix = CP.FPE2MComprehensive(epsilon, epsilonE, rootF, rootP, rootE, topology)
+        extractedMatrix, msg = CP.FPE2MComprehensive(epsilon, epsilonE, rootF, rootP, rootE, topology)
         targetMatrix = np.array(reqJson['targetMatrix'])
         temp1 = targetMatrix.copy()
         temp1[np.abs(targetMatrix) < 1e-4] = 1e9
         deviateMatrix = 100 * (extractedMatrix - targetMatrix) / temp1
-        resJson = {'q': Qu, 'extractedMatrix': extractedMatrix.tolist(), 'deviateMatrix': deviateMatrix.tolist()}
+        resJson = {'q': Qu, 'extractedMatrix': extractedMatrix.tolist(), 'deviateMatrix': deviateMatrix.tolist(), 'message': msg}
         return json.dumps(resJson, separators = (',', ':'))
     else:
         flask.abort(404)
