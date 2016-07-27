@@ -82,12 +82,14 @@ def get_task(method):
         tranZeros = [x[0] + 1j * x[1] for x in reqJson['tranZeros']]
         numZeros = len(tranZeros)
         filterOrder = np.hstack((np.zeros((N, )), 2 * np.ones((numZeros, ))))
-        w1 = (reqJson['centerFreq'] - reqJson['bandwidth'] / 2) * 1e6
-        w2 = (reqJson['centerFreq'] + reqJson['bandwidth'] / 2) * 1e6
+        w1 = (reqJson['centerFreq'] - reqJson['bandwidth'] / 2) * 1e9
+        w2 = (reqJson['centerFreq'] + reqJson['bandwidth'] / 2) * 1e9
 #        print(N, numZeros, filterOrder, w1, w2)
-        startFreq = reqJson['captureStartFreqMHz'] * 1e6
-        stopFreq = reqJson['captureStopFreqMHz'] * 1e6
+        startFreq = reqJson['captureStartFreqGHz'] * 1e9
+        stopFreq = reqJson['captureStopFreqGHz'] * 1e9
         epsilon, epsilonE, Qu, rootF, rootP, rootE = CP.S2FP(freq, S21, S11, filterOrder, w1, w2, wga=1.122*0.0254, method=3, startFreq=startFreq, stopFreq=stopFreq)
+        if Qu == np.inf:
+            Qu = 1e9
 #        print(Qu)
         rootP_perm = np.array([x for x in itertools.permutations(rootP)])
         deltaRootP = np.sum(np.abs(rootP_perm - tranZeros), axis=1)
@@ -99,6 +101,7 @@ def get_task(method):
         temp1[np.abs(targetMatrix) < 1e-4] = 1e9
         deviateMatrix = 100 * (extractedMatrix - targetMatrix) / temp1
         resJson = {'q': Qu, 'extractedMatrix': extractedMatrix.tolist(), 'deviateMatrix': deviateMatrix.tolist(), 'message': msg}
+        print(resJson)
         return json.dumps(resJson, separators = (',', ':'))
     else:
         flask.abort(404)

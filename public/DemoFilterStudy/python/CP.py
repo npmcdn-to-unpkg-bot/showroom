@@ -1,6 +1,6 @@
 import numpy as np
 from numpy.polynomial import Polynomial
-from scipy import optimize, interpolate, signal, sparse
+from scipy import optimize, interpolate, signal
 #import matplotlib.pyplot as plt
 #import sympy
 #from sympy.tensor import IndexedBase, Idx
@@ -151,7 +151,7 @@ def FP2E(epsilon, rootF, rootP):
         polyP = Polynomial([1])
     else:
         polyP = Polynomial.fromroots(rootP)
-    temp1 = (len(polyF) + len(polyP) + 1) % 4
+    temp1 = (len(rootF) + len(rootP) + 3) % 4
     temp2 = polyF + (1j) ** temp1 * polyP / np.abs(epsilon)
     rootE = temp2.roots()
     rootE = -np.abs(np.real(rootE)) + 1j * np.imag(rootE)
@@ -686,9 +686,8 @@ def FPE2M(epsilon, epsilonE, rootF, rootP, rootE, method=1):
             coefP = Polynomial.fromroots(rootP).coef
         else:
             coefP = np.array([1.])
-#        y21n = -1j *  coefP / np.abs(epsilonE)
-#        y21n = -1j *  coefP / epsilonE
-        y21n = -coefP / np.abs(epsilonE) + 0j
+        temp1 = (len(rootF) + len(rootP) + 3) % 4
+        y21n = (1j) ** temp1 * coefP / np.abs(epsilonE)
     
         y21n /= yd[-1]
         y22n /= yd[-1]
@@ -712,8 +711,8 @@ def FPE2M(epsilon, epsilonE, rootF, rootP, rootE, method=1):
         Mlk = np.sqrt(r22k)
         Msk = r21k / Mlk
         
-        if np.abs(np.imag(Msk[0])) > np.abs(np.real(Msk[0])):
-            Msk *= 1j
+#        if np.abs(np.imag(Msk[0])) > np.abs(np.real(Msk[0])):
+#            Msk *= 1j
         
         M[0, 1:-1] = Msk
         M[1:-1, 0] = Msk
@@ -1110,7 +1109,7 @@ def RotateArrow2CTCQ(M, topology, tranZeros):
                 point = np.sum(np.abs(MRotated[topology == 0]))
             if indexZeros > len(tranZeros) - 1:
                 break
-        if (i + 2 < N + 2) and (topology[i, i + 2] == 1):
+        if (i + 2 < N + 2) and (topology[i, i + 2] == 1) and (topology[i, i + 3] != 1):
             if (i > 0) and np.any(topology[i - 1, i + 3:]):
                 break
             if (i + 4 < N + 2) and np.any(topology[i, i + 4:]):
@@ -1119,10 +1118,9 @@ def RotateArrow2CTCQ(M, topology, tranZeros):
                 break
             if (i > 0) and (topology[i - 1, i + 2] == 1):
                 continue
-            if indexZeros < len(tranZeros):
-                MRotated = MoveZero(MRotated, N - 1, i, -1j * tranZeros[indexZeros])
-                point = np.sum(np.abs(MRotated[topology == 0]))
-                indexZeros += 1
+            MRotated = MoveZero(MRotated, N - 1, i, -1j * tranZeros[indexZeros])
+            point = np.sum(np.abs(MRotated[topology == 0]))
+            indexZeros += 1
             if indexZeros > len(tranZeros) - 1:
                 break
     return AdjustPrimaryCouple(np.real(MRotated)), point
@@ -1133,11 +1131,16 @@ def FPE2MComprehensive(epsilon, epsilonE, rootF, rootP, rootE, topology):
     ctcqMatrix, ctcqPoint = RotateArrow2CTCQ(arrowMatrix, topology, rootP)
     if np.abs(ctcqPoint) < 1e-4:
         MRotated = ctcqMatrix
-        message = "CTCQ detected!"
+        MRotated[topology == 0] = 0
+        if len(rootP) > 0:
+            message = "CTCQ detected!"
+        else:
+            message = "Chebyshev detected!"
     else:
         foldedMatrix, foldedPoint = RotateArrow2Folded(arrowMatrix, topology)
         if np.abs(foldedPoint) < 1e-4:
             MRotated = foldedMatrix
+            MRotated[topology == 0] = 0
             message = "Folded detected!"
         elif ctcqPoint < foldedPoint:
             MRotated = ReduceMAngleMethod(ctcqMatrix, topology)
@@ -1145,4 +1148,5 @@ def FPE2MComprehensive(epsilon, epsilonE, rootF, rootP, rootE, topology):
         else:
             MRotated = ReduceMAngleMethod(foldedMatrix, topology)
             message = "Optimized."
+    MRotated[np.abs(MRotated) < 1e-5] = 0
     return MRotated, message

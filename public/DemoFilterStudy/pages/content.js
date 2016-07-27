@@ -137,11 +137,11 @@ angular
 		$scope.data = {
 			filterOrder: 6,
 			returnLoss: 20,
-			centerFreq: 1000,
-			bandwidth: 20,
+			centerFreq: 1,
+			bandwidth: 0.02,
 			unloadedQ: 2000,
-			startFreq: 960,
-			stopFreq: 1040,
+			startFreq: 0.96,
+			stopFreq: 1.04,
 			numberOfPoints: 1000,
 			filterType: "BPF",
 			/* tranZeros: [['', 1.5], ['', '']], */
@@ -186,7 +186,7 @@ angular
 				.filter(function(d){return (d[0] !== 0) || (d[1] !== 0)}),
 				numberOfPoints = ($scope.data.numberOfPoints < 5000)? $scope.data.numberOfPoints : 5000,
 				stopFreq = ($scope.data.startFreq < $scope.data.stopFreq)? $scope.data.stopFreq : $scope.data.startFreq + $scope.data.bandwidth * 8,
-				freqMHz = numeric.linspace($scope.data.startFreq, stopFreq, numberOfPoints),
+				freqGHz = numeric.linspace($scope.data.startFreq, stopFreq, numberOfPoints),
 			
 				response = await common.xhr2('SynthesizeFromTranZeros', {rootP: tranZeros, N: $scope.data.filterOrder, returnLoss: $scope.data.returnLoss, topology: store.getState().topoM}),
 
@@ -195,10 +195,10 @@ angular
 				coefP = response.coefP.map(function(d){return numeric.t(d[0], d[1])}),
 				coefF = response.coefF.map(function(d){return numeric.t(d[0], d[1])}),
 				coefE = response.coefE.map(function(d){return numeric.t(d[0], d[1])}),
-/* 				sFromFPE = common.FPE2S(epsilon, epsilonE, coefF, coefP, coefE, freqMHz, $scope.data.unloadedQ, $scope.data.centerFreq, $scope.data.bandwidth),
+/* 				sFromFPE = common.FPE2S(epsilon, epsilonE, coefF, coefP, coefE, freqGHz, $scope.data.unloadedQ, $scope.data.centerFreq, $scope.data.bandwidth),
 				S11dB = sFromFPE.S11.map(function(s){return [s[0], 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10]}),
 				S21dB = sFromFPE.S21.map(function(s){return [s[0], 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10]}), */
-				sFromM = common.CM2S(response.targetMatrix, freqMHz, $scope.data.unloadedQ, $scope.data.centerFreq, $scope.data.bandwidth);
+				sFromM = common.CM2S(response.targetMatrix, freqGHz, $scope.data.unloadedQ, $scope.data.centerFreq, $scope.data.bandwidth);
 				
 			$scope.S11dB_fromM = sFromM.S11.map(function(s){return [s[0], 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10]});
 			$scope.S21dB_fromM = sFromM.S21.map(function(s){return [s[0], 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10]});
@@ -398,16 +398,16 @@ function handleChangeM(){
 				tranZeros = synStoreState.tranZeros
 				.map(function(d){return [Number(d[0]), Number(d[1])]})
 				.filter(function(d){return (d[0] !== 0) || (d[1] !== 0)}),
-				captureStartFreqMHz = $scope.captureStartFreqMHz || 0,
-				captureStopFreqMHz = $scope.captureStopFreqMHz || 0,
-				response = await common.xhr2('ExtractMatrix', {...sFile, ...synStoreState, tranZeros: tranZeros, topology: topoM, captureStartFreqMHz: captureStartFreqMHz, captureStopFreqMHz: captureStopFreqMHz}),
+				captureStartFreqGHz = $scope.captureStartFreqGHz || 0,
+				captureStopFreqGHz = $scope.captureStopFreqGHz || 0,
+				response = await common.xhr2('ExtractMatrix', {...sFile, ...synStoreState, tranZeros: tranZeros, topology: topoM, captureStartFreqGHz: captureStartFreqGHz, captureStopFreqGHz: captureStopFreqGHz}),
 				numberOfPoints = (synStoreState.numberOfPoints < 5000)? synStoreState.numberOfPoints : 5000,
 				stopFreq = (synStoreState.startFreq < synStoreState.stopFreq)? synStoreState.stopFreq : synStoreState.startFreq + synStoreState.bandwidth * 8,
-				freqMHz = numeric.linspace(synStoreState.startFreq, stopFreq, numberOfPoints),
+				freqGHz = numeric.linspace(synStoreState.startFreq, stopFreq, numberOfPoints),
 				
-/* 				sFromTargetM = common.CM2S(synStoreState.targetMatrix, freqMHz, synStoreState.unloadedQ, synStoreState.centerFreq, synStoreState.bandwidth), */
+/* 				sFromTargetM = common.CM2S(synStoreState.targetMatrix, freqGHz, synStoreState.unloadedQ, synStoreState.centerFreq, synStoreState.bandwidth), */
 				
-				sFromExtractM = common.CM2S(response.extractedMatrix, freqMHz, synStoreState.unloadedQ, synStoreState.centerFreq, synStoreState.bandwidth);
+				sFromExtractM = common.CM2S(response.extractedMatrix, freqGHz, synStoreState.unloadedQ, synStoreState.centerFreq, synStoreState.bandwidth);
 				
 /* 			$scope.S11dB_fromTargetM = sFromTargetM.S11.map(function(s){return [s[0], 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10]});
 			$scope.S21dB_fromTargetM = sFromTargetM.S21.map(function(s){return [s[0], 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10]});

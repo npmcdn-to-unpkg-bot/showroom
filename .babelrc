@@ -1,4 +1,4 @@
 {
-	"presets": [],
-	"plugins": ["syntax-async-functions", "transform-es2015-arrow-functions", "transform-regenerator"]
+	"presets": ["react"],
+	"plugins": ["syntax-async-functions", "syntax-object-rest-spread", "transform-es2015-arrow-functions", "transform-regenerator", "transform-object-rest-spread"]
 }

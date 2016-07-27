@@ -96,12 +96,12 @@
 					function toFixed3(num){return Math.round(num * 1000) / 1000;}
 					return {freq: freq, S21_db: S21_db.map(toFixed3), S21_angRad: S21_ang.map(toFixed3), S11_db: S11_db.map(toFixed3), S11_angRad: S11_ang.map(toFixed3)}
 				};
-				this.FPE2S = function(epsilon, epsilonE, coefF, coefP, coefE, freqMHz, q, centerFreq, bandwidth){
+				this.FPE2S = function(epsilon, epsilonE, coefF, coefP, coefE, freqGHz, q, centerFreq, bandwidth){
 					var N = coefF.length,
 						bw = bandwidth,
 						w0 = Math.sqrt((centerFreq - bw / 2) * (centerFreq + bw / 2)),
-						normalizedS = freqMHz.map(function(d){return numeric.t(w0 / (q * bw), (w0 / bw) * (d / w0 - w0 / d))}),
-						normalizedFreq = freqMHz.map(function(d){return numeric.t((w0 / bw) * (d / w0 - w0 / d), -w0 / (q * bw))}),
+						normalizedS = freqGHz.map(function(d){return numeric.t(w0 / (q * bw), (w0 / bw) * (d / w0 - w0 / d))}),
+						normalizedFreq = freqGHz.map(function(d){return numeric.t((w0 / bw) * (d / w0 - w0 / d), -w0 / (q * bw))}),
 						vanderN = normalizedS.map(function(d){
 							var i, result = [], temp1 = numeric.t(1, 0);
 							for (i = 0; i < N + 1; i++){
@@ -120,16 +120,16 @@
 						polyResultP = polyResult(coefP),
 						polyResultF = polyResult(coefF),
 						polyResultE = polyResult(coefE),
-						S11 = freqMHz.map(function(f, i){return [f / 1000, polyResultF[i].div(polyResultE[i])]}),
-						S21 = freqMHz.map(function(f, i){return [f / 1000, polyResultP[i].div(polyResultE[i]).div(epsilon)]});
+						S11 = freqGHz.map(function(f, i){return [f, polyResultF[i].div(polyResultE[i])]}),
+						S21 = freqGHz.map(function(f, i){return [f, polyResultP[i].div(polyResultE[i]).div(epsilon)]});
 					return {S11: S11, S21: S21}
 				};
-				this.CM2S = function(coupleMatrix, freqMHz, q, centerFreq, bandwidth){
+				this.CM2S = function(coupleMatrix, freqGHz, q, centerFreq, bandwidth){
 					var N = coupleMatrix.length - 2,
 						bw = bandwidth,
 						w0 = Math.sqrt((centerFreq - bw / 2) * (centerFreq + bw / 2)),
-						normalizedS = freqMHz.map(function(d){return numeric.t(w0 / (q * bw), (w0 / bw) * (d / w0 - w0 / d))}),
-						normalizedFreq = freqMHz.map(function(d){return numeric.t((w0 / bw) * (d / w0 - w0 / d), -w0 / (q * bw))}),
+						normalizedS = freqGHz.map(function(d){return numeric.t(w0 / (q * bw), (w0 / bw) * (d / w0 - w0 / d))}),
+						normalizedFreq = freqGHz.map(function(d){return numeric.t((w0 / bw) * (d / w0 - w0 / d), -w0 / (q * bw))}),
 						S11 = [],
 						S21 = [],			
 						minusR = numeric.rep([N + 2], 0);
@@ -152,8 +152,8 @@
 						
 						Y = Z.inv();
 						
-						S11.push([freqMHz[i] / 1000, numeric.t(Y.x[0][0], Y.y[0][0]).mul(numeric.t(0, 2)).add(1)]);
-						S21.push([freqMHz[i] / 1000, numeric.t(Y.x[N+1][0], Y.y[N+1][0]).mul(numeric.t(0, -2))]);
+						S11.push([freqGHz[i], numeric.t(Y.x[0][0], Y.y[0][0]).mul(numeric.t(0, 2)).add(1)]);
+						S21.push([freqGHz[i], numeric.t(Y.x[N+1][0], Y.y[N+1][0]).mul(numeric.t(0, -2))]);
 					});
 					return {S11: S11, S21: S21}
 				};

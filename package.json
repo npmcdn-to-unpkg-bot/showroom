@@ -26,11 +26,13 @@
   },
   "scripts": {
     "start": "node app.js",
-    "build": ".\\node_modules\\.bin\\babel public\\DemoFranchiseComm\\content.js --out-file public\\DemoFranchiseComm\\content_compiled.js --source-maps"
+    "build": ".\\node_modules\\.bin\\babel public\\DemoFranchiseComm\\content.js --out-file public\\DemoFranchiseComm\\content_compiled.js --source-maps",
+    "build2": ".\\node_modules\\.bin\\babel public\\DemoFilterStudy\\pages\\KM_tools.js public\\DemoFilterStudy\\pages\\react_store.js public\\DemoFilterStudy\\pages\\react_component.js public\\DemoFilterStudy\\pages\\content.js public\\DemoFilterStudy\\pages\\e2e.js --out-file public\\DemoFilterStudy\\pages\\content_compiled.js --source-maps"
   },
   "devDependencies": {
-    "babel-cli": "^6.10.1",
+    "babel-cli": "^6.11.4",
     "babel-polyfill": "^6.9.1",
-    "babel-preset-es2015": "^6.9.0"
+    "babel-preset-es2015": "^6.9.0",
+    "babel-preset-react": "^6.11.1"
   }
 }
