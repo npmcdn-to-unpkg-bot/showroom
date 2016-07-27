@@ -822,7 +822,7 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 			store.dispatch({ type: 'saveSFile', data: sFile });
 			extractMatrix(sFile);
 		}
-	}, 100);
+	}, 300);
 	function extractMatrix(sFile) {
 		var synStoreState, topoM, tranZeros, captureStartFreqGHz, captureStopFreqGHz, response, numberOfPoints, stopFreq, freqGHz, sFromExtractM;
 		return regeneratorRuntime.async(function extractMatrix$(_context2) {
