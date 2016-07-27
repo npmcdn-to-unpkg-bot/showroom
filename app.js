@@ -108,7 +108,7 @@ app.use(flash());
 app.use(passport.initialize());
 app.use(passport.session());
 app.use('/ajax', bodyParser.json());
-app.use('/python', bodyParser.text());
+app.use('/python', bodyParser.text({limit: 3*1024*1024})); // bytes
 
 app.post('/ajax/:method', require('./routes/ajax')(eventEmitter, io));
 app.post('/python/:method', require('./routes/python')(eventEmitter, io));

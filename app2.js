@@ -9,7 +9,7 @@ app.set('port', process.env.PORT || 3000);
 
 app.use(morgan('dev'));
 app.use(express.static('public'));
-app.use('/python', bodyParser.text());
+app.use('/python', bodyParser.text({limit: 3*1024*1024})); // bytes
 //app.use('/ajax', bodyParser.json());
 
 //app.post('/ajax/:method', require('./routes/ajax')(eventEmitter, io));
