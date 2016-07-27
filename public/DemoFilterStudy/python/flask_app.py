@@ -101,7 +101,6 @@ def get_task(method):
         temp1[np.abs(targetMatrix) < 1e-4] = 1e9
         deviateMatrix = 100 * (extractedMatrix - targetMatrix) / temp1
         resJson = {'q': Qu, 'extractedMatrix': extractedMatrix.tolist(), 'deviateMatrix': deviateMatrix.tolist(), 'message': msg}
-        print(resJson)
         return json.dumps(resJson, separators = (',', ':'))
     else:
         flask.abort(404)

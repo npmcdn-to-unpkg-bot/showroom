@@ -1118,9 +1118,10 @@ def RotateArrow2CTCQ(M, topology, tranZeros):
                 break
             if (i > 0) and (topology[i - 1, i + 2] == 1):
                 continue
-            MRotated = MoveZero(MRotated, N - 1, i, -1j * tranZeros[indexZeros])
-            point = np.sum(np.abs(MRotated[topology == 0]))
-            indexZeros += 1
+            if indexZeros < len(tranZeros):
+                MRotated = MoveZero(MRotated, N - 1, i, -1j * tranZeros[indexZeros])
+                point = np.sum(np.abs(MRotated[topology == 0]))
+                indexZeros += 1
             if indexZeros > len(tranZeros) - 1:
                 break
     return AdjustPrimaryCouple(np.real(MRotated)), point

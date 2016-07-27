@@ -1,3 +1,5 @@
+'use strict';
+
 (function (root) {
 	'use strict';
 
@@ -129,7 +131,7 @@
 					}
 					return result;
 				}),
-				    polyResult = function (coef) {
+				    polyResult = function polyResult(coef) {
 					return vanderN.map(function (v) {
 						return coef.reduce(function (t, d, i) {
 							return t.add(d.mul(v[i]));
@@ -210,7 +212,7 @@
 					return 0;
 				};
 				var countResult = 0,
-				    myFunc = function (myElement) {
+				    myFunc = function myFunc(myElement) {
 					// console.log(myElement.data().$scope.$$watchers);
 					if (myElement.data().$isolateScope && myElement.data().$isolateScope.$$watchers && myElement.data().$isolateScope.$$watchers.length) {
 						countResult += myElement.data().$isolateScope.$$watchers.length;
@@ -228,7 +230,7 @@
 				if (myElement === []) {
 					return undefined;
 				};
-				var myFunc = function (myElement) {
+				var myFunc = function myFunc(myElement) {
 					if (myElement.data().$isolateScope && myElement.data().$isolateScope.$$watchers && myElement.data().$isolateScope.$$watchers.length !== 0) {
 						// console.log(myElement.data().$isolateScope.$$watchers, "isolate scope watchers detached!");
 						myElement.data('backupWatchersIsolateScope', myElement.data().$isolateScope.$$watchers);
@@ -246,7 +248,7 @@
 				if (myElement === []) {
 					return undefined;
 				};
-				var myFunc = function (myElement) {
+				var myFunc = function myFunc(myElement) {
 					if (myElement.data().$isolateScope && myElement.data().$isolateScope.$$watchers && myElement.data().$isolateScope.$$watchers.length === 0 && myElement.data().hasOwnProperty('backupWatchersIsolateScope')) {
 						// Boolean([]) is evaluated to "true"
 						myElement.data().$isolateScope.$$watchers = myElement.data('backupWatchersIsolateScope');
@@ -268,19 +270,26 @@
 		factory(root.angular);
 	}
 })(window);
+"use strict";
+
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
-function reducer(state = {}, action) {
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
+function reducer() {
+  var state = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+  var action = arguments[1];
+
   var tempState = _extends({}, state);
   switch (action.type) {
     case "createTopoM":
       tempState.topoM = action.M;
       break;
     case "updateTopoM":
-      tempState.topoM = [...state.topoM];
-      tempState.topoM[action.row] = [...state.topoM[action.row]];
+      tempState.topoM = [].concat(_toConsumableArray(state.topoM));
+      tempState.topoM[action.row] = [].concat(_toConsumableArray(state.topoM[action.row]));
       tempState.topoM[action.row][action.col] = action.value;
-      tempState.topoM[action.col] = [...state.topoM[action.col]];
+      tempState.topoM[action.col] = [].concat(_toConsumableArray(state.topoM[action.col]));
       tempState.topoM[action.col][action.row] = action.value;
       //console.log("updateTopoM triggered: ", action, tempState);
       break;
@@ -299,6 +308,8 @@ function reducer(state = {}, action) {
 }
 
 window.store = Redux.createStore(reducer);
+'use strict';
+
 (function (w) {
 
 	w.ReactCSSTransitionGroup = React.addons.CSSTransitionGroup;
@@ -306,7 +317,7 @@ window.store = Redux.createStore(reducer);
 	w.MatrixTopology = React.createClass({
 		displayName: 'MatrixTopology',
 
-		render: function () {
+		render: function render() {
 			var _this2 = this;
 
 			var _this = this,
@@ -345,7 +356,7 @@ window.store = Redux.createStore(reducer);
 						})
 					),
 					this.props.topoM.map(function (row, index_row) {
-						let firstCol;
+						var firstCol = void 0;
 						if (index_row === 0) {
 							firstCol = React.createElement(
 								'td',
@@ -372,7 +383,7 @@ window.store = Redux.createStore(reducer);
 							row.map(function (eleM, index_col) {
 								return React.createElement(
 									'td',
-									{ style: tdStyle, onClick: function () {
+									{ style: tdStyle, onClick: function onClick() {
 											if (Math.abs(index_col - index_row) > 0.5) {
 												_this2.props.clickM(index_row, index_col, 1 - eleM);
 											}
@@ -387,15 +398,15 @@ window.store = Redux.createStore(reducer);
 		}
 	});
 
-	const mapStateToProps = function (state) {
+	var mapStateToProps = function mapStateToProps(state) {
 		return {
 			topoM: state.topoM
 		};
 	};
 
-	const mapDispatchToProps = function (dispatch) {
+	var mapDispatchToProps = function mapDispatchToProps(dispatch) {
 		return {
-			clickM: function (row, col, value) {
+			clickM: function clickM(row, col, value) {
 				dispatch({ type: "updateTopoM", row: row, col: col, value: value });
 			}
 		};
@@ -403,6 +414,8 @@ window.store = Redux.createStore(reducer);
 
 	w.MatrixTopologyContainer = ReactRedux.connect(mapStateToProps, mapDispatchToProps)(MatrixTopology);
 })(window);
+'use strict';
+
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
 angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.router', 'ngAnimate', 'ngSanitize']).config(['$stateProvider', '$urlRouterProvider', function ($stateProvider, $urlRouterProvider) {
@@ -418,7 +431,7 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 				controller: '_synthesis'
 			}
 		},
-		onExit: function () {
+		onExit: function onExit() {
 			ReactDOM.unmountComponentAtNode(document.getElementById('matrix-topology-table'));
 		}
 	}).state('extractmatrix', {
@@ -561,90 +574,92 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 	$scope.calculate = function _callee() {
 		var polyResult, tranZeros, numberOfPoints, stopFreq, freqGHz, response, epsilon, epsilonE, coefP, coefF, coefE, sFromM, tempString;
 		return regeneratorRuntime.async(function _callee$(_context) {
-			while (1) switch (_context.prev = _context.next) {
-				case 0:
-					polyResult = function polyResult(coef) {
-						return vanderN.map(function (v) {
-							return coef.reduce(function (t, d, i) {
-								return t.add(d.mul(v[i]));
-							}, numeric.t(0, 0));
+			while (1) {
+				switch (_context.prev = _context.next) {
+					case 0:
+						polyResult = function polyResult(coef) {
+							return vanderN.map(function (v) {
+								return coef.reduce(function (t, d, i) {
+									return t.add(d.mul(v[i]));
+								}, numeric.t(0, 0));
+							});
+						};
+
+						;
+						_context.prev = 2;
+						tranZeros = $scope.data.tranZeros.map(function (d) {
+							return [Number(d[0]), Number(d[1])];
+						}).filter(function (d) {
+							return d[0] !== 0 || d[1] !== 0;
 						});
-					};
+						numberOfPoints = $scope.data.numberOfPoints < 5000 ? $scope.data.numberOfPoints : 5000;
+						stopFreq = $scope.data.startFreq < $scope.data.stopFreq ? $scope.data.stopFreq : $scope.data.startFreq + $scope.data.bandwidth * 8;
+						freqGHz = numeric.linspace($scope.data.startFreq, stopFreq, numberOfPoints);
+						_context.next = 9;
+						return regeneratorRuntime.awrap(common.xhr2('SynthesizeFromTranZeros', { rootP: tranZeros, N: $scope.data.filterOrder, returnLoss: $scope.data.returnLoss, topology: store.getState().topoM }));
 
-					;
-					_context.prev = 2;
-					tranZeros = $scope.data.tranZeros.map(function (d) {
-						return [Number(d[0]), Number(d[1])];
-					}).filter(function (d) {
-						return d[0] !== 0 || d[1] !== 0;
-					});
-					numberOfPoints = $scope.data.numberOfPoints < 5000 ? $scope.data.numberOfPoints : 5000;
-					stopFreq = $scope.data.startFreq < $scope.data.stopFreq ? $scope.data.stopFreq : $scope.data.startFreq + $scope.data.bandwidth * 8;
-					freqGHz = numeric.linspace($scope.data.startFreq, stopFreq, numberOfPoints);
-					_context.next = 9;
-					return regeneratorRuntime.awrap(common.xhr2('SynthesizeFromTranZeros', { rootP: tranZeros, N: $scope.data.filterOrder, returnLoss: $scope.data.returnLoss, topology: store.getState().topoM }));
-
-				case 9:
-					response = _context.sent;
-					epsilon = numeric.t(response.epsilon[0], response.epsilon[1]);
-					epsilonE = epsilon;
-					coefP = response.coefP.map(function (d) {
-						return numeric.t(d[0], d[1]);
-					});
-					coefF = response.coefF.map(function (d) {
-						return numeric.t(d[0], d[1]);
-					});
-					coefE = response.coefE.map(function (d) {
-						return numeric.t(d[0], d[1]);
-					});
-					sFromM = common.CM2S(response.targetMatrix, freqGHz, $scope.data.unloadedQ, $scope.data.centerFreq, $scope.data.bandwidth);
+					case 9:
+						response = _context.sent;
+						epsilon = numeric.t(response.epsilon[0], response.epsilon[1]);
+						epsilonE = epsilon;
+						coefP = response.coefP.map(function (d) {
+							return numeric.t(d[0], d[1]);
+						});
+						coefF = response.coefF.map(function (d) {
+							return numeric.t(d[0], d[1]);
+						});
+						coefE = response.coefE.map(function (d) {
+							return numeric.t(d[0], d[1]);
+						});
+						sFromM = common.CM2S(response.targetMatrix, freqGHz, $scope.data.unloadedQ, $scope.data.centerFreq, $scope.data.bandwidth);
 
 
-					$scope.S11dB_fromM = sFromM.S11.map(function (s) {
-						return [s[0], 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10];
-					});
-					$scope.S21dB_fromM = sFromM.S21.map(function (s) {
-						return [s[0], 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10];
-					});
-					$scope.GroupDelay_fromM = sFromM.S21.map(function (s, i, o) {
-						var freqStep = i === o.length - 1 ? o[i][0] - o[i - 1][0] : o[i + 1][0] - o[i][0],
-						    phase1 = Math.atan2(o[i][1].y, o[i][1].x),
-						    phase2 = i === o.length - 1 ? 2 * Math.atan2(o[i][1].y, o[i][1].x) - Math.atan2(o[i - 1][1].y, o[i - 1][1].x) : Math.atan2(o[i + 1][1].y, o[i + 1][1].x),
-						    phaseStep = phase2 - phase1;
-						phaseStep = phaseStep - Math.round(phaseStep / Math.PI) * Math.PI;
-						return [s[0], -phaseStep / (2 * Math.PI * freqStep)];
-					});
+						$scope.S11dB_fromM = sFromM.S11.map(function (s) {
+							return [s[0], 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10];
+						});
+						$scope.S21dB_fromM = sFromM.S21.map(function (s) {
+							return [s[0], 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10];
+						});
+						$scope.GroupDelay_fromM = sFromM.S21.map(function (s, i, o) {
+							var freqStep = i === o.length - 1 ? o[i][0] - o[i - 1][0] : o[i + 1][0] - o[i][0],
+							    phase1 = Math.atan2(o[i][1].y, o[i][1].x),
+							    phase2 = i === o.length - 1 ? 2 * Math.atan2(o[i][1].y, o[i][1].x) - Math.atan2(o[i - 1][1].y, o[i - 1][1].x) : Math.atan2(o[i + 1][1].y, o[i + 1][1].x),
+							    phaseStep = phase2 - phase1;
+							phaseStep = phaseStep - Math.round(phaseStep / Math.PI) * Math.PI;
+							return [s[0], -phaseStep / (2 * Math.PI * freqStep)];
+						});
 
-					document.querySelector('#s11dbChart').click();
+						document.querySelector('#s11dbChart').click();
 
-					$scope.data.targetMatrix = response.targetMatrix;
-					$scope.data.message = response.message;
-					$scope.$digest();
+						$scope.data.targetMatrix = response.targetMatrix;
+						$scope.data.message = response.message;
+						$scope.$digest();
 
-					tempString = "# GHZ S DB R 50";
+						tempString = "# GHZ S DB R 50";
 
-					sFromM.S11.forEach(function (s, i) {
-						var S11_dB = 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10,
-						    S11_phase = Math.atan2(s[1].y, s[1].x) * 180 / Math.PI,
-						    t = sFromM.S21[i],
-						    S21_dB = 10 * Math.log(t[1].x * t[1].x + t[1].y * t[1].y) / Math.LN10,
-						    S21_phase = Math.atan2(t[1].y, t[1].x) * 180 / Math.PI;
-						tempString += "\n" + s[0] + " " + S11_dB + " " + S11_phase + " " + S21_dB + " " + S21_phase + " " + S21_dB + " " + S21_phase + " " + S11_dB + " " + S11_phase;
-					});
-					store.dispatch({ type: 'updateTempString', tempString: tempString });
-					/* console.log(tempString.slice(0)); */
-					_context.next = 31;
-					break;
+						sFromM.S11.forEach(function (s, i) {
+							var S11_dB = 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10,
+							    S11_phase = Math.atan2(s[1].y, s[1].x) * 180 / Math.PI,
+							    t = sFromM.S21[i],
+							    S21_dB = 10 * Math.log(t[1].x * t[1].x + t[1].y * t[1].y) / Math.LN10,
+							    S21_phase = Math.atan2(t[1].y, t[1].x) * 180 / Math.PI;
+							tempString += "\n" + s[0] + " " + S11_dB + " " + S11_phase + " " + S21_dB + " " + S21_phase + " " + S21_dB + " " + S21_phase + " " + S11_dB + " " + S11_phase;
+						});
+						store.dispatch({ type: 'updateTempString', tempString: tempString });
+						/* console.log(tempString.slice(0)); */
+						_context.next = 31;
+						break;
 
-				case 28:
-					_context.prev = 28;
-					_context.t0 = _context['catch'](2);
+					case 28:
+						_context.prev = 28;
+						_context.t0 = _context['catch'](2);
 
-					console.log(_context.t0.message);
+						console.log(_context.t0.message);
 
-				case 31:
-				case 'end':
-					return _context.stop();
+					case 31:
+					case 'end':
+						return _context.stop();
+				}
 			}
 		}, null, this, [[2, 28]]);
 	};
@@ -759,7 +774,7 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 			return "translate(" + d.x + "," + d.y + ")";
 		});
 
-		let eachNode = selectNodes.enter().append("svg:g").attr("class", "node").attr("transform", function (d) {
+		var eachNode = selectNodes.enter().append("svg:g").attr("class", "node").attr("transform", function (d) {
 			return "translate(" + d.x + "," + d.y + ")";
 		});
 
@@ -811,77 +826,79 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 	function extractMatrix(sFile) {
 		var synStoreState, topoM, tranZeros, captureStartFreqGHz, captureStopFreqGHz, response, numberOfPoints, stopFreq, freqGHz, sFromExtractM;
 		return regeneratorRuntime.async(function extractMatrix$(_context2) {
-			while (1) switch (_context2.prev = _context2.next) {
-				case 0:
-					_context2.prev = 0;
-					synStoreState = store.getState().savedSynthesisData;
-					topoM = store.getState().topoM;
-					tranZeros = synStoreState.tranZeros.map(function (d) {
-						return [Number(d[0]), Number(d[1])];
-					}).filter(function (d) {
-						return d[0] !== 0 || d[1] !== 0;
-					});
-					captureStartFreqGHz = $scope.captureStartFreqGHz || 0;
-					captureStopFreqGHz = $scope.captureStopFreqGHz || 0;
-					_context2.next = 8;
-					return regeneratorRuntime.awrap(common.xhr2('ExtractMatrix', _extends({}, sFile, synStoreState, { tranZeros: tranZeros, topology: topoM, captureStartFreqGHz: captureStartFreqGHz, captureStopFreqGHz: captureStopFreqGHz })));
+			while (1) {
+				switch (_context2.prev = _context2.next) {
+					case 0:
+						_context2.prev = 0;
+						synStoreState = store.getState().savedSynthesisData;
+						topoM = store.getState().topoM;
+						tranZeros = synStoreState.tranZeros.map(function (d) {
+							return [Number(d[0]), Number(d[1])];
+						}).filter(function (d) {
+							return d[0] !== 0 || d[1] !== 0;
+						});
+						captureStartFreqGHz = $scope.captureStartFreqGHz || 0;
+						captureStopFreqGHz = $scope.captureStopFreqGHz || 0;
+						_context2.next = 8;
+						return regeneratorRuntime.awrap(common.xhr2('ExtractMatrix', _extends({}, sFile, synStoreState, { tranZeros: tranZeros, topology: topoM, captureStartFreqGHz: captureStartFreqGHz, captureStopFreqGHz: captureStopFreqGHz })));
 
-				case 8:
-					response = _context2.sent;
-					numberOfPoints = synStoreState.numberOfPoints < 5000 ? synStoreState.numberOfPoints : 5000;
-					stopFreq = synStoreState.startFreq < synStoreState.stopFreq ? synStoreState.stopFreq : synStoreState.startFreq + synStoreState.bandwidth * 8;
-					freqGHz = numeric.linspace(synStoreState.startFreq, stopFreq, numberOfPoints);
-					sFromExtractM = common.CM2S(response.extractedMatrix, freqGHz, synStoreState.unloadedQ, synStoreState.centerFreq, synStoreState.bandwidth);
+					case 8:
+						response = _context2.sent;
+						numberOfPoints = synStoreState.numberOfPoints < 5000 ? synStoreState.numberOfPoints : 5000;
+						stopFreq = synStoreState.startFreq < synStoreState.stopFreq ? synStoreState.stopFreq : synStoreState.startFreq + synStoreState.bandwidth * 8;
+						freqGHz = numeric.linspace(synStoreState.startFreq, stopFreq, numberOfPoints);
+						sFromExtractM = common.CM2S(response.extractedMatrix, freqGHz, synStoreState.unloadedQ, synStoreState.centerFreq, synStoreState.bandwidth);
 
 
-					/* 			$scope.S11dB_fromTargetM = sFromTargetM.S11.map(function(s){return [s[0], 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10]});
-     			$scope.S21dB_fromTargetM = sFromTargetM.S21.map(function(s){return [s[0], 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10]});
-     			$scope.S11ang_fromTargetM = sFromTargetM.S11.map(function(s){return [s[0], Math.atan2(s[1].y, s[1].x) * 180 / Math.PI]});
-     			$scope.S21ang_fromTargetM = sFromTargetM.S21.map(function(s){return [s[0], Math.atan2(s[1].y, s[1].x) * 180 / Math.PI]}); */
+						/* 			$scope.S11dB_fromTargetM = sFromTargetM.S11.map(function(s){return [s[0], 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10]});
+      			$scope.S21dB_fromTargetM = sFromTargetM.S21.map(function(s){return [s[0], 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10]});
+      			$scope.S11ang_fromTargetM = sFromTargetM.S11.map(function(s){return [s[0], Math.atan2(s[1].y, s[1].x) * 180 / Math.PI]});
+      			$scope.S21ang_fromTargetM = sFromTargetM.S21.map(function(s){return [s[0], Math.atan2(s[1].y, s[1].x) * 180 / Math.PI]}); */
 
-					$scope.S11dB_fromExtractM = sFromExtractM.S11.map(function (s) {
-						return [s[0], 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10];
-					});
-					$scope.S21dB_fromExtractM = sFromExtractM.S21.map(function (s) {
-						return [s[0], 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10];
-					});
-					$scope.S11ang_fromExtractM = sFromExtractM.S11.map(function (s) {
-						return [s[0], Math.atan2(s[1].y, s[1].x) * 180 / Math.PI];
-					});
-					$scope.S21ang_fromExtractM = sFromExtractM.S21.map(function (s) {
-						return [s[0], Math.atan2(s[1].y, s[1].x) * 180 / Math.PI];
-					});
+						$scope.S11dB_fromExtractM = sFromExtractM.S11.map(function (s) {
+							return [s[0], 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10];
+						});
+						$scope.S21dB_fromExtractM = sFromExtractM.S21.map(function (s) {
+							return [s[0], 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10];
+						});
+						$scope.S11ang_fromExtractM = sFromExtractM.S11.map(function (s) {
+							return [s[0], Math.atan2(s[1].y, s[1].x) * 180 / Math.PI];
+						});
+						$scope.S21ang_fromExtractM = sFromExtractM.S21.map(function (s) {
+							return [s[0], Math.atan2(s[1].y, s[1].x) * 180 / Math.PI];
+						});
 
-					$scope.S11dB_fromSFile = sFile.freq.map(function (f, i) {
-						return [f / 1000, sFile.S11_db[i]];
-					});
-					$scope.S21dB_fromSFile = sFile.freq.map(function (f, i) {
-						return [f / 1000, sFile.S21_db[i]];
-					});
-					$scope.S11ang_fromSFile = sFile.freq.map(function (f, i) {
-						return [f / 1000, sFile.S11_angRad[i] * 180 / Math.PI];
-					});
-					$scope.S21ang_fromSFile = sFile.freq.map(function (f, i) {
-						return [f / 1000, sFile.S21_angRad[i] * 180 / Math.PI];
-					});
+						$scope.S11dB_fromSFile = sFile.freq.map(function (f, i) {
+							return [f / 1000, sFile.S11_db[i]];
+						});
+						$scope.S21dB_fromSFile = sFile.freq.map(function (f, i) {
+							return [f / 1000, sFile.S21_db[i]];
+						});
+						$scope.S11ang_fromSFile = sFile.freq.map(function (f, i) {
+							return [f / 1000, sFile.S11_angRad[i] * 180 / Math.PI];
+						});
+						$scope.S21ang_fromSFile = sFile.freq.map(function (f, i) {
+							return [f / 1000, sFile.S21_angRad[i] * 180 / Math.PI];
+						});
 
-					document.querySelector('#s11dbChart').click();
-					$scope.data.extractedMatrix = response.extractedMatrix;
-					$scope.data.deviateMatrix = response.deviateMatrix;
-					document.querySelector('#deviationTable').click();
-					$scope.$digest();
-					_context2.next = 31;
-					break;
+						document.querySelector('#s11dbChart').click();
+						$scope.data.extractedMatrix = response.extractedMatrix;
+						$scope.data.deviateMatrix = response.deviateMatrix;
+						document.querySelector('#deviationTable').click();
+						$scope.$digest();
+						_context2.next = 31;
+						break;
 
-				case 28:
-					_context2.prev = 28;
-					_context2.t0 = _context2['catch'](0);
+					case 28:
+						_context2.prev = 28;
+						_context2.t0 = _context2['catch'](0);
 
-					document.getElementById("p1-file").innerHTML = _context2.t0.message;
+						document.getElementById("p1-file").innerHTML = _context2.t0.message;
 
-				case 31:
-				case 'end':
-					return _context2.stop();
+					case 31:
+					case 'end':
+						return _context2.stop();
+				}
 			}
 		}, null, this, [[0, 28]]);
 	}
@@ -959,7 +976,7 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 }]).controller("_optimize", ['$scope', '$timeout', function ($scope, $timeout) {}]).directive('hideTabs', ['$rootScope', function ($rootScope) {
 	return {
 		restrict: 'A',
-		link: function ($scope, $el) {
+		link: function link($scope, $el) {
 			$rootScope.hideTabs = 'tabs-item-hide';
 			$scope.$on('$destroy', function () {
 				$rootScope.hideTabs = '';
@@ -977,7 +994,7 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 			nsDelete: '&nsDelete'
 		},
 		templateUrl: '_nsFillForm.html',
-		link: function (scope, element, attrs) {
+		link: function link(scope, element, attrs) {
 			scope.nsShowDelete = attrs.hasOwnProperty('nsShowDelete') ? attrs.nsShowDelete === 'true' : false;
 		}
 	};
@@ -989,7 +1006,7 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 			nsClickButton: '&nsClickButton'
 		},
 		templateUrl: '_nsSearchBox.html',
-		link: function (scope, element, attrs) {
+		link: function link(scope, element, attrs) {
 			scope.nsShowButton = attrs.hasOwnProperty('nsShowButton') ? attrs.nsShowButton === 'true' : false;
 		}
 	};
@@ -999,7 +1016,7 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 		transclude: true,
 		scope: {},
 		templateUrl: '_nsLinkBox.html',
-		link: function (scope, element, attrs) {
+		link: function link(scope, element, attrs) {
 			scope.nsState = attrs.hasOwnProperty('nsState') ? attrs.nsState : "";
 			scope.nsIcon = attrs.hasOwnProperty('nsIcon') ? attrs.nsIcon : "";
 			scope.$state = $state;
@@ -1010,6 +1027,8 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 /* angular.element(document).ready(function () {
 	angular.bootstrap(document, ['content']);
 }); */
+'use strict';
+
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
 angular.module('myAppE2E', ['content', 'ngMockE2E']).run(['$httpBackend', '$timeout', function ($httpBackend, $timeout) {
@@ -1025,8 +1044,8 @@ angular.module('myAppE2E', ['content', 'ngMockE2E']).run(['$httpBackend', '$time
 	} else {
 		console.log("dummy /ajax/:method used");
 		$httpBackend.whenRoute('POST', '/ajax/:method').respond(function (method, url, data, headers, params) {
-			let body = JSON.parse(data),
-			    tempUser;
+			var body = JSON.parse(data),
+			    tempUser = void 0;
 			switch (params.method) {
 				case 'isLoggedIn':
 					return [200, "success"];
@@ -1043,7 +1062,7 @@ angular.module('myAppE2E', ['content', 'ngMockE2E']).run(['$httpBackend', '$time
 					break;
 				case 'saveAddress':
 					if (body.hasOwnProperty("id")) {
-						let tempIndex = address.map(function (o) {
+						var tempIndex = address.map(function (o) {
 							return o.id;
 						}).indexOf(body.id);
 						address[tempIndex] = body;
@@ -1054,10 +1073,10 @@ angular.module('myAppE2E', ['content', 'ngMockE2E']).run(['$httpBackend', '$time
 					break;
 				case 'deleteAddress':
 					if (body.hasOwnProperty("id")) {
-						let tempIndex = address.map(function (o) {
+						var _tempIndex = address.map(function (o) {
 							return o.id;
 						}).indexOf(body.id);
-						address.splice(tempIndex, 1);
+						address.splice(_tempIndex, 1);
 					}
 					return [200, address];
 					break;
