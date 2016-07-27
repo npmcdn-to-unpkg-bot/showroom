@@ -390,7 +390,7 @@ function handleChangeM(){
 			store.dispatch({type: 'saveSFile', data: sFile});
 			extractMatrix(sFile);
 		}
-	}, 100);
+	}, 300);
 	async function extractMatrix(sFile){
 		try {
 			var synStoreState = store.getState().savedSynthesisData,
