@@ -64,23 +64,43 @@
 
 <div class="row">
 		<div class="col-lg-12">
-				<h3>Description</h3>
+				<h3>Group Definition</h3>
 		</div>
 </div>
 <table class="table table-condensed">
 	<thead>
 		<tr>
-			<th class="label-sm">Real</th>
-			<th class="label-sm">Image</th>
+			<th class="label-sm">Distance(km)</th>
+			<th class="label-sm">Radius(km)</th>
+			<th class="label-sm">Order amount</th>
+			<th class="label-sm">Currency</th>
 		</tr>
 	</thead>
 	<tbody>
-		<tr ng-repeat="d in data.tranZeros track by $index">
+		<tr ng-repeat="d in store.deliveryplan track by $index">
 			<td>
-				<input type="number" class="form-control input-sm" ng-model="d[0]" ng-change="$last && (d[0] !== '') && data.tranZeros.push(['', ''])">
+				<input type="number" class="form-control input-sm" ng-model="d.distance" ng-change="$last && (d.distance !== '') && store.deliveryplan.push({distance: '', radius: '', order: '', currency: ''})">
 			</td>
 			<td>
-				<input type="number" class="form-control input-sm" ng-model="d[1]" ng-change="$last && (d[1] !== '') && data.tranZeros.push(['', ''])">
+				<input type="number" class="form-control input-sm" ng-model="d.radius" ng-change="$last && (d.radius !== '') && store.deliveryplan.push({distance: '', radius: '', order: '', currency: ''})">
+			</td>
+			<td>
+				<input type="number" class="form-control input-sm" ng-model="d.order" ng-change="$last && (d.order !== '') && store.deliveryplan.push({distance: '', radius: '', order: '', currency: ''})">
+			</td>
+			<td>
+				<div role="presentation" class="dropdown">
+					<button id="dLabel" type="button" class="btn btn-default" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+						{{d.currency}}&nbsp;
+					</button>
+
+					<div class="dropdown-menu list-group">
+						<button type="button" class="list-group-item" ng-repeat="c in ['CAD', 'USD']" ng-click="d.currency = c">
+								<div>
+									{{::c}}
+								</div>
+						</button>
+					</div>
+				</div>
 			</td>
 		</tr>
 	</tbody>

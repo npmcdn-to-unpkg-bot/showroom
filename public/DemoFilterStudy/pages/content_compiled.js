@@ -535,16 +535,16 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 		$scope.data = tempStoreState.savedSynthesisData;
 	} else {
 		$scope.data = {
-			filterOrder: 6,
-			returnLoss: 20,
-			centerFreq: 1,
-			bandwidth: 0.02,
+			filterOrder: 3,
+			returnLoss: 30,
+			centerFreq: 4, //14.36,
+			bandwidth: 0.02, //0.89,
 			unloadedQ: 2000,
-			startFreq: 0.96,
-			stopFreq: 1.04,
+			startFreq: 3.75, //12.8,
+			stopFreq: 4.25, //15.5,
 			numberOfPoints: 1000,
 			filterType: "BPF",
-			/* tranZeros: [['', 1.5], ['', '']], */
+			/* tranZeros: [['', 1.1], ['', 1.4], ['', 1.9]], */
 			tranZeros: [['', '']],
 			matrixDisplay: "M",
 			focusZero: 0
@@ -847,7 +847,7 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 						numberOfPoints = synStoreState.numberOfPoints < 5000 ? synStoreState.numberOfPoints : 5000;
 						stopFreq = synStoreState.startFreq < synStoreState.stopFreq ? synStoreState.stopFreq : synStoreState.startFreq + synStoreState.bandwidth * 8;
 						freqGHz = numeric.linspace(synStoreState.startFreq, stopFreq, numberOfPoints);
-						sFromExtractM = common.CM2S(response.extractedMatrix, freqGHz, synStoreState.unloadedQ, synStoreState.centerFreq, synStoreState.bandwidth);
+						sFromExtractM = common.CM2S(response.extractedMatrix, freqGHz, response.q, synStoreState.centerFreq, synStoreState.bandwidth);
 
 
 						/* 			$scope.S11dB_fromTargetM = sFromTargetM.S11.map(function(s){return [s[0], 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10]});
@@ -884,23 +884,25 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 						document.querySelector('#s11dbChart').click();
 						$scope.data.extractedMatrix = response.extractedMatrix;
 						$scope.data.deviateMatrix = response.deviateMatrix;
+						$scope.data.q = response.q;
+						document.getElementById("p1-file").innerHTML = response.message;
 						document.querySelector('#deviationTable').click();
 						$scope.$digest();
-						_context2.next = 31;
+						_context2.next = 33;
 						break;
 
-					case 28:
-						_context2.prev = 28;
+					case 30:
+						_context2.prev = 30;
 						_context2.t0 = _context2['catch'](0);
 
 						document.getElementById("p1-file").innerHTML = _context2.t0.message;
 
-					case 31:
+					case 33:
 					case 'end':
 						return _context2.stop();
 				}
 			}
-		}, null, this, [[0, 28]]);
+		}, null, this, [[0, 30]]);
 	}
 
 	$scope.showChart = function (select) {

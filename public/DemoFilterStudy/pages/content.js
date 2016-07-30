@@ -135,16 +135,16 @@ angular
 		$scope.data = tempStoreState.savedSynthesisData;
 	} else {
 		$scope.data = {
-			filterOrder: 6,
-			returnLoss: 20,
-			centerFreq: 1,
-			bandwidth: 0.02,
+			filterOrder: 3,
+			returnLoss: 30,
+			centerFreq: 4,//14.36,
+			bandwidth: 0.02,//0.89,
 			unloadedQ: 2000,
-			startFreq: 0.96,
-			stopFreq: 1.04,
+			startFreq: 3.75,//12.8,
+			stopFreq: 4.25,//15.5,
 			numberOfPoints: 1000,
 			filterType: "BPF",
-			/* tranZeros: [['', 1.5], ['', '']], */
+			/* tranZeros: [['', 1.1], ['', 1.4], ['', 1.9]], */
 			tranZeros: [['', '']],
 			matrixDisplay: "M",
 			focusZero: 0
@@ -407,7 +407,7 @@ function handleChangeM(){
 				
 /* 				sFromTargetM = common.CM2S(synStoreState.targetMatrix, freqGHz, synStoreState.unloadedQ, synStoreState.centerFreq, synStoreState.bandwidth), */
 				
-				sFromExtractM = common.CM2S(response.extractedMatrix, freqGHz, synStoreState.unloadedQ, synStoreState.centerFreq, synStoreState.bandwidth);
+				sFromExtractM = common.CM2S(response.extractedMatrix, freqGHz, response.q, synStoreState.centerFreq, synStoreState.bandwidth);
 				
 /* 			$scope.S11dB_fromTargetM = sFromTargetM.S11.map(function(s){return [s[0], 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10]});
 			$scope.S21dB_fromTargetM = sFromTargetM.S21.map(function(s){return [s[0], 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10]});
@@ -427,6 +427,8 @@ function handleChangeM(){
 			document.querySelector('#s11dbChart').click();
 			$scope.data.extractedMatrix = response.extractedMatrix;
 			$scope.data.deviateMatrix = response.deviateMatrix;
+			$scope.data.q = response.q;
+			document.getElementById("p1-file").innerHTML = response.message;
 			document.querySelector('#deviationTable').click();
 			$scope.$digest();
 		} catch(e) {

@@ -37,8 +37,8 @@ function simpleD3LinearChart(domElementId, margin, xDomainInit, yDomainInit){
 			})
 			.y(function(d) {
 				return yScale(d[1])
-			})
-			.curve(d3.curveBasis);
+			});
+			//.curve(d3.curveBasis);
 
 	svg.append("g")
 		.attr("class", "x axis")

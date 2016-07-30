@@ -12,9 +12,9 @@ from numpy.polynomial import Polynomial
 from scipy import optimize, interpolate, signal, sparse
 import matplotlib.pyplot as plt
 
-rootP = np.array([1.1j]) #np.array([-2j, 2j])
-N = 20
-returnLoss= 40
+rootP = np.array([1.1j, 1.4j, 1.9j]) #np.array([-2j, 2j])
+N = 7
+returnLoss= 30
 #epsilon, coefP, coefF, coefE = CP.ChebyshevP2EF(rootP, N, returnLoss)
 
 U = 1.
@@ -62,15 +62,15 @@ def jacobFunc(s, c, rootP, N):
 #    temp5 = temp4 * temp2.conj()
     return np.array([[np.real(temp4), -np.imag(temp4)], [np.imag(temp4), np.real(temp4)]])
 
-temp1 = np.arccos(1j / np.abs(epsilon / 2 ** (N - 1 - 0.2)))
-temp2 = np.hstack((temp1 + np.arange(N) * np.pi, np.pi - temp1 + np.arange(N) * np.pi))
-result = np.array([optimize.root(fun=costFunc, x0=[0, 0], args=(x, rootP, N), jac=jacobFunc, method='hybr') for x in temp2])
-result2 = np.array([x.x[0] + 1j * x.x[1] for x in result])
-rootE1 = result2[np.real(result2) < 0]
-rootE = rootE1
-plt.clf()
-plt.plot(np.real(rootE), np.imag(rootE), '*')
-plt.plot(np.real(rootE1), np.imag(rootE1), '+')
+#temp1 = np.arccos(1j / np.abs(epsilon / 2 ** (N - 1 - 0.2)))
+#temp2 = np.hstack((temp1 + np.arange(N) * np.pi, np.pi - temp1 + np.arange(N) * np.pi))
+#result = np.array([optimize.root(fun=costFunc, x0=[0, 0], args=(x, rootP, N), jac=jacobFunc, method='hybr') for x in temp2])
+#result2 = np.array([x.x[0] + 1j * x.x[1] for x in result])
+#rootE1 = result2[np.real(result2) < 0]
+#rootE = rootE1
+#plt.clf()
+#plt.plot(np.real(rootE), np.imag(rootE), '*')
+#plt.plot(np.real(rootE1), np.imag(rootE1), '+')
 
 #aaa = np.arange(0.1, 3, 0.1) * 1j
 #iter = 14
@@ -151,28 +151,38 @@ else:
     coefP = np.array([1.])
 #y21n = -1j *  coefP / epsilonE
 coefP = polyP.coef
-temp1 = (len(rootF) + len(rootP) + 3) % 4
-y21n = (1j) ** temp1 * coefP / np.abs(epsilonE)
+y21n = coefP / CP.signedEpsilon(len(rootF), len(rootP), epsilon)
 
-#y21n /= yd[-1]
-#y22n /= yd[-1]
-#yd /= yd[-1]
+y21n /= yd[-1]
+y22n /= yd[-1]
+yd /= yd[-1]
 
 polyYd = Polynomial(yd)
-rootYd = polyYd.roots()
-print(rootYd[0], rootYd[-1])
 yd2 = yd.copy()
 for i in np.arange(len(yd)):
     yd2[i] *= (1j) ** (i + N % 2)
 yd2 = np.real(yd2)
 rootYd = 1j * Polynomial(yd2).roots()
-polyYd2 = Polynomial.fromroots(rootYd)
 polyYdDer = polyYd.deriv()
 polyY21n = Polynomial(y21n)
 polyY22n = Polynomial(y22n)
-#lambdak = rootYd
-#r21k = polyY21n(rootYd) / polyYdDer(rootYd)
-#r22k = polyY22n(rootYd) / polyYdDer(rootYd)
+polyYdDerDer = polyYdDer.deriv()
+polyY21nDer = polyY21n.deriv()
+polyY22nDer = polyY22n.deriv()
+lambdak = rootYd
+r21k = polyY21n(rootYd) / polyYdDer(rootYd)
+r22k = polyY22n(rootYd) / polyYdDer(rootYd)
+r21k2 = polyY21nDer(rootYd) / polyYdDerDer(rootYd)
+r22k2 = polyY22nDer(rootYd) / polyYdDerDer(rootYd)
+r21k = np.where(np.abs(polyYdDer(rootYd)) > 0.1, r21k, r21k2)
+r22k = np.where(np.abs(polyYdDer(rootYd)) > 0.1, r22k, r22k2)
+print("polyYdDer: ", polyYdDer)
+print("polyY21n: ", polyY21n)
+print("polyY22n: ", polyY22n)
+print("rootYd: ", rootYd)
+print("polyYdDer: ", polyYdDer(rootYd))
+print("polyY21n: ", polyY21n(rootYd))
+print("polyY22n: ", polyY22n(rootYd))
 
 #rootYd[0] += 0.001j + 1.51089316e-03
 #rootYd[-1] -= 0.001j - 1.51089316e-03
@@ -221,16 +231,16 @@ M[1:-1, -1] = Mlk
 
 S21, S11 = CP.CM2S(M, normalizedFreq)
 
-#plt.clf()
-#plt.subplot(1, 2, 1)
-#plt.plot(normalizedFreq, 20*np.log10(np.abs(S11_old)), 'o');
-#plt.plot(normalizedFreq, 20*np.log10(np.abs(S11)), '*');
-#plt.title('S11(dB)')
-#plt.subplot(1, 2, 2)
-#plt.plot(normalizedFreq, 20*np.log10(np.abs(S21_old)), 'o');
-#plt.plot(normalizedFreq, 20*np.log10(np.abs(S21)), '*');
-#plt.title('S21(dB)')
-#plt.draw()
+plt.clf()
+plt.subplot(1, 2, 1)
+plt.plot(normalizedFreq, 20*np.log10(np.abs(S11_old)), 'o');
+plt.plot(normalizedFreq, 20*np.log10(np.abs(S11)), '*');
+plt.title('S11(dB)')
+plt.subplot(1, 2, 2)
+plt.plot(normalizedFreq, 20*np.log10(np.abs(S21_old)), 'o');
+plt.plot(normalizedFreq, 20*np.log10(np.abs(S21)), '*');
+plt.title('S21(dB)')
+plt.draw()
 
 
 def SerializeM(M):
@@ -581,58 +591,3 @@ ps.print_stats()
 #plt.plot(cost)
 
 
-#reqJson = np.load('tempData.npy')[0]
-#freq = np.array(reqJson['freq']) * 1e6
-#S11_amp = 10 ** (np.array(reqJson['S21_db']) / 20)
-#S11 = S11_amp * (np.cos(np.array(reqJson['S21_angRad'])) + 1j * np.sin(np.array(reqJson['S21_angRad'])))
-#S21_amp = 10 ** (np.array(reqJson['S11_db']) / 20)
-#S21 = S21_amp * (np.cos(np.array(reqJson['S11_angRad'])) + 1j * np.sin(np.array(reqJson['S11_angRad'])))
-#N = reqJson['filterOrder']
-#numZeros = len(reqJson['tranZeros'])
-#filterOrder = np.hstack((np.zeros((N, )), 2 * np.ones((numZeros, ))))
-#w1 = (reqJson['centerFreq'] - reqJson['bandwidth'] / 2) * 1e6
-#w2 = (reqJson['centerFreq'] + reqJson['bandwidth'] / 2) * 1e6
-#
-#epsilon, epsilonE, Qu, rootF, rootP, rootE = CP.S2FP(freq, S21, S11, filterOrder, w1, w2, wga=1.122*0.0254, method=3)
-#S11_new, S21_new = CP.FPE2S(epsilon, epsilonE, rootF, rootP, rootE, normalizedFreq)
-#
-#plt.clf()
-#plt.subplot(2, 2, 1)
-#plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), 20*np.log10(np.abs(S11_old)), 'o');
-#plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), 20*np.log10(np.abs(S11_new)), '*');
-#plt.title('S11(dB)')
-#plt.subplot(2, 2, 3)
-#plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), np.angle(S11_old, deg=True), 'o');
-#plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), np.angle(S11_new, deg=True), '*');
-#plt.title('S11(degree)')
-#plt.subplot(2, 2, 2)
-#plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), 20*np.log10(np.abs(S21_old)), 'o');
-#plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), 20*np.log10(np.abs(S21_new)), '*');
-#plt.title('S21(dB)')
-#plt.subplot(2, 2, 4)
-#plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), np.angle(S21_old, deg=True), 'o');
-#plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), np.angle(S21_new, deg=True), '*');
-##plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), np.angle(resultS21, deg=True) - np.angle(S21, deg=True), '*');
-#plt.title('S21(degree)')
-#
-#fullMatrix = CP.FPE2M(epsilon, epsilonE, rootF, rootP, rootE, method=1)
-#topology = np.array(reqJson['topology'])
-#extractedMatrix = CP.ReduceMAngleMethod(fullMatrix, topology)
-#targetMatrix = np.array(reqJson['targetMatrix'])
-#temp1 = targetMatrix.copy()
-#temp1[np.abs(targetMatrix) < 1e-4] = 1e9
-#deviateMatrix = (extractedMatrix - targetMatrix) / temp1
-#
-#print(np.round(fullMatrix, 4))
-#print(np.round(extractedMatrix, 4))
-#print(np.round(deviateMatrix, 4))
-
-#
-#M = np.real(M)
-#print(np.round(M, 4), "\n")
-#temp1 = RotateMReduce(M, 1, 6, 0, 6)
-#temp2 = RotateM2Arrow(M)
-#temp3 = RotateMReduce(temp2, 5, 6, 5, 7)
-#print(np.round(temp2, 4), "\n")
-#print(np.round(temp3, 4), "\n")
-#N = M.shape[0] - 2

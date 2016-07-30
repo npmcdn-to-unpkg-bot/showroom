@@ -86,6 +86,10 @@ def ChebyshevP2EF(rootP, N, returnLoss):
     polyE = Polynomial.fromroots(rootE);
     return epsilon, polyP.coef, polyF.coef, polyE.coef
     
+def signedEpsilon(nF, nP, epsilon):
+    temp1 = (nF + nP + 3) % 4
+    return np.abs(epsilon) / (1j) ** temp1
+        
 def CM2S(M, normalizedFreq):
     R1 = 1.;
     RN = 1.;
@@ -123,38 +127,38 @@ def CM2S(M, normalizedFreq):
 
     return S21, S11
 
-def FP2E(epsilon, rootF, rootP):
-#    polyF = Polynomial.fromroots(rootF)
-#    if rootF.shape[0] % 2 == 0:
-#        polyFminus = Polynomial.fromroots(-np.conj(rootF)) # polyF(-s)
-##        polyFminus = Polynomial.fromroots(-rootF) # polyF(-s)
-#    else:
-#        polyFminus = -Polynomial.fromroots(-np.conj(rootF))
-##        polyFminus = -Polynomial.fromroots(-rootF)
-#    if len(rootP) == 0:
-#        polyP = Polynomial([1])
-#        polyPminus = Polynomial([1])
-#    else:
-#        polyP = Polynomial.fromroots(rootP)
-#        if len(rootP) % 2 == 0:
-#            polyPminus = Polynomial.fromroots(-np.conj(rootP))
-##            polyPminus = Polynomial.fromroots(-rootP)
-#        else:
-#            polyPminus = -Polynomial.fromroots(-np.conj(rootP))
-##            polyPminus = -Polynomial.fromroots(-rootP)
-#    E2 = polyF * polyFminus + polyP * polyPminus / (np.abs(epsilon) * np.abs(epsilon))
-#    rootE2 = E2.roots()
-#    rootE = rootE2[np.real(rootE2) < -1.e-9]
-
-    polyF = Polynomial.fromroots(rootF)
-    if len(rootP) == 0:
-        polyP = Polynomial([1])
-    else:
-        polyP = Polynomial.fromroots(rootP)
-    temp1 = (len(rootF) + len(rootP) + 3) % 4
-    temp2 = polyF + (1j) ** temp1 * polyP / np.abs(epsilon)
-    rootE = temp2.roots()
-    rootE = -np.abs(np.real(rootE)) + 1j * np.imag(rootE)
+def FP2E(epsilon, rootF, rootP, method = 1):
+    if method == 1:
+        polyF = Polynomial.fromroots(rootF)
+        if len(rootP) == 0:
+            polyP = Polynomial([1])
+        else:
+            polyP = Polynomial.fromroots(rootP)
+        temp1 = polyF + polyP / signedEpsilon(len(rootF), len(rootP), epsilon)
+        rootE = temp1.roots()
+        rootE = -np.abs(np.real(rootE)) + 1j * np.imag(rootE)
+    elif method == 2:
+        polyF = Polynomial.fromroots(rootF)
+        if rootF.shape[0] % 2 == 0:
+            polyFminus = Polynomial.fromroots(-np.conj(rootF)) # polyF(-s)
+    #        polyFminus = Polynomial.fromroots(-rootF) # polyF(-s)
+        else:
+            polyFminus = -Polynomial.fromroots(-np.conj(rootF))
+    #        polyFminus = -Polynomial.fromroots(-rootF)
+        if len(rootP) == 0:
+            polyP = Polynomial([1])
+            polyPminus = Polynomial([1])
+        else:
+            polyP = Polynomial.fromroots(rootP)
+            if len(rootP) % 2 == 0:
+                polyPminus = Polynomial.fromroots(-np.conj(rootP))
+    #            polyPminus = Polynomial.fromroots(-rootP)
+            else:
+                polyPminus = -Polynomial.fromroots(-np.conj(rootP))
+    #            polyPminus = -Polynomial.fromroots(-rootP)
+        E2 = polyF * polyFminus + polyP * polyPminus / (np.abs(epsilon) * np.abs(epsilon))
+        rootE2 = E2.roots()
+        rootE = rootE2[np.real(rootE2) < -1.e-9]
     return rootE
 
 def FPE2S(epsilon, epsilonE, rootF, rootP, rootE, normalizedFreq):
@@ -414,6 +418,7 @@ def S2FP(inFreq, inS21, inS11, filterOrder, w1, w2, wga, wgb=0.1, method=0, star
         return rootF, rootP
 
     def GetEpsilonRootE(rootF, rootP, S11, S21, normalizedFreq, Qu=5000., epsilon=1.e10):
+        normalizedS = 1j * normalizedFreq + 1./Qu
         polyF = Polynomial.fromroots(rootF)
         if len(rootP) == 0:
             polyP = Polynomial([1])
@@ -424,11 +429,11 @@ def S2FP(inFreq, inS21, inS11, filterOrder, w1, w2, wga, wgb=0.1, method=0, star
 #            epsilon = ((S11[tempIndex] / S21[tempIndex]) * polyP(1j * normalizedFreq[tempIndex] + 1./Qu) / polyF(1j * normalizedFreq[tempIndex] + 1./Qu)) # polyP(1./Qu) / polyF(1./Qu) is very close to polyP(0) / polyF(0)
             nF = rootF.shape[0]
             nP = len(rootP)
-            M = np.hstack((np.diag(S21).dot(np.vander(1j * normalizedFreq + 1./Qu, nF+1, increasing=True).dot(np.array([polyF.coef]).T)), -np.diag(S11).dot(np.vander(1j * normalizedFreq + 1./Qu, nP+1, increasing=True).dot(np.array([polyP.coef]).T))))
+            M = np.hstack((np.diag(S21).dot(np.vander(normalizedS, nF+1, increasing=True).dot(np.array([polyF.coef]).T)), -np.diag(S11).dot(np.vander(normalizedS, nP+1, increasing=True).dot(np.array([polyP.coef]).T))))
             V = np.linalg.svd(M)[2]
             temp1 = np.conj(V[-1, :]) # b
             epsilon = temp1[0] / temp1[1]
-        rootE = FP2E(epsilon, rootF, rootP)
+        rootE = FP2E(epsilon, rootF, rootP, method=2)
         polyE = Polynomial.fromroots(rootE)
 #        tempIndex = np.argmin(np.abs(normalizedFreq - 1.0))
 
@@ -535,7 +540,7 @@ def S2FP(inFreq, inS21, inS11, filterOrder, w1, w2, wga, wgb=0.1, method=0, star
     freq, S21, S11 = RectifyInputData(inFreq, inS21, inS11)
     normalizedFreq = NormalizeFreq(freq, w1, w2);
     cutoffFrequency = 299792458. / (2. * wga);
-    Qu = 5000.e6 # initial Qu value
+    Qu = 2000.e0 # initial Qu value
     
     if method == 0:
         initialValue = GetInitialValue(filterOrder, method=1)
@@ -560,6 +565,7 @@ def S2FP(inFreq, inS21, inS11, filterOrder, w1, w2, wga, wgb=0.1, method=0, star
         rootF, rootP = DeserializeFP(resultFP, filterOrder)
         epsilon, epsilonE, rootE = GetEpsilonRootE(rootF, rootP, S11, S21, normalizedFreq, Qu)
     elif (method == 1) or (method == 2):
+        normalizedS = 1j * normalizedFreq + 0*np.sqrt(w2 * w1) / (Qu * (w2 - w1))
         rootF, rootP = DeserializeFP(np.arange(filterOrder.shape[0] * 2), filterOrder)
         nF = rootF.shape[0]
         nP = len(rootP)
@@ -568,7 +574,7 @@ def S2FP(inFreq, inS21, inS11, filterOrder, w1, w2, wga, wgb=0.1, method=0, star
                 originalNF = nF
                 nF += int(0.49 * nF)
 #            M = np.hstack((np.vander(1j * normalizedFreq + 1./Qu, nF+1, increasing=True), -np.diag(S11 / S21).dot(np.vander(1j * normalizedFreq + 1./Qu, nP+1, increasing=True))))
-            M = np.hstack((np.diag(S21).dot(np.vander(1j * normalizedFreq + 1./Qu, nF+1, increasing=True)), -np.diag(S11).dot(np.vander(1j * normalizedFreq + 1./Qu, nP+1, increasing=True))))
+            M = np.hstack((np.diag(S21).dot(np.vander(normalizedS, nF+1, increasing=True)), -np.diag(S11).dot(np.vander(normalizedS, nP+1, increasing=True))))
 #            M = np.hstack((np.diag(S21 / S11).dot(np.vander(1j * normalizedFreq + 1./Qu, nF+1, increasing=True)), -np.vander(1j * normalizedFreq + 1./Qu, nP+1, increasing=True)))
             Q, R = np.linalg.qr(M, mode='complete')
             R11 = R[:nF+1, :nF+1]
@@ -593,14 +599,17 @@ def S2FP(inFreq, inS21, inS11, filterOrder, w1, w2, wga, wgb=0.1, method=0, star
                 break
         epsilon = coefF[-1] / coefP[-1]
         epsilon, epsilonE, rootE = GetEpsilonRootE(rootF, rootP, S11, S21, normalizedFreq, Qu, epsilon)
-    elif method == 3:
+    elif (method == 3) or (method == 4):
         rootF, rootP = DeserializeFP(np.arange(filterOrder.shape[0] * 2), filterOrder)
         nF = rootF.shape[0]
         nP = len(rootP)
         for i in np.arange(0, 1):
-            normalizedS = 1j * normalizedFreq + np.sqrt(w2 * w1) / (Qu * (w2 - w1))
+            normalizedS = 1j * normalizedFreq + 0*np.sqrt(w2 * w1) / (Qu * (w2 - w1))
+            if (method == 4): # increase order
+                originalNF = nF
+                nF += int(0.49 * nF)
             M = np.hstack((np.vander(normalizedS, nF+1, increasing=True), -np.diag(S11 / S21).dot(np.vander(normalizedS, nP+1, increasing=True))))
-#            M = np.hstack((np.diag(S21).dot(np.vander(1j * normalizedFreq + 1./Qu, nF+1, increasing=True)), -np.diag(S11).dot(np.vander(1j * normalizedFreq + 1./Qu, nP+1, increasing=True))))
+            M = np.hstack((np.diag(S21).dot(np.vander(normalizedS, nF+1, increasing=True)), -np.diag(S11).dot(np.vander(normalizedS, nP+1, increasing=True))))
             Q, R = np.linalg.qr(M, mode='complete')
             R11 = R[:nF+1, :nF+1]
             R12 = R[:nF+1, nF+1:]
@@ -608,53 +617,61 @@ def S2FP(inFreq, inS21, inS11, filterOrder, w1, w2, wga, wgb=0.1, method=0, star
             V = np.linalg.svd(R22)[2]
             coefP = np.conj(V[-1, :]) # b
             rootP = Polynomial(coefP).roots()
-#            coefF = -np.linalg.inv(R11).dot(R12.dot(coefP))
-#            rootF = Polynomial(coefF).roots()
+            print("rootP: ", rootP)
+            coefF = -np.linalg.inv(R11).dot(R12.dot(coefP))
+            rootF = Polynomial(coefF).roots()
 #            if (method == 2): # decrease order
 #                nF = originalNF
-            bandIndS21 = FindEdge(S21)
-            temp1 = np.ones((S21.shape[0],))
+#            bandIndS21 = FindEdge(S21)
+#            temp1 = np.ones((S21.shape[0],))
 #            for j in bandIndS21:
 #                temp1[j - 10 : j + 10] = 0.5e-2
 #            for j in rootP:
 #                tempIndex = np.argmin(np.abs(normalizedFreq - np.imag(j)))
 #                temp1[tempIndex - 10 : tempIndex + 10] = 0.2e-4 / np.abs(S21[tempIndex])
-            M = np.diag(temp1).dot(np.hstack((np.diag(S21).dot(np.vander(normalizedS, nF+1, increasing=True)), -np.diag(S11).dot(np.vander(normalizedS, nP+1, increasing=True).dot(np.array([coefP]).T)))))
+#            M = np.diag(temp1).dot(np.hstack((np.diag(S21).dot(np.vander(normalizedS, nF+1, increasing=True)), -np.diag(S11).dot(np.vander(normalizedS, nP+1, increasing=True).dot(np.array([coefP]).T)))))
+            if (method == 4): # decrease order
+                nF = originalNF
+            M = np.hstack((np.diag(S21 * S21 * S21).dot(np.vander(normalizedS, nF+1, increasing=True)), -np.diag(S11 * S21 * S21).dot(np.vander(normalizedS, nP+1, increasing=True).dot(np.array([coefP]).T))))
             V = np.linalg.svd(M)[2]
             temp1 = np.conj(V[-1, :]) # b
             coefF = temp1[:-1]
             rootF = Polynomial(coefF).roots()
             coefP = temp1[-1] * coefP
             epsilon = coefF[-1] / coefP[-1]
-            if np.all((np.real(rootF) < 1) & (np.real(rootF) > -1)):
-                deviateRootF = np.median(np.real(rootF))
-                Qu = 1. / (1. / Qu - deviateRootF * (w2 - w1) / np.sqrt(w2 * w1))
-#                print('i: ', i, ', rootF:', rootF, Qu, deviateRootF)
-#                print('i: ', i, ', rootP:', rootP)
-                rootF -= deviateRootF
-                coefF = Polynomial.fromroots(rootF).coef
-                if len(rootP) == 0:
-                    polyP = Polynomial([1])
-                else:
-                    rootP -= deviateRootF
-                    polyP = Polynomial.fromroots(rootP)
-                coefP = polyP.coef
-            else:
-                break
-        for i in np.arange(len(rootP)):
-            if np.abs(np.real(rootP[i])) < 1e-2:
-                rootP[i] -= np.real(rootP[i])
-            else:
-                for j in np.arange(i, len(rootP)):
-                    if (i != j) and (np.abs(np.real(rootP[i] + rootP[j])) < 1e-2) and (np.abs(np.imag(rootP[i] - rootP[j])) < 1e-2):
-                        rootP[i] = (np.real(rootP[i] - rootP[j]) + 1j * np.imag(rootP[i] + rootP[j])) / 2
-                        rootP[j] = -rootP[i].conj()
-        rootF -= np.real(rootF)
+#            if np.all((np.real(rootF) < 1) & (np.real(rootF) > -1)):
+#                deviateRootF = np.median(np.real(rootF))
+#                Qu = 1. / (1. / Qu - deviateRootF * (w2 - w1) / np.sqrt(w2 * w1))
+##                print('i: ', i, ', rootF:', rootF, Qu, deviateRootF)
+##                print('i: ', i, ', rootP:', rootP)
+#                rootF -= deviateRootF
+#                coefF = Polynomial.fromroots(rootF).coef
+#                if len(rootP) == 0:
+#                    polyP = Polynomial([1])
+#                else:
+#                    rootP -= deviateRootF
+#                    polyP = Polynomial.fromroots(rootP)
+#                coefP = polyP.coef
+#            else:
+#                break
+#        for i in np.arange(len(rootP)):
+#            if np.abs(np.real(rootP[i])) < 1e-2:
+#                rootP[i] -= np.real(rootP[i])
+#            else:
+#                for j in np.arange(i, len(rootP)):
+#                    if (i != j) and (np.abs(np.real(rootP[i] + rootP[j])) < 1e-2) and (np.abs(np.imag(rootP[i] - rootP[j])) < 1e-2):
+#                        rootP[i] = (np.real(rootP[i] - rootP[j]) + 1j * np.imag(rootP[i] + rootP[j])) / 2
+#                        rootP[j] = -rootP[i].conj()
+#        rootF -= np.real(rootF)
         epsilon, epsilonE, rootE = GetEpsilonRootE(rootF, rootP, S11, S21, normalizedFreq, Qu, epsilon)
+#        Qu = GetQu(epsilon, epsilonE, Qu, rootF, rootP, rootE, S11, S21, normalizedFreq)
 #        epsilon, epsilonE, rootE = GetEpsilonRootE(rootF, rootP, S11, S21, normalizedFreq, Qu)
 
 #        epsilon, epsilonE, rootE = GetEpsilonRootE(rootF, rootP, S11, S21, normalizedFreq, Qu)
     Qu = GetQu(epsilon, epsilonE, Qu, rootF, rootP, rootE, S11, S21, normalizedFreq)
+    rootF += np.sqrt(w2 * w1) / (Qu * (w2 - w1))
+    rootP += np.sqrt(w2 * w1) / (Qu * (w2 - w1))
+#    rootE += np.sqrt(w2 * w1) / (Qu * (w2 - w1))
 #    print('epsilon:', epsilon)
 #    print('epsilonE:', epsilonE)
 #    print('Qu:', Qu)
@@ -686,8 +703,7 @@ def FPE2M(epsilon, epsilonE, rootF, rootP, rootE, method=1):
             coefP = Polynomial.fromroots(rootP).coef
         else:
             coefP = np.array([1.])
-        temp1 = (len(rootF) + len(rootP) + 3) % 4
-        y21n = (1j) ** temp1 * coefP / np.abs(epsilonE)
+        y21n = coefP / signedEpsilon(len(rootF), len(rootP), epsilon)
     
         y21n /= yd[-1]
         y22n /= yd[-1]
@@ -695,6 +711,33 @@ def FPE2M(epsilon, epsilonE, rootF, rootP, rootE, method=1):
     
         r21k, lambdak, k21 = signal.residue(y21n[-1::-1], yd[-1::-1], tol=1e-9)
         r22k, lambdak, k22 = signal.residue(y22n[-1::-1], yd[-1::-1], tol=1e-9)
+
+        polyYd = Polynomial(yd)
+        yd2 = yd.copy()
+        for i in np.arange(len(yd)):
+            yd2[i] *= (1j) ** (i + N % 2)
+        yd2 = np.real(yd2)
+        rootYd = 1j * Polynomial(yd2).roots()
+        polyYdDer = polyYd.deriv()
+        polyY21n = Polynomial(y21n)
+        polyY22n = Polynomial(y22n)
+#        polyYdDerDer = polyYdDer.deriv()
+#        polyY21nDer = polyY21n.deriv()
+#        polyY22nDer = polyY22n.deriv()
+        lambdak = rootYd
+        r21k = polyY21n(rootYd) / polyYdDer(rootYd)
+        r22k = polyY22n(rootYd) / polyYdDer(rootYd)
+#        r21k2 = polyY21nDer(rootYd) / polyYdDerDer(rootYd)
+#        r22k2 = polyY22nDer(rootYd) / polyYdDerDer(rootYd)
+#        r21k = np.where(np.abs(polyYdDer(rootYd)) > 0.1, r21k, r21k2)
+#        r22k = np.where(np.abs(polyYdDer(rootYd)) > 0.1, r22k, r22k2)
+#        print("polyYdDer: ", polyYdDer)
+#        print("polyY21n: ", polyY21n)
+#        print("polyY22n: ", polyY22n)
+#        print("rootYd: ", rootYd)
+#        print("polyYdDer: ", polyYdDer(rootYd))
+#        print("polyY21n: ", polyY21n(rootYd))
+#        print("polyY22n: ", polyY22n(rootYd))
 
         tempSort = np.argsort(np.imag(lambdak))
         lambdak = lambdak[tempSort]
