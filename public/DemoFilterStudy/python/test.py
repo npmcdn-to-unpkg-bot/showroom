@@ -12,9 +12,9 @@ from numpy.polynomial import Polynomial
 from scipy import optimize, interpolate, signal, sparse
 import matplotlib.pyplot as plt
 
-rootP = np.array([1.1j, 1.4j, 1.9j]) #np.array([-2j, 2j])
-N = 7
-returnLoss= 30
+rootP = np.array([1.0900j, 1.1691j, 1.5057j]) #np.array([-2j, 2j])
+N = 20
+returnLoss= 22
 #epsilon, coefP, coefF, coefE = CP.ChebyshevP2EF(rootP, N, returnLoss)
 
 U = 1.
@@ -115,10 +115,12 @@ for i in np.arange(N + 1):
     topology[i + 1, i] = 1
 topology[1, 3] = 1
 topology[3, 1] = 1
-#topology[1, 4] = 1
-#topology[4, 1] = 1
-#topology[4, 7] = 1
-#topology[7, 4] = 1
+topology[1, 4] = 1
+topology[4, 1] = 1
+topology[4, 6] = 1
+topology[6, 4] = 1
+#topology[3, 5] = 1
+#topology[5, 3] = 1
 #topology[5, 7] = 1
 #topology[7, 5] = 1
 #topology[8, 10] = 1
@@ -128,106 +130,82 @@ topology[3, 1] = 1
 #topology[7, 9] = 1
 #topology[9, 7] = 1
 
-#EF = Polynomial.fromroots(rootE).coef + np.abs(epsilon / epsilonE) * Polynomial.fromroots(rootF).coef
-EF = polyE.coef + np.abs(epsilon / epsilonE) * polyF.coef
-realEF = np.real(EF)
-imagEF = np.imag(EF)
 
-N = rootF.shape[0]
-temp1 = np.arange(N + 1)
-temp2 = np.where(temp1 % 2 == 0, 0., 1.)
-m1 = (1. - temp2) * realEF + 1j * temp2 * imagEF
-n1 = temp2 * realEF + 1j * (1. - temp2) * imagEF
+def Y2Ladder(yn, yd, evenModeOddDegree = False):
+    tempYn = yn
+    tempYd = yd
+    polyArray = []
+    while tempYn != Polynomial([0]):
+        polyArray.append(tempYd // tempYn)
+        temp1 = tempYd % tempYn
+        tempYd = tempYn
+        tempYn = temp1
+    C = np.real([x.coef[1] if len(x.coef) > 1 else 1.0 for x in polyArray])
+    B = np.imag([x.coef[0] for x in polyArray])
+    bArray = B / C
+    mArray = 1 / np.sqrt(C[:-1] * C[1:])
+    if evenModeOddDegree:
+        mArray[-1] /= np.sqrt(2.0)
+    return bArray, mArray
 
-if N % 2 == 0:
-    yd = m1
-    y22n = n1
+N = len(rootE)
+tempSort = np.argsort(np.imag(rootE))
+sortRootE = rootE[tempSort[-1::-1]]
+
+yEnEd = Polynomial.fromroots(sortRootE[np.arange(0, len(rootE), 2)])
+lenPolyYe = int((N + 1) / 2) + 1
+temp2 = np.where(np.arange(lenPolyYe) % 2 == 0, 0., 1.)
+if lenPolyYe % 2 == 0:
+    yEd = Polynomial((1. - temp2) * np.real(yEnEd.coef) + 1j * temp2 * np.imag(yEnEd.coef))
+    yEn = Polynomial(temp2 * np.real(yEnEd.coef) + 1j * (1. - temp2) * np.imag(yEnEd.coef))
 else:
-    yd = n1
-    y22n = m1
-if len(rootP) > 0:
-    coefP = Polynomial.fromroots(rootP).coef
+    yEn = Polynomial((1. - temp2) * np.real(yEnEd.coef) + 1j * temp2 * np.imag(yEnEd.coef))
+    yEd = Polynomial(temp2 * np.real(yEnEd.coef) + 1j * (1. - temp2) * np.imag(yEnEd.coef))
+Be, Me = Y2Ladder(yEn, yEd, evenModeOddDegree = (N % 2 == 1))
+
+yOnOd = Polynomial.fromroots(sortRootE[np.arange(1, len(rootE), 2)])
+lenPolyYo = int(N / 2) + 1
+temp2 = np.where(np.arange(lenPolyYo) % 2 == 0, 0., 1.)
+if lenPolyYo % 2 == 0:
+    yOd = Polynomial((1. - temp2) * np.real(yOnOd.coef) + 1j * temp2 * np.imag(yOnOd.coef))
+    yOn = Polynomial(temp2 * np.real(yOnOd.coef) + 1j * (1. - temp2) * np.imag(yOnOd.coef))
 else:
-    coefP = np.array([1.])
-#y21n = -1j *  coefP / epsilonE
-coefP = polyP.coef
-y21n = coefP / CP.signedEpsilon(len(rootF), len(rootP), epsilon)
+    yOn = Polynomial((1. - temp2) * np.real(yOnOd.coef) + 1j * temp2 * np.imag(yOnOd.coef))
+    yOd = Polynomial(temp2 * np.real(yOnOd.coef) + 1j * (1. - temp2) * np.imag(yOnOd.coef))
+Bo, Mo = Y2Ladder(yOn, yOd, evenModeOddDegree = False)
 
-y21n /= yd[-1]
-y22n /= yd[-1]
-yd /= yd[-1]
+M = np.zeros((N + 2, N + 2))
+for i in np.arange(len(Bo)):
+    M[i, i] = (Be[i] + Bo[i]) / 2
+    M[-i - 1, -i - 1] = M[i, i]
+    M[i, -i - 1] = (Be[i] - Bo[i]) / 2
+    M[-i - 1, i] = M[i, -i - 1]
+if N % 2 == 1:
+    M[len(Be) - 1, len(Be) - 1] = Be[-1]
+for i in np.arange(len(Mo)):
+    M[i, i + 1] = (Me[i] + Mo[i]) / 2
+    M[i + 1, i] = M[i, i + 1]
+    M[-i - 1, -i - 2] = M[i, i + 1]
+    M[-i - 2, -i - 1] = M[i, i + 1]
+    M[i, -i - 2] = (Me[i] - Mo[i]) / 2
+    M[-i - 1, i + 1] = M[i, -i - 2]
+    M[i + 1, -i - 1] = M[i, -i - 2]
+    M[-i - 2, i] = M[i, -i - 2]
+if N % 2 == 1:
+    M[len(Me) - 1, len(Me)] = Me[-1]
+    M[len(Me), len(Me) - 1] = M[len(Me) - 1, len(Me)]
+    M[-len(Me), -len(Me) - 1] = M[len(Me) - 1, len(Me)]
+    M[-len(Me) - 1, -len(Me)] = M[len(Me) - 1, len(Me)]
+M[np.abs(M) < 1e-5] = 0.0
 
-polyYd = Polynomial(yd)
-yd2 = yd.copy()
-for i in np.arange(len(yd)):
-    yd2[i] *= (1j) ** (i + N % 2)
-yd2 = np.real(yd2)
-rootYd = 1j * Polynomial(yd2).roots()
-polyYdDer = polyYd.deriv()
-polyY21n = Polynomial(y21n)
-polyY22n = Polynomial(y22n)
-polyYdDerDer = polyYdDer.deriv()
-polyY21nDer = polyY21n.deriv()
-polyY22nDer = polyY22n.deriv()
-lambdak = rootYd
-r21k = polyY21n(rootYd) / polyYdDer(rootYd)
-r22k = polyY22n(rootYd) / polyYdDer(rootYd)
-r21k2 = polyY21nDer(rootYd) / polyYdDerDer(rootYd)
-r22k2 = polyY22nDer(rootYd) / polyYdDerDer(rootYd)
-r21k = np.where(np.abs(polyYdDer(rootYd)) > 0.1, r21k, r21k2)
-r22k = np.where(np.abs(polyYdDer(rootYd)) > 0.1, r22k, r22k2)
-print("polyYdDer: ", polyYdDer)
-print("polyY21n: ", polyY21n)
-print("polyY22n: ", polyY22n)
-print("rootYd: ", rootYd)
-print("polyYdDer: ", polyYdDer(rootYd))
-print("polyY21n: ", polyY21n(rootYd))
-print("polyY22n: ", polyY22n(rootYd))
+#M = CP.FPE2M(epsilon, epsilonE, rootF, rootP, rootE, method=1)
 
-#rootYd[0] += 0.001j + 1.51089316e-03
-#rootYd[-1] -= 0.001j - 1.51089316e-03
-#yd = Polynomial.fromroots(rootYd)
+#for i in np.arange(0, 4):
+#    for j in np.arange(4, 7):
+#        M[i, j] *= -1
+#        M[j, i] = M[i, j]
 
-r21k, lambdak, k21 = signal.residue(y21n[-1::-1], yd[-1::-1], tol=1e-9)
-r22k, lambdak, k22 = signal.residue(y22n[-1::-1], yd[-1::-1], tol=1e-9)
-
-tempSort = np.argsort(np.imag(lambdak))
-lambdak = lambdak[tempSort]
-r21k = r21k[tempSort]
-r22k = r22k[tempSort]
-
-#r21k[-1] = -r22k[-1]
-#r21k[-2] = r22k[-2]
-#r22k[-1] = -r21k[-1]
-#r22k[-2] = r21k[-2]
-
-#lambdak = 1j * np.imag(lambdak)
-
-Mkk = np.zeros((N + 2,), dtype=complex)
-Mkk[1:-1] = 1j * lambdak
-M = np.diag(Mkk)
-
-#M[0, -1] = -k21[0]
-#M[-1, 0] = -k21[0]
-
-Mlk = np.sqrt(r22k)
-Msk = r21k / Mlk
-
-#Msk[-1] = -Mlk[-1]
-#Msk[-2] = Mlk[-2]
-#Mlk = np.real(Mlk)
-#Msk = np.real(Msk)
-
-#if np.abs(np.imag(Msk[0])) > np.abs(np.real(Msk[0])):
-#    Msk *= 1j
-            
-M[0, 1:-1] = Msk
-M[1:-1, 0] = Msk
-M[-1, 1:-1] = Mlk
-M[1:-1, -1] = Mlk
-
-#M = np.real(M)
-#print(np.round((M), 2), "\n")
+print("Transversal M: \n", np.round((M), 4), "\n")
 
 S21, S11 = CP.CM2S(M, normalizedFreq)
 
@@ -524,9 +502,11 @@ pr.enable()
 
 arrowM = RotateM2Arrow(M)
 tranZeros = rootP
+#foldedM, foldedPoint = RotateArrow2Folded(arrowM, topology)
+#print(np.round(np.real(foldedM), 4), "folded point:", foldedPoint, "\n")
 ctcqM, ctcqPoint = RotateArrow2CTCQ(arrowM, topology, tranZeros)
 print(np.round(np.real(ctcqM), 2), "ctcq point:", ctcqPoint, "\n")
-print("ctcq point:", ctcqPoint, "\n")
+#print("ctcq point:", ctcqPoint, "\n")
 #foldedM, point = RotateArrow2Folded(arrowM, topology)
 #print(np.round(M, 2), "\n")
 #print(np.round(foldedM, 2))

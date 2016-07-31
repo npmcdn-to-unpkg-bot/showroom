@@ -66,12 +66,15 @@ def get_task(method):
         rootF = polyF.roots()
         rootE = polyE.roots()
         topology = np.array(reqJson['topology'])
-        targetMatrix, msg = CP.FPE2MComprehensive(epsilon, epsilonE, rootF, rootP, rootE, topology)
+        if np.any(np.abs(np.imag(rootP)) < 1.0):
+            targetMatrix, msg = CP.FPE2MComprehensive(epsilon, epsilonE, rootF, rootP, rootE, topology, method = 1)
+        else:
+            targetMatrix, msg = CP.FPE2MComprehensive(epsilon, epsilonE, rootF, rootP, rootE, topology, method = 2)
         resJson = {'epsilon': [epsilon.real, epsilon.imag], 'coefP': [[x.real, x.imag] for x in coefP], 'coefF': [[x.real, x.imag] for x in coefF], 'coefE': [[x.real, x.imag] for x in coefE], 'targetMatrix': targetMatrix.tolist(), 'message': msg}
         return json.dumps(resJson, separators = (',', ':'))
     elif method == "ExtractMatrix":
         reqJson = flask.request.get_json()
-#        np.save("tempData", np.array([reqJson]))
+        np.save("tempData", np.array([reqJson]))
         #print(json.dumps(reqJson, separators = (',', ':')))
         freq = np.array(reqJson['freq']) * 1e6
         S21_amp = 10 ** (np.array(reqJson['S21_db']) / 20)
@@ -87,7 +90,8 @@ def get_task(method):
 #        print(N, numZeros, filterOrder, w1, w2)
         startFreq = reqJson['captureStartFreqGHz'] * 1e9
         stopFreq = reqJson['captureStopFreqGHz'] * 1e9
-        epsilon, epsilonE, Qu, rootF, rootP, rootE = CP.S2FP(freq, S21, S11, filterOrder, w1, w2, wga=1.122*0.0254, method=4, startFreq=startFreq, stopFreq=stopFreq)
+        extractMethod = 6
+        epsilon, epsilonE, Qu, rootF, rootP, rootE = CP.S2FP(freq, S21, S11, filterOrder, w1, w2, wga=1.122*0.0254, method=extractMethod, startFreq=startFreq, stopFreq=stopFreq)
         if Qu == np.inf:
             Qu = 1e9
 #        print(Qu)
@@ -95,7 +99,7 @@ def get_task(method):
         deltaRootP = np.sum(np.abs(rootP_perm - tranZeros), axis=1)
         rootP = rootP_perm[np.argmin(deltaRootP)]
         topology = np.array(reqJson['topology'])
-        extractedMatrix, msg = CP.FPE2MComprehensive(epsilon, epsilonE, rootF, rootP, rootE, topology)
+        extractedMatrix, msg = CP.FPE2MComprehensive(epsilon, epsilonE, rootF, rootP, rootE, topology, method = 1)
         targetMatrix = np.array(reqJson['targetMatrix'])
         temp1 = targetMatrix.copy()
         temp1[np.abs(targetMatrix) < 1e-4] = 1e9
