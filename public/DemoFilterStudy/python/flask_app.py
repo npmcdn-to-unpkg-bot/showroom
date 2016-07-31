@@ -74,7 +74,7 @@ def get_task(method):
         return json.dumps(resJson, separators = (',', ':'))
     elif method == "ExtractMatrix":
         reqJson = flask.request.get_json()
-        np.save("tempData", np.array([reqJson]))
+        #np.save("tempData", np.array([reqJson]))
         #print(json.dumps(reqJson, separators = (',', ':')))
         freq = np.array(reqJson['freq']) * 1e6
         S21_amp = 10 ** (np.array(reqJson['S21_db']) / 20)
@@ -101,9 +101,7 @@ def get_task(method):
         topology = np.array(reqJson['topology'])
         extractedMatrix, msg = CP.FPE2MComprehensive(epsilon, epsilonE, rootF, rootP, rootE, topology, method = 1)
         targetMatrix = np.array(reqJson['targetMatrix'])
-        temp1 = targetMatrix.copy()
-        temp1[np.abs(targetMatrix) < 1e-4] = 1e9
-        deviateMatrix = 100 * (extractedMatrix - targetMatrix) / temp1
+        deviateMatrix = extractedMatrix - targetMatrix
         resJson = {'q': Qu, 'extractedMatrix': extractedMatrix.tolist(), 'deviateMatrix': deviateMatrix.tolist(), 'message': msg}
         return json.dumps(resJson, separators = (',', ':'))
     else:

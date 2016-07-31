@@ -50,7 +50,7 @@
 					<ul class="nav nav-tabs" role="tablist">
 						<li role="presentation"><a href="" ng-click="showTable('TargetMatrix', 0)" aria-controls="home" role="tab" data-toggle="tab">TargetMatrix</a></li>
 						<li role="presentation"><a href="" ng-click="showTable('ExtractedMatrix', 0)" aria-controls="profile" role="tab" data-toggle="tab">ExtractedMatrix</a></li>
-						<li role="presentation" class="active"><a id="deviationTable" href="" ng-click="showTable('Deviation', 1)" aria-controls="profile" role="tab" data-toggle="tab">Deviation</a></li>
+						<li role="presentation" class="active"><a id="deviationTable" href="" ng-click="showTable('Deviation', 0)" aria-controls="profile" role="tab" data-toggle="tab">Deviation</a></li>
 					</ul>
 					<br>
 					<table class="table table-bordered" style="text-align: center; width: 100%;">
@@ -63,7 +63,7 @@
 						<tbody>
 							<tr ng-repeat="r in data.matrixToShow track by $index">
 								<td>{{($first || $last)? (($first)? 'S' : 'L') : $index}}</td>
-								<td ng-repeat="d in r track by $index">{{(data.tableDataFormat === 0)? ((d < 1e-4 && d > -1e-4)? '0' : d.toFixed(3)) : ((d < 1e-2 && d > -1e-2)? '0' : d.toFixed(1) + '%')}}</td>
+								<td ng-repeat="d in r track by $index">{{(data.tableDataFormat === 0)? ((d < 1e-4 && d > -1e-4)? '0' : d.toFixed(5)) : ((d < 1e-2 && d > -1e-2)? '0' : d.toFixed(1) + '%')}}</td>
 							</tr>
 						</tbody>
 					</table>

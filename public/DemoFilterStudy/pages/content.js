@@ -475,7 +475,7 @@ function handleChangeM(){
 		if (typeof tableDataFormat === "undefined"){
 			$scope.data.tableDataFormat = 0;
 		} else {
-				$scope.data.tableDataFormat = tableDataFormat;
+			$scope.data.tableDataFormat = tableDataFormat;
 		}
 	}
 	
