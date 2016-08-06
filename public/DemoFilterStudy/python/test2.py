@@ -131,10 +131,10 @@ N = reqJson['filterOrder']
 numZeros = len(reqJson['tranZeros'])
 filterOrder = np.hstack((np.zeros((N, )), 2 * np.ones((numZeros, ))))
 
-extractMethod = 5
+extractMethod = 6
 epsilon, epsilonE, Qu, rootF, rootP, rootE = CP.S2FP(freq, S21, S11, filterOrder, w1, w2, wga=1.122*0.0254, method=extractMethod, startFreq=0, stopFreq=0)
 
-fullMatrix = CP.FPE2M(epsilon, epsilonE, rootF, rootP, rootE, method=1)
+transversalMatrix = CP.FPE2M(epsilon, epsilonE, rootF, rootP, rootE, method=1)
 topology = np.array(reqJson['topology'])
 extractedMatrix, msg1 = CP.FPE2MComprehensive(epsilon, epsilonE, rootF, rootP, rootE, topology)
 print(msg1)
@@ -144,7 +144,7 @@ temp1[np.abs(targetMatrix) < 1e-4] = 1e9
 deviateMatrix = (extractedMatrix - targetMatrix) / temp1
 
 S11_new, S21_new = CP.FPE2S(epsilon, epsilonE, rootF, rootP, rootE, normalizedFreq - 1j * reqJson['centerFreq'] / (reqJson['bandwidth'] * Qu))
-#S21_new, S11_new = CP.CM2S(fullMatrix, normalizedFreq - 1j * reqJson['centerFreq'] / (reqJson['bandwidth'] * Qu))
+S21_new, S11_new = CP.CM2S(transversalMatrix, normalizedFreq - 1j * reqJson['centerFreq'] / (reqJson['bandwidth'] * Qu))
 
 plt.clf()
 plt.subplot(2, 2, 1)

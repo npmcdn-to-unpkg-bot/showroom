@@ -11,7 +11,7 @@ angular
 		{id: 4, user: 1, streetno: '40', streetname: 'king st', city: 'Kitchener', province: 'Ontario', country: 'Canada', postcode: 'N2A 0J5'}
 	],
 	store = [
-		{id: 1, user: 1, name: 'corner store', streetno: '10', streetname: 'king st', city: 'Kitchener', province: 'Ontario', country: 'Canada', postcode: 'N2A 0J5', description: 'Electronic commodity', deliveryplan: "[{distance: 1, radius: 0.2, order: 200, currency: 'CAD'}]"}
+		{id: 1, user: 1, name: 'corner store', streetno: '10', streetname: 'king st', city: 'Kitchener', province: 'Ontario', country: 'Canada', postcode: 'N2A 0J5', description: 'Electronic commodity', deliveryplan: [{distance: 1, radius: 0.2, order: 200, currency: 'CAD'}], maxcapacity: {order: 2000, currency: 'CAD'}}
 	];
 
 	$httpBackend.whenRoute('GET', /.+\.html$/).passThrough();

@@ -13,7 +13,7 @@ from scipy import optimize, interpolate, signal, sparse
 import matplotlib.pyplot as plt
 
 rootP = np.array([1.0900j, 1.1691j, 1.5057j]) #np.array([-2j, 2j])
-N = 20
+N = 7
 returnLoss= 22
 #epsilon, coefP, coefF, coefE = CP.ChebyshevP2EF(rootP, N, returnLoss)
 
@@ -130,82 +130,103 @@ topology[6, 4] = 1
 #topology[7, 9] = 1
 #topology[9, 7] = 1
 
-
-def Y2Ladder(yn, yd, evenModeOddDegree = False):
-    tempYn = yn
-    tempYd = yd
-    polyArray = []
-    while tempYn != Polynomial([0]):
-        polyArray.append(tempYd // tempYn)
-        temp1 = tempYd % tempYn
-        tempYd = tempYn
-        tempYn = temp1
-    C = np.real([x.coef[1] if len(x.coef) > 1 else 1.0 for x in polyArray])
-    B = np.imag([x.coef[0] for x in polyArray])
-    bArray = B / C
-    mArray = 1 / np.sqrt(C[:-1] * C[1:])
-    if evenModeOddDegree:
-        mArray[-1] /= np.sqrt(2.0)
-    return bArray, mArray
-
-N = len(rootE)
-tempSort = np.argsort(np.imag(rootE))
-sortRootE = rootE[tempSort[-1::-1]]
-
-yEnEd = Polynomial.fromroots(sortRootE[np.arange(0, len(rootE), 2)])
-lenPolyYe = int((N + 1) / 2) + 1
-temp2 = np.where(np.arange(lenPolyYe) % 2 == 0, 0., 1.)
-if lenPolyYe % 2 == 0:
-    yEd = Polynomial((1. - temp2) * np.real(yEnEd.coef) + 1j * temp2 * np.imag(yEnEd.coef))
-    yEn = Polynomial(temp2 * np.real(yEnEd.coef) + 1j * (1. - temp2) * np.imag(yEnEd.coef))
+polyE = Polynomial.fromroots(rootE)
+polyF = Polynomial.fromroots(rootF)
+if len(rootP) > 0:
+    polyP = Polynomial.fromroots(rootP)
 else:
-    yEn = Polynomial((1. - temp2) * np.real(yEnEd.coef) + 1j * temp2 * np.imag(yEnEd.coef))
-    yEd = Polynomial(temp2 * np.real(yEnEd.coef) + 1j * (1. - temp2) * np.imag(yEnEd.coef))
-Be, Me = Y2Ladder(yEn, yEd, evenModeOddDegree = (N % 2 == 1))
+    polyP = Polynomial([1.])
 
-yOnOd = Polynomial.fromroots(sortRootE[np.arange(1, len(rootE), 2)])
-lenPolyYo = int(N / 2) + 1
-temp2 = np.where(np.arange(lenPolyYo) % 2 == 0, 0., 1.)
-if lenPolyYo % 2 == 0:
-    yOd = Polynomial((1. - temp2) * np.real(yOnOd.coef) + 1j * temp2 * np.imag(yOnOd.coef))
-    yOn = Polynomial(temp2 * np.real(yOnOd.coef) + 1j * (1. - temp2) * np.imag(yOnOd.coef))
+N = len(rootF)
+temp1 = np.arange(N + 1)
+temp2 = np.where(temp1 % 2 == 0, 0., 1.)
+
+EF = polyE.coef + polyF.coef
+realEF = np.real(EF)
+imagEF = np.imag(EF)
+m1 = (1. - temp2) * realEF + 1j * temp2 * imagEF
+n1 = temp2 * realEF + 1j * (1. - temp2) * imagEF
+
+EF = polyE.coef - polyF.coef
+realEF = np.real(EF)
+imagEF = np.imag(EF)
+m2 = (1. - temp2) * realEF + 1j * temp2 * imagEF
+n2 = temp2 * realEF + 1j * (1. - temp2) * imagEF
+
+if N % 2 == 0:
+    A = Polynomial(n1)
+    B = Polynomial(m1)
+    C = Polynomial(m2)
+    D = Polynomial(n2)
 else:
-    yOn = Polynomial((1. - temp2) * np.real(yOnOd.coef) + 1j * temp2 * np.imag(yOnOd.coef))
-    yOd = Polynomial(temp2 * np.real(yOnOd.coef) + 1j * (1. - temp2) * np.imag(yOnOd.coef))
-Bo, Mo = Y2Ladder(yOn, yOd, evenModeOddDegree = False)
+    A = Polynomial(m1)
+    B = Polynomial(n1)
+    C = Polynomial(n2)
+    D = Polynomial(m2)
+
+A = Polynomial(A.coef[:-1])
+D = Polynomial(D.coef[:-1])
+if len(rootP) < len(rootF):
+    C = Polynomial(C.coef[:-2])
+
+if (len(rootF) - len(rootP)) % 2 == 0:
+    pEpsilon = -polyP / np.abs(epsilon)
+else:
+    pEpsilon = 1j * polyP / np.abs(epsilon)    
+J = np.zeros((N + 1, ))
+sCJB = []
+sCJB2 = []
+for i in np.arange(N + 1):
+    if len(pEpsilon.coef) < len(B.coef):
+        J[i] = 0.0
+    else:
+        J[i] = np.real(-pEpsilon.coef[-1] / B.coef[-1])
+        C = C + 2 * J[i] * pEpsilon + J[i] * J[i] * B
+        pEpsilon = pEpsilon % B
+
+    if np.sum(np.abs(A.coef)) > 1e-9:
+        sCJB2.append(C // A)
+        C = C % A
+    if np.sum(np.abs(B.coef)) > 1e-9:
+        sCJB.append(D // B)
+        D = D % B
+    
+    tempA = A
+    tempB = B
+    A = -1j * C
+    B = -1j * D
+    C = -1j * tempA
+    D = -1j * tempB        
+
+if np.sum(np.abs(B.coef)) > 1e-9:
+    sCJB.append(D // B)
+else:
+    sCJB.append(Polynomial([0.0]))
+
+B = np.imag([x.coef[0] for x in sCJB])
+C = np.real([x.coef[1] if len(x.coef) > 1 else 1.0 for x in sCJB])
 
 M = np.zeros((N + 2, N + 2))
-for i in np.arange(len(Bo)):
-    M[i, i] = (Be[i] + Bo[i]) / 2
-    M[-i - 1, -i - 1] = M[i, i]
-    M[i, -i - 1] = (Be[i] - Bo[i]) / 2
-    M[-i - 1, i] = M[i, -i - 1]
-if N % 2 == 1:
-    M[len(Be) - 1, len(Be) - 1] = Be[-1]
-for i in np.arange(len(Mo)):
-    M[i, i + 1] = (Me[i] + Mo[i]) / 2
+for i in np.arange(N + 2):
+    M[i, i] = B[i] / C[i]
+for i in np.arange(N):
+    M[i, i + 1] = 1 / np.sqrt(C[i] * C[i + 1])
     M[i + 1, i] = M[i, i + 1]
-    M[-i - 1, -i - 2] = M[i, i + 1]
-    M[-i - 2, -i - 1] = M[i, i + 1]
-    M[i, -i - 2] = (Me[i] - Mo[i]) / 2
-    M[-i - 1, i + 1] = M[i, -i - 2]
-    M[i + 1, -i - 1] = M[i, -i - 2]
-    M[-i - 2, i] = M[i, -i - 2]
-if N % 2 == 1:
-    M[len(Me) - 1, len(Me)] = Me[-1]
-    M[len(Me), len(Me) - 1] = M[len(Me) - 1, len(Me)]
-    M[-len(Me), -len(Me) - 1] = M[len(Me) - 1, len(Me)]
-    M[-len(Me) - 1, -len(Me)] = M[len(Me) - 1, len(Me)]
-M[np.abs(M) < 1e-5] = 0.0
 
-#M = CP.FPE2M(epsilon, epsilonE, rootF, rootP, rootE, method=1)
+M[:-1, -1] = J / np.sqrt(C[:-1] * C[-1])
+M[-1, :-1] = M[:-1, -1]
+
+M[np.abs(M) < 1e-5] = 0.0
+print("Transversal M: \n", np.round(M, 2), "\n")
+
+M = CP.FPE2M(epsilon, epsilonE, rootF, rootP, rootE, method=3)
 
 #for i in np.arange(0, 4):
 #    for j in np.arange(4, 7):
 #        M[i, j] *= -1
 #        M[j, i] = M[i, j]
 
-print("Transversal M: \n", np.round((M), 4), "\n")
+#print("Transversal M: \n", np.round(M, 2), "\n")
 
 S21, S11 = CP.CM2S(M, normalizedFreq)
 
@@ -501,11 +522,12 @@ pr.enable()
 #print(np.round(resultM, 2), "\n")
 
 arrowM = RotateM2Arrow(M)
+print(np.round(arrowM, 2))
 tranZeros = rootP
 #foldedM, foldedPoint = RotateArrow2Folded(arrowM, topology)
 #print(np.round(np.real(foldedM), 4), "folded point:", foldedPoint, "\n")
-ctcqM, ctcqPoint = RotateArrow2CTCQ(arrowM, topology, tranZeros)
-print(np.round(np.real(ctcqM), 2), "ctcq point:", ctcqPoint, "\n")
+#ctcqM, ctcqPoint = RotateArrow2CTCQ(arrowM, topology, tranZeros)
+#print(np.round(np.real(ctcqM), 2), "ctcq point:", ctcqPoint, "\n")
 #print("ctcq point:", ctcqPoint, "\n")
 #foldedM, point = RotateArrow2Folded(arrowM, topology)
 #print(np.round(M, 2), "\n")

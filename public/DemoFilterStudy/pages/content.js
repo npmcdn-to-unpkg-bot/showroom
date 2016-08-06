@@ -147,6 +147,7 @@ angular
 			/* tranZeros: [['', 1.1], ['', 1.4], ['', 1.9]], */
 			tranZeros: [['', '']],
 			matrixDisplay: "M",
+			isSymmetric: false,
 			focusZero: 0
 		}
 	}	

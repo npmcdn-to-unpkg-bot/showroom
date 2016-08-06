@@ -206,6 +206,7 @@ angular
 	(async function(){
 		try {
 			$scope.store = await common.xhr('getStoreInfo', {userid: $stateParams.userid, storeid: $stateParams.storeid});
+			$scope.store.deliveryplan.push({distance: '', radius: '', order: '', currency: ''});
 		} catch(e){
 			$scope.store = [];
 		}

@@ -74,7 +74,7 @@ def get_task(method):
         return json.dumps(resJson, separators = (',', ':'))
     elif method == "ExtractMatrix":
         reqJson = flask.request.get_json()
-        #np.save("tempData", np.array([reqJson]))
+#        np.save("tempData", np.array([reqJson]))
         #print(json.dumps(reqJson, separators = (',', ':')))
         freq = np.array(reqJson['freq']) * 1e6
         S21_amp = 10 ** (np.array(reqJson['S21_db']) / 20)
@@ -90,8 +90,9 @@ def get_task(method):
 #        print(N, numZeros, filterOrder, w1, w2)
         startFreq = reqJson['captureStartFreqGHz'] * 1e9
         stopFreq = reqJson['captureStopFreqGHz'] * 1e9
+        isSymmetric = reqJson['isSymmetric']
         extractMethod = 6
-        epsilon, epsilonE, Qu, rootF, rootP, rootE = CP.S2FP(freq, S21, S11, filterOrder, w1, w2, wga=1.122*0.0254, method=extractMethod, startFreq=startFreq, stopFreq=stopFreq)
+        epsilon, epsilonE, Qu, rootF, rootP, rootE = CP.S2FP(freq, S21, S11, filterOrder, w1, w2, wga=1.122*0.0254, method=extractMethod, startFreq=startFreq, stopFreq=stopFreq, isSymmetric=isSymmetric)
         if Qu == np.inf:
             Qu = 1e9
 #        print(Qu)
@@ -99,9 +100,11 @@ def get_task(method):
         deltaRootP = np.sum(np.abs(rootP_perm - tranZeros), axis=1)
         rootP = rootP_perm[np.argmin(deltaRootP)]
         topology = np.array(reqJson['topology'])
-        extractedMatrix, msg = CP.FPE2MComprehensive(epsilon, epsilonE, rootF, rootP, rootE, topology, method = 1)
+        matrixMethod = 4
+#        rootF = np.abs(np.real(rootF)) + 1j * np.imag(rootF)
+        extractedMatrix, msg = CP.FPE2MComprehensive(epsilon, epsilonE, rootF, rootP, rootE, topology, method = matrixMethod)
         targetMatrix = np.array(reqJson['targetMatrix'])
-        deviateMatrix = extractedMatrix - targetMatrix
+        deviateMatrix = targetMatrix - extractedMatrix
         resJson = {'q': Qu, 'extractedMatrix': extractedMatrix.tolist(), 'deviateMatrix': deviateMatrix.tolist(), 'message': msg}
         return json.dumps(resJson, separators = (',', ':'))
     else:

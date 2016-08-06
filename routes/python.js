@@ -22,8 +22,8 @@ exports = module.exports = function (eventEmitter, io) {
 		co(function *(){
 			res.set('Content-Type', 'application/json');
 			try {
-				var pythonServer = "https://gongfan99.pythonanywhere.com/";
-				/* var pythonServer = "http://localhost:4000/"; */
+				/* var pythonServer = "https://gongfan99.pythonanywhere.com/"; */
+				var pythonServer = "http://localhost:4000/";
 				var pythonResponse = yield fetch(pythonServer + req.params.method, {  
 					method: 'post',  
 					headers: {  
