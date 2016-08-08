@@ -1,5 +1,4 @@
-import flask, urllib.request, tempfile, json
-import itertools
+import flask, tempfile, json
 import numpy as np
 from numpy.polynomial import Polynomial
 import CP
@@ -59,17 +58,12 @@ def get_task(method):
         N = reqJson['N']
         returnLoss= reqJson['returnLoss']
         rootP = np.array([x[0] + 1j * x[1] for x in reqJson['rootP']])
-        epsilon, coefP, coefF, coefE = CP.ChebyshevP2EF(rootP, N, returnLoss)
+        epsilon, coefP, coefF, rootE = CP.ChebyshevP2EF(rootP, N, returnLoss)
+        coefE = Polynomial.fromroots(rootE).coef
         epsilonE = epsilon
-        polyF = Polynomial(coefF)
-        polyE = Polynomial(coefE)
-        rootF = polyF.roots()
-        rootE = polyE.roots()
         topology = np.array(reqJson['topology'])
-        if np.any(np.abs(np.imag(rootP)) < 1.0):
-            targetMatrix, msg = CP.FPE2MComprehensive(epsilon, epsilonE, rootF, rootP, rootE, topology, method = 1)
-        else:
-            targetMatrix, msg = CP.FPE2MComprehensive(epsilon, epsilonE, rootF, rootP, rootE, topology, method = 2)
+        matrixMethod = 5
+        targetMatrix, msg = CP.FPE2MComprehensive(epsilon, epsilonE, coefF, coefP, rootE, topology, refRootP = rootP, method = matrixMethod)
         resJson = {'epsilon': [epsilon.real, epsilon.imag], 'coefP': [[x.real, x.imag] for x in coefP], 'coefF': [[x.real, x.imag] for x in coefF], 'coefE': [[x.real, x.imag] for x in coefE], 'targetMatrix': targetMatrix.tolist(), 'message': msg}
         return json.dumps(resJson, separators = (',', ':'))
     elif method == "ExtractMatrix":
@@ -92,17 +86,13 @@ def get_task(method):
         stopFreq = reqJson['captureStopFreqGHz'] * 1e9
         isSymmetric = reqJson['isSymmetric']
         extractMethod = 6
-        epsilon, epsilonE, Qu, rootF, rootP, rootE = CP.S2FP(freq, S21, S11, filterOrder, w1, w2, wga=1.122*0.0254, method=extractMethod, startFreq=startFreq, stopFreq=stopFreq, isSymmetric=isSymmetric)
+        epsilon, epsilonE, Qu, coefF, coefP, rootE = CP.S2FP(freq, S21, S11, filterOrder, w1, w2, wga=1.122*0.0254, method=extractMethod, startFreq=startFreq, stopFreq=stopFreq, isSymmetric=isSymmetric)
         if Qu == np.inf:
             Qu = 1e9
 #        print(Qu)
-        rootP_perm = np.array([x for x in itertools.permutations(rootP)])
-        deltaRootP = np.sum(np.abs(rootP_perm - tranZeros), axis=1)
-        rootP = rootP_perm[np.argmin(deltaRootP)]
         topology = np.array(reqJson['topology'])
-        matrixMethod = 4
-#        rootF = np.abs(np.real(rootF)) + 1j * np.imag(rootF)
-        extractedMatrix, msg = CP.FPE2MComprehensive(epsilon, epsilonE, rootF, rootP, rootE, topology, method = matrixMethod)
+        matrixMethod = 5
+        extractedMatrix, msg = CP.FPE2MComprehensive(epsilon, epsilonE, coefF, coefP, rootE, topology, refRootP = tranZeros, method = matrixMethod)
         targetMatrix = np.array(reqJson['targetMatrix'])
         deviateMatrix = targetMatrix - extractedMatrix
         resJson = {'q': Qu, 'extractedMatrix': extractedMatrix.tolist(), 'deviateMatrix': deviateMatrix.tolist(), 'message': msg}

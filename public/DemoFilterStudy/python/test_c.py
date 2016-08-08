@@ -48,22 +48,23 @@ with backend_pdf.PdfPages("%s\\\\%s" % (sparaFolder, "summary.pdf")) as pdf:
         filterOrder = np.hstack((np.zeros((N, )), 2 * np.ones((numZeros, ))))
         
         extractMethod = 6
-        epsilon, epsilonE, Qu, rootF, rootP, rootE = CP.S2FP(freq, S21, S11, filterOrder, w1, w2, wga=1.122*0.0254, method=extractMethod, startFreq=0, stopFreq=0, isSymmetric=False)
+        isSymmetric = False
+        epsilon, epsilonE, Qu, coefF, coefP, rootE = CP.S2FP(freq, S21, S11, filterOrder, w1, w2, wga=1.122*0.0254, method=extractMethod, startFreq=0, stopFreq=0, isSymmetric=isSymmetric)
         
-#        rootF = np.abs(np.real(rootF)) + 1j * np.imag(rootF)
-        transversalMatrix = CP.FPE2M(epsilon, epsilonE, rootF, rootP, rootE, method=4)
-        matrixMethod = 4
+        matrixMethod = 5
+        transversalMatrix = CP.FPE2M(epsilon, epsilonE, coefF, coefP, rootE, method=matrixMethod)
+
 #        extractedMatrix, msg = CP.FPE2MComprehensive(epsilon, epsilonE, rootF, rootP, rootE, topology, method = matrixMethod)
 #        arrowM = CP.RotateM2Arrow(transversalMatrix, isComplex = True)
 #        ctcqM, ctcqPoint = CP.RotateArrow2CTCQ(arrowM, topology, rootP)
-#        print(np.round(np.real(transversalMatrix), 2))
+#        print(np.round(np.real(transversalMatrix), 3))
 #        print(np.round(np.imag(transversalMatrix), 4))
 #        print(np.round(np.real(arrowM), 2))
 #        print(np.round(np.imag(arrowM), 4))
 #        print(np.round(np.real(ctcqM), 2))
 #        print(np.round(np.imag(ctcqM), 4))
         
-        S11_new, S21_new = CP.FPE2S(epsilon, epsilonE, rootF, rootP, rootE, normalizedFreq - 1j * f0 / (bw * Qu))
+        S11_new, S21_new = CP.FPE2S(epsilon, epsilonE, coefF, coefP, rootE, normalizedFreq - 1j * f0 / (bw * Qu))
         S21_new, S11_new = CP.CM2S(transversalMatrix, normalizedFreq - 1j * f0 / (bw * Qu))
         
         fig = plt.figure(testCase["No"])
@@ -84,4 +85,4 @@ with backend_pdf.PdfPages("%s\\\\%s" % (sparaFolder, "summary.pdf")) as pdf:
         plt.plot(normalizedFreq, np.angle(S21_new, deg=True), '*');
         plt.title('S21(degree)')
         
-#        pdf.savefig(fig)
+        pdf.savefig(fig)

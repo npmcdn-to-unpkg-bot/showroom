@@ -18,7 +18,7 @@
 		<div class="col-sm-2">
 			<input type="file" id="input-s2p-file" style="display: none;">
 			<button type="button" class="btn btn-primary" onclick="document.querySelector('#input-s2p-file').click()">
-				Choose s2p file
+				Upload s2p file
 			</button>
 		</div>
 		<div class="col-sm-4">
@@ -69,7 +69,11 @@
 					</table>
 					<br>
 					<div>
-						Captured Q = {{data.q.toFixed(1)}}
+						Captured Q = {{(data.q > 1e8)? "infinite" : data.q.toFixed(1)}}
+					</div>
+					<br>
+					<div>
+						{{(data.isSymmetric)? "Note: symmetric structure selected." : ""}}
 					</div>
 				</div>
 			</div>

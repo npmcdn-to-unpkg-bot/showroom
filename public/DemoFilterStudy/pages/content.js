@@ -429,6 +429,7 @@ function handleChangeM(){
 			$scope.data.extractedMatrix = response.extractedMatrix;
 			$scope.data.deviateMatrix = response.deviateMatrix;
 			$scope.data.q = response.q;
+			$scope.data.isSymmetric = synStoreState.isSymmetric;
 			document.getElementById("p1-file").innerHTML = response.message;
 			document.querySelector('#deviationTable').click();
 			$scope.$digest();

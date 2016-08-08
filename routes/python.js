@@ -9,7 +9,25 @@ var bcrypt = require('bcrypt-nodejs'),
 	https = require('https'),
 	gcm = require('node-gcm'),
 	fetch = require('node-fetch');
-	
+
+var pythonServer = "http://localhost:4000/";
+co(function *(){
+	try {
+		var tryResponse = yield fetch(pythonServer, {method: 'get'})
+				.then(function(res) {
+					if (!res.ok) {
+						pythonServer = "https://gongfan99.pythonanywhere.com/";
+					}
+					return res.ok;
+				});
+	} catch(e) {
+		pythonServer = "https://gongfan99.pythonanywhere.com/";
+	}
+})
+.catch(function(err){
+	console.error(err);
+});
+
 exports = module.exports = function (eventEmitter, io) {
 
 	var TransferItem = co.wrap(function *(from, to, item, quantity){ // yield any promise
@@ -22,7 +40,7 @@ exports = module.exports = function (eventEmitter, io) {
 		co(function *(){
 			res.set('Content-Type', 'application/json');
 			try {
-				var pythonServer = "https://gongfan99.pythonanywhere.com/";
+				/* var pythonServer = "https://gongfan99.pythonanywhere.com/"; */
 				/* var pythonServer = "http://localhost:4000/"; */
 				var pythonResponse = yield fetch(pythonServer + req.params.method, {  
 					method: 'post',  

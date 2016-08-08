@@ -886,24 +886,25 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 						$scope.data.extractedMatrix = response.extractedMatrix;
 						$scope.data.deviateMatrix = response.deviateMatrix;
 						$scope.data.q = response.q;
+						$scope.data.isSymmetric = synStoreState.isSymmetric;
 						document.getElementById("p1-file").innerHTML = response.message;
 						document.querySelector('#deviationTable').click();
 						$scope.$digest();
-						_context2.next = 33;
+						_context2.next = 34;
 						break;
 
-					case 30:
-						_context2.prev = 30;
+					case 31:
+						_context2.prev = 31;
 						_context2.t0 = _context2['catch'](0);
 
 						document.getElementById("p1-file").innerHTML = _context2.t0.message;
 
-					case 33:
+					case 34:
 					case 'end':
 						return _context2.stop();
 				}
 			}
-		}, null, this, [[0, 30]]);
+		}, null, this, [[0, 31]]);
 	}
 
 	$scope.showChart = function (select) {

@@ -12,42 +12,11 @@ from numpy.polynomial import Polynomial
 from scipy import optimize, interpolate, signal, sparse
 import matplotlib.pyplot as plt
 
-rootP = np.array([1.0900j, 1.1691j, 1.5057j]) #np.array([-2j, 2j])
+rootP = np.array([1.5j, 1.8j])#np.array([1.0900j, 1.1691j, 1.5057j]) #np.array([-2j, 2j])
 N = 7
 returnLoss= 22
-#epsilon, coefP, coefF, coefE = CP.ChebyshevP2EF(rootP, N, returnLoss)
+epsilon, coefP, coefF, rootE = CP.ChebyshevP2EF(rootP, N, returnLoss)
 
-U = 1.
-V = 0.
-
-for k in np.arange(0, N):
-    tempU = U;
-    tempV = V;
-    if k < len(rootP):
-        a = Polynomial([-1j / rootP[k], 1])
-        b = np.sqrt(1 + 1 / (rootP[k] * rootP[k]))
-    else:
-        a = Polynomial([0., 1.])
-        b = 1.
-    U = a * tempU + b * Polynomial([-1, 0, 1]) * tempV;
-    V = a * tempV + b * tempU;
-
-rootF = np.real(U.roots()) * 1j; # w domain to s domain
-polyF = Polynomial.fromroots(rootF)
-
-if len(rootP) == 0:
-    polyP = Polynomial([1])
-else:
-    polyP = Polynomial.fromroots(rootP)
-
-epsilon = polyP(1j) / (polyF(1j) * np.sqrt(10 ** (np.abs(returnLoss) / 10) - 1))
-#epsilon = np.abs(epsilon)
-
-#temp1 = (len(polyF) + len(polyP) + 1) % 4
-#temp2 = polyF + (1j) ** temp1 * polyP / np.abs(epsilon)
-#rootE = temp2.roots()
-#rootE = -np.abs(np.real(rootE)) + 1j * np.imag(rootE)
-rootE = CP.FP2E(epsilon, rootF, rootP);
 
 def costFunc(s, c, rootP, N):
     temp1 = np.array([np.arccos(1j * (x + (1 + x * x) / (s[0] + 1j * s[1] - x))) for x in rootP])
@@ -92,8 +61,9 @@ def jacobFunc(s, c, rootP, N):
 #    cost[i] = r.dot(r)
 
 #rootE = rootE1.copy()
-polyE = Polynomial.fromroots(rootE);
 
+polyF = Polynomial(coefF)
+rootF = polyF.roots()
 
 normalizedFreq = np.arange(-5.5, 5.5, 0.01)
 #polyF = Polynomial(coefF)
@@ -101,7 +71,7 @@ normalizedFreq = np.arange(-5.5, 5.5, 0.01)
 #rootF = polyF.roots()
 #rootE = polyE.roots()
 epsilonE = epsilon
-S11_old, S21_old = CP.FPE2S(epsilon, epsilonE, rootF, rootP, rootE, normalizedFreq - 50j / 100000)
+S11_old, S21_old = CP.FPE2S(epsilon, epsilonE, rootF, rootP, rootE, normalizedFreq)
 #print(rootF)
 #print(rootP)
 #print(rootE)
@@ -130,96 +100,8 @@ topology[6, 4] = 1
 #topology[7, 9] = 1
 #topology[9, 7] = 1
 
-polyE = Polynomial.fromroots(rootE)
-polyF = Polynomial.fromroots(rootF)
-if len(rootP) > 0:
-    polyP = Polynomial.fromroots(rootP)
-else:
-    polyP = Polynomial([1.])
 
-N = len(rootF)
-temp1 = np.arange(N + 1)
-temp2 = np.where(temp1 % 2 == 0, 0., 1.)
-
-EF = polyE.coef + polyF.coef
-realEF = np.real(EF)
-imagEF = np.imag(EF)
-m1 = (1. - temp2) * realEF + 1j * temp2 * imagEF
-n1 = temp2 * realEF + 1j * (1. - temp2) * imagEF
-
-EF = polyE.coef - polyF.coef
-realEF = np.real(EF)
-imagEF = np.imag(EF)
-m2 = (1. - temp2) * realEF + 1j * temp2 * imagEF
-n2 = temp2 * realEF + 1j * (1. - temp2) * imagEF
-
-if N % 2 == 0:
-    A = Polynomial(n1)
-    B = Polynomial(m1)
-    C = Polynomial(m2)
-    D = Polynomial(n2)
-else:
-    A = Polynomial(m1)
-    B = Polynomial(n1)
-    C = Polynomial(n2)
-    D = Polynomial(m2)
-
-A = Polynomial(A.coef[:-1])
-D = Polynomial(D.coef[:-1])
-if len(rootP) < len(rootF):
-    C = Polynomial(C.coef[:-2])
-
-if (len(rootF) - len(rootP)) % 2 == 0:
-    pEpsilon = -polyP / np.abs(epsilon)
-else:
-    pEpsilon = 1j * polyP / np.abs(epsilon)    
-J = np.zeros((N + 1, ))
-sCJB = []
-sCJB2 = []
-for i in np.arange(N + 1):
-    if len(pEpsilon.coef) < len(B.coef):
-        J[i] = 0.0
-    else:
-        J[i] = np.real(-pEpsilon.coef[-1] / B.coef[-1])
-        C = C + 2 * J[i] * pEpsilon + J[i] * J[i] * B
-        pEpsilon = pEpsilon % B
-
-    if np.sum(np.abs(A.coef)) > 1e-9:
-        sCJB2.append(C // A)
-        C = C % A
-    if np.sum(np.abs(B.coef)) > 1e-9:
-        sCJB.append(D // B)
-        D = D % B
-    
-    tempA = A
-    tempB = B
-    A = -1j * C
-    B = -1j * D
-    C = -1j * tempA
-    D = -1j * tempB        
-
-if np.sum(np.abs(B.coef)) > 1e-9:
-    sCJB.append(D // B)
-else:
-    sCJB.append(Polynomial([0.0]))
-
-B = np.imag([x.coef[0] for x in sCJB])
-C = np.real([x.coef[1] if len(x.coef) > 1 else 1.0 for x in sCJB])
-
-M = np.zeros((N + 2, N + 2))
-for i in np.arange(N + 2):
-    M[i, i] = B[i] / C[i]
-for i in np.arange(N):
-    M[i, i + 1] = 1 / np.sqrt(C[i] * C[i + 1])
-    M[i + 1, i] = M[i, i + 1]
-
-M[:-1, -1] = J / np.sqrt(C[:-1] * C[-1])
-M[-1, :-1] = M[:-1, -1]
-
-M[np.abs(M) < 1e-5] = 0.0
-print("Transversal M: \n", np.round(M, 2), "\n")
-
-M = CP.FPE2M(epsilon, epsilonE, rootF, rootP, rootE, method=3)
+M = CP.FPE2M(epsilon, epsilonE, coefF, coefP, rootE, method=5)
 
 #for i in np.arange(0, 4):
 #    for j in np.arange(4, 7):

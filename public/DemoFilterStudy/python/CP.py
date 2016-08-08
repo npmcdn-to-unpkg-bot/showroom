@@ -4,7 +4,7 @@ from scipy import optimize, interpolate, signal
 #import matplotlib.pyplot as plt
 #import sympy
 #from sympy.tensor import IndexedBase, Idx
-import tempfile
+import tempfile, itertools
 
 def WriteString2TempFile(text):
     fp = tempfile.SpooledTemporaryFile(max_size=1000000, mode='r')
@@ -73,18 +73,24 @@ def ChebyshevP2EF(rootP, N, returnLoss):
         U = a * tempU + b * Polynomial([-1, 0, 1]) * tempV;
         V = a * tempV + b * tempU;
 
-    rootF = U.roots() * 1j; # w domain to s domain
-    polyF = Polynomial.fromroots(rootF)
+#    rootF = U.roots() * 1j; # w domain to s domain
+#    polyF = Polynomial.fromroots(rootF)
+#    coefF = polyF.coef
+    temp1 = (1j) ** (np.arange(N + 1) % 4)
+    coefF = U.coef * temp1[-1::-1]
+    coefF /= coefF[-1]
+    polyF = Polynomial(coefF)
 
     if len(rootP) == 0:
         polyP = Polynomial([1])
     else:
         polyP = Polynomial.fromroots(rootP)
+    coefP = polyP.coef
 
     epsilon = polyP(1j) / (polyF(1j) * np.sqrt(10 ** (np.abs(returnLoss) / 10) - 1))
-    rootE = FP2E(epsilon, rootF, rootP);
-    polyE = Polynomial.fromroots(rootE);
-    return epsilon, polyP.coef, polyF.coef, polyE.coef
+    rootE = FP2E(epsilon, coefF, coefP);
+#    polyE = Polynomial.fromroots(rootE);
+    return epsilon, coefP, coefF, rootE
     
 def signedEpsilon(nF, nP, epsilon):
     temp1 = (nF + nP + 3) % 4
@@ -127,47 +133,64 @@ def CM2S(M, normalizedFreq):
 
     return S21, S11
 
-def FP2E(epsilon, rootF, rootP, method = 1):
+#def FP2E(epsilon, rootF, rootP, method = 1):
+#    if method == 1:
+#        polyF = Polynomial.fromroots(rootF)
+#        if len(rootP) == 0:
+#            polyP = Polynomial([1])
+#        else:
+#            polyP = Polynomial.fromroots(rootP)
+#        temp1 = polyF + polyP / signedEpsilon(len(rootF), len(rootP), epsilon)
+#        rootE = temp1.roots()
+#        rootE = -np.abs(np.real(rootE)) + 1j * np.imag(rootE)
+#    elif method == 2:
+#        polyF = Polynomial.fromroots(rootF)
+#        if rootF.shape[0] % 2 == 0:
+#            polyFminus = Polynomial.fromroots(-np.conj(rootF)) # polyF(-s)
+#        else:
+#            polyFminus = -Polynomial.fromroots(-np.conj(rootF))
+#        if len(rootP) == 0:
+#            polyP = Polynomial([1])
+#            polyPminus = Polynomial([1])
+#        else:
+#            polyP = Polynomial.fromroots(rootP)
+#            if len(rootP) % 2 == 0:
+#                polyPminus = Polynomial.fromroots(-np.conj(rootP))
+#            else:
+#                polyPminus = -Polynomial.fromroots(-np.conj(rootP))
+#        E2 = polyF * polyFminus + polyP * polyPminus / (np.abs(epsilon) * np.abs(epsilon))
+#        rootE2 = E2.roots()
+#        rootE = rootE2[np.real(rootE2) < -1.e-9]
+#    return rootE
+
+def FP2E(epsilon, coefF, coefP, method = 1):
+    N = len(coefF) - 1
     if method == 1:
-        polyF = Polynomial.fromroots(rootF)
-        if len(rootP) == 0:
-            polyP = Polynomial([1])
-        else:
-            polyP = Polynomial.fromroots(rootP)
-        temp1 = polyF + polyP / signedEpsilon(len(rootF), len(rootP), epsilon)
+        polyF = Polynomial(coefF)
+        polyP = Polynomial(coefP)
+        temp1 = polyF + polyP / signedEpsilon(len(coefF) - 1, len(coefP) - 1, epsilon)
         rootE = temp1.roots()
         rootE = -np.abs(np.real(rootE)) + 1j * np.imag(rootE)
     elif method == 2:
-        polyF = Polynomial.fromroots(rootF)
-        if rootF.shape[0] % 2 == 0:
-            polyFminus = Polynomial.fromroots(-np.conj(rootF)) # polyF(-s)
-    #        polyFminus = Polynomial.fromroots(-rootF) # polyF(-s)
-        else:
-            polyFminus = -Polynomial.fromroots(-np.conj(rootF))
-    #        polyFminus = -Polynomial.fromroots(-rootF)
-        if len(rootP) == 0:
-            polyP = Polynomial([1])
-            polyPminus = Polynomial([1])
-        else:
-            polyP = Polynomial.fromroots(rootP)
-            if len(rootP) % 2 == 0:
-                polyPminus = Polynomial.fromroots(-np.conj(rootP))
-    #            polyPminus = Polynomial.fromroots(-rootP)
-            else:
-                polyPminus = -Polynomial.fromroots(-np.conj(rootP))
-    #            polyPminus = -Polynomial.fromroots(-rootP)
+        polyF = Polynomial(coefF)
+        temp1 = 1 - (np.arange(N + 1) % 2) * 2
+        coefFminus = -np.conj(coefF.copy()) * temp1
+        polyFminus = Polynomial(coefFminus)
+        
+        polyP = Polynomial(coefP)
+        temp1 = 1 - (np.arange(len(coefP)) % 2) * 2
+        coefPminus = -np.conj(coefP.copy()) * temp1
+        polyPminus = Polynomial(coefPminus)
+
         E2 = polyF * polyFminus + polyP * polyPminus / (np.abs(epsilon) * np.abs(epsilon))
         rootE2 = E2.roots()
         rootE = rootE2[np.real(rootE2) < -1.e-9]
     return rootE
-
-def FPE2S(epsilon, epsilonE, rootF, rootP, rootE, normalizedFreq):
-    polyF = epsilon * Polynomial.fromroots(rootF)
-    if len(rootP) == 0:
-        polyP = Polynomial([1])
-    else:
-        polyP = Polynomial.fromroots(rootP)
     
+def FPE2S(epsilon, epsilonE, coefF, coefP, rootE, normalizedFreq):
+    polyF = epsilon * Polynomial(coefF)
+    polyP = Polynomial(coefP)
+
     polyE = epsilonE * Polynomial.fromroots(rootE)
     return polyF(1j * normalizedFreq) / polyE(1j * normalizedFreq), polyP(1j * normalizedFreq) / polyE(1j * normalizedFreq) # S11, S21
 
@@ -419,23 +442,24 @@ def S2FP(inFreq, inS21, inS11, filterOrder, w1, w2, wga, wgb=0.1, method=0, star
                 eFP_index += 2
         return rootF, rootP
 
-    def GetEpsilonRootE(rootF, rootP, S11, S21, normalizedFreq, Qu=5000., epsilon=1.e10):
+    def GetEpsilonRootE(coefF, coefP, S11, S21, normalizedFreq, Qu=5000., epsilon=1.e10, method=2):
         normalizedS = 1j * normalizedFreq + 1./Qu
-        polyF = Polynomial.fromroots(rootF)
-        if len(rootP) == 0:
-            polyP = Polynomial([1])
-        else:
-            polyP = Polynomial.fromroots(rootP)
+        polyF = Polynomial(coefF)
+#        if len(rootP) == 0:
+#            polyP = Polynomial([1])
+#        else:
+#            polyP = Polynomial.fromroots(rootP)
+        polyP = Polynomial(coefP)
         if np.abs(epsilon) > 1.e9:
 #            tempIndex = np.argmin(np.abs(normalizedFreq - 1.0))
 #            epsilon = ((S11[tempIndex] / S21[tempIndex]) * polyP(1j * normalizedFreq[tempIndex] + 1./Qu) / polyF(1j * normalizedFreq[tempIndex] + 1./Qu)) # polyP(1./Qu) / polyF(1./Qu) is very close to polyP(0) / polyF(0)
-            nF = len(rootF)
-            nP = len(rootP)
+            nF = len(coefF) - 1
+            nP = len(coefP) - 1
             M = np.hstack((np.diag(S21).dot(np.vander(normalizedS, nF+1, increasing=True).dot(np.array([polyF.coef]).T)), -np.diag(S11).dot(np.vander(normalizedS, nP+1, increasing=True).dot(np.array([polyP.coef]).T))))
             V = np.linalg.svd(M)[2]
             temp1 = np.conj(V[-1, :]) # b
             epsilon = temp1[0] / temp1[1]
-        rootE = FP2E(epsilon, rootF, rootP, method=2)
+        rootE = FP2E(epsilon, coefF, coefP, method=method)
         polyE = Polynomial.fromroots(rootE)
 #        tempIndex = np.argmin(np.abs(normalizedFreq - 1.0))
 
@@ -443,8 +467,8 @@ def S2FP(inFreq, inS21, inS11, filterOrder, w1, w2, wga, wgb=0.1, method=0, star
 #        temp2 = np.array([1., 1.j, -1., -1.j])
 #        temp3 = temp2[np.argmin(np.abs(np.angle(temp1 / temp2)))]
 #        epsilonE = epsilon * temp3
-        nF = len(rootF)
-        nP = len(rootP)
+        nF = len(coefF) - 1
+        nP = len(coefP) - 1
         nE = int(np.max([nF, nP]))
 #        nFreq = normalizedFreq.shape[0]
 #        temp1 = np.hstack((np.vander(1j * normalizedFreq + 1./Qu, nF+1, increasing=True).dot(np.array([polyF.coef]).T), np.zeros((nFreq, 1)), -np.diag(S11).dot(np.vander(1j * normalizedFreq + 1./Qu, nE+1, increasing=True))))
@@ -492,8 +516,10 @@ def S2FP(inFreq, inS21, inS11, filterOrder, w1, w2, wga, wgb=0.1, method=0, star
 
     def CostFunc(eFP, filterOrder, Qu=5000, considerPhase=False):
         rootF, rootP = DeserializeFP(eFP, filterOrder)
-        epsilon, rootE = GetEpsilonRootE(rootF, rootP, S11, S21, normalizedFreq, Qu)
-        S11fromFP, S21fromFP = FPE2S(epsilon, epsilonE, rootF, rootP, rootE, normalizedFreq - 1.j / Qu);
+        coefF = Polynomial.fromroots(rootF)
+        coefP = Polynomial.fromroots(rootP)
+        epsilon, rootE = GetEpsilonRootE(coefF, coefP, S11, S21, normalizedFreq, Qu)
+        S11fromFP, S21fromFP = FPE2S(epsilon, epsilonE, coefF, coefP, rootE, normalizedFreq - 1.j / Qu);
         
         if considerPhase:
             temp1 = -2. * np.pi * np.sqrt(freq * freq - cutoffFrequency * cutoffFrequency) / 299792458.
@@ -542,7 +568,7 @@ def S2FP(inFreq, inS21, inS11, filterOrder, w1, w2, wga, wgb=0.1, method=0, star
     freq, S21, S11 = RectifyInputData(inFreq, inS21, inS11)
     normalizedFreq = NormalizeFreq(freq, w1, w2);
     cutoffFrequency = 299792458. / (2. * wga);
-    Qu = 2000.e9 # initial Qu value
+    Qu = 1e9 # initial Qu value
     
     if method == 0:
         initialValue = GetInitialValue(filterOrder, method=1)
@@ -565,7 +591,9 @@ def S2FP(inFreq, inS21, inS11, filterOrder, w1, w2, wga, wgb=0.1, method=0, star
             print(CostFunc(initialValue, filterOrder, False));
             resultFP = initialValue;
         rootF, rootP = DeserializeFP(resultFP, filterOrder)
-        epsilon, epsilonE, rootE = GetEpsilonRootE(rootF, rootP, S11, S21, normalizedFreq, Qu)
+        coefF = Polynomial.fromroots(rootF)
+        coefP = Polynomial.fromroots(rootP)
+        epsilon, epsilonE, rootE = GetEpsilonRootE(coefF, coefP, S11, S21, normalizedFreq, Qu)
     elif (method == 1) or (method == 2):
         normalizedS = 1j * normalizedFreq + 0*np.sqrt(w2 * w1) / (Qu * (w2 - w1))
         rootF, rootP = DeserializeFP(np.arange(filterOrder.shape[0] * 2), filterOrder)
@@ -600,7 +628,7 @@ def S2FP(inFreq, inS21, inS11, filterOrder, w1, w2, wga, wgb=0.1, method=0, star
             else:
                 break
         epsilon = coefF[-1] / coefP[-1]
-        epsilon, epsilonE, rootE = GetEpsilonRootE(rootF, rootP, S11, S21, normalizedFreq, Qu, epsilon)
+        epsilon, epsilonE, rootE = GetEpsilonRootE(coefF, coefP, S11, S21, normalizedFreq, Qu, epsilon)
         Qu = GetQu(epsilon, epsilonE, Qu, rootF, rootP, rootE, S11, S21, normalizedFreq)
         rootF += np.sqrt(w2 * w1) / (Qu * (w2 - w1))
         rootP += np.sqrt(w2 * w1) / (Qu * (w2 - w1))
@@ -698,7 +726,7 @@ def S2FP(inFreq, inS21, inS11, filterOrder, w1, w2, wga, wgb=0.1, method=0, star
 #                    if (i != j) and (np.abs(np.real(rootP[i] + rootP[j])) < 1e-2) and (np.abs(np.imag(rootP[i] - rootP[j])) < 1e-2):
 #                        rootP[i] = (np.real(rootP[i] - rootP[j]) + 1j * np.imag(rootP[i] + rootP[j])) / 2
 #                        rootP[j] = -rootP[i].conj()
-        epsilon, epsilonE, rootE = GetEpsilonRootE(rootF, rootP, S11, S21, normalizedFreq, Qu, epsilon)
+        epsilon, epsilonE, rootE = GetEpsilonRootE(coefF, coefP, S11, S21, normalizedFreq, Qu, epsilon)
         Qu = GetQu(epsilon, epsilonE, Qu, rootF, rootP, rootE, S11, S21, normalizedFreq)
         rootF += np.sqrt(w2 * w1) / (Qu * (w2 - w1))
         rootP += np.sqrt(w2 * w1) / (Qu * (w2 - w1))
@@ -756,7 +784,7 @@ def S2FP(inFreq, inS21, inS11, filterOrder, w1, w2, wga, wgb=0.1, method=0, star
         V = np.linalg.svd(M)[2]
         temp1 = np.conj(V[-1, :]) # b
         epsilon = temp1[0] / temp1[1]
-        rootE = FP2E(epsilon, rootF, rootP)
+        rootE = FP2E(epsilon, coefF, coefP)
         epsilonE = epsilon
 #        epsilon, epsilonE, rootE = GetEpsilonRootE(rootF, rootP, S11, S21, normalizedFreq, Qu, epsilon)
         Qu = GetQu(epsilon, epsilonE, Qu, rootF, rootP, rootE, S11, S21, normalizedFreq)
@@ -819,6 +847,7 @@ def S2FP(inFreq, inS21, inS11, filterOrder, w1, w2, wga, wgb=0.1, method=0, star
                 coefF = temp1[:nF + 1] * riSeqF
             else:
                 coefF = temp1[:nF + 1]
+            coefF /= coefF[-1]
             rootF = Polynomial(coefF).roots()
 #            tempSort = np.argsort(np.abs(rootF))
 #            rootF = rootF[tempSort]
@@ -835,11 +864,17 @@ def S2FP(inFreq, inS21, inS11, filterOrder, w1, w2, wga, wgb=0.1, method=0, star
             V = np.linalg.svd(M)[2]
             temp1 = np.conj(V[-1, :]) # b
             epsilon = temp1[0] / temp1[1]
-            
-        epsilon, epsilonE, rootE = GetEpsilonRootE(rootF, rootP, S11, S21, normalizedFreq, Qu, epsilon)
+
+        if isSymmetric:
+            fp2eMethod = 1
+        else:
+            fp2eMethod = 2
+        epsilon, epsilonE, rootE = GetEpsilonRootE(coefF, coefP, S11, S21, normalizedFreq, Qu, epsilon, method=fp2eMethod)
         Qu = GetQu(epsilon, epsilonE, Qu, rootF, rootP, rootE, S11, S21, normalizedFreq)
         if not isSymmetric:
             rootF += np.sqrt(w2 * w1) / (Qu * (w2 - w1))
+            coefF = Polynomial.fromroots(rootF).coef
+            rootE = FP2E(epsilon, coefF, coefP, method=fp2eMethod)
 
 
 #        epsilon, epsilonE, rootE = GetEpsilonRootE(rootF, rootP, S11, S21, normalizedFreq, Qu)
@@ -854,7 +889,7 @@ def S2FP(inFreq, inS21, inS11, filterOrder, w1, w2, wga, wgb=0.1, method=0, star
 #    print('rootF:', rootF)
 #    print('rootP:', rootP)
 #    print('rootE:', rootE)
-    return epsilon, epsilonE, Qu, rootF, rootP, rootE
+    return epsilon, epsilonE, Qu, coefF, coefP, rootE
 
 def Y2Ladder(yn, yd, evenModeOddDegree = False):
     tempYn = yn
@@ -873,14 +908,15 @@ def Y2Ladder(yn, yd, evenModeOddDegree = False):
         mArray[-1] /= np.sqrt(2.0)
     return bArray, mArray
 
-def FPE2M(epsilon, epsilonE, rootF, rootP, rootE, method=1):
+def FPE2M(epsilon, epsilonE, coefF, coefP, rootE, method=1):
     if method == 1:
     #    EF = Polynomial.fromroots(rootE).coef + np.exp(1j * np.pi * 180 / 180) * (epsilon / epsilonE) * Polynomial.fromroots(rootF).coef
-        EF = Polynomial.fromroots(rootE).coef + np.abs(epsilon / epsilonE) * Polynomial.fromroots(rootF).coef
+#        EF = Polynomial.fromroots(rootE).coef + np.abs(epsilon / epsilonE) * Polynomial.fromroots(rootF).coef
+        EF = Polynomial.fromroots(rootE).coef + coefF
         realEF = np.real(EF)
         imagEF = np.imag(EF)
         
-        N = rootF.shape[0]
+        N = len(coefF) - 1
         temp1 = np.arange(N + 1)
         temp2 = np.where(temp1 % 2 == 0, 0., 1.)
         m1 = (1. - temp2) * realEF + 1j * temp2 * imagEF
@@ -894,11 +930,12 @@ def FPE2M(epsilon, epsilonE, rootF, rootP, rootE, method=1):
             y22n = m1
         y22n = y22n[:-1]
 
-        if len(rootP) > 0:
-            coefP = Polynomial.fromroots(rootP).coef
-        else:
-            coefP = np.array([1.])
-        y21n = coefP / signedEpsilon(len(rootF), len(rootP), epsilon)
+#        if len(rootP) > 0:
+#            coefP = Polynomial.fromroots(rootP).coef
+#        else:
+#            coefP = np.array([1.])
+
+        y21n = coefP / signedEpsilon(len(coefF) - 1, len(coefP) - 1, epsilon)
     
         y21n /= yd[-1]
         y22n /= yd[-1]
@@ -960,7 +997,7 @@ def FPE2M(epsilon, epsilonE, rootF, rootP, rootE, method=1):
         return np.real(M)
 
     elif method == 2:
-        N = len(rootE)
+        N = len(coefF) - 1
         tempSort = np.argsort(np.imag(rootE))
         sortRootE = rootE[tempSort[-1::-1]]
         
@@ -1013,14 +1050,15 @@ def FPE2M(epsilon, epsilonE, rootF, rootP, rootE, method=1):
 
     elif method == 3:
         N = len(rootE)
-        polyF = Polynomial.fromroots(rootF)
-        if len(rootP) == 0:
-            polyP = Polynomial([1])
-        else:
-            polyP = Polynomial.fromroots(rootP)
+        polyF = Polynomial(coefF)
+#        if len(rootP) == 0:
+#            polyP = Polynomial([1])
+#        else:
+#            polyP = Polynomial.fromroots(rootP)
+        polyP = Polynomial(coefP)
 #        polyE = Polynomial.fromroots(rootE)
         
-        accurateEpsilon = signedEpsilon(len(rootF), len(rootP), epsilon)
+        accurateEpsilon = signedEpsilon(len(coefF) - 1, len(coefP) - 1, epsilon)
         
         polyFplusP = polyF - polyP / accurateEpsilon
         rootFplusP = polyFplusP.roots()
@@ -1072,16 +1110,17 @@ def FPE2M(epsilon, epsilonE, rootF, rootP, rootE, method=1):
         
     elif method == 4:
         polyE = Polynomial.fromroots(rootE)
-        polyF = Polynomial.fromroots(rootF)
-        if len(rootP) > 0:
-            polyP = Polynomial.fromroots(rootP)
-        else:
-            polyP = Polynomial([1.])
-        
-        N = len(rootF)
+        polyF = Polynomial(coefF)
+#        if len(rootP) > 0:
+#            polyP = Polynomial.fromroots(rootP)
+#        else:
+#            polyP = Polynomial([1.])
+        polyP = Polynomial(coefP)
+
+        N = len(coefF) - 1
         temp1 = np.arange(N + 1)
         temp2 = np.where(temp1 % 2 == 0, 0., 1.)
-        
+
         EF = polyE.coef + polyF.coef
         realEF = np.real(EF)
         imagEF = np.imag(EF)
@@ -1107,10 +1146,10 @@ def FPE2M(epsilon, epsilonE, rootF, rootP, rootE, method=1):
         
         A = Polynomial(A.coef[:-1])
         D = Polynomial(D.coef[:-1])
-        if len(rootP) < len(rootF):
+        if len(coefP) < len(coefF):
             C = Polynomial(C.coef[:-2])
-        
-        if (len(rootF) - len(rootP)) % 2 == 0:
+
+        if (len(coefF) - len(coefP)) % 2 == 0:
             pEpsilon = -polyP / np.abs(epsilon)
         else:
             pEpsilon = 1j * polyP / np.abs(epsilon)    
@@ -1132,12 +1171,7 @@ def FPE2M(epsilon, epsilonE, rootF, rootP, rootE, method=1):
                 sCJB.append(D // B)
                 D = D % B
             
-            tempA = A
-            tempB = B
-            A = -1j * C
-            B = -1j * D
-            C = -1j * tempA
-            D = -1j * tempB        
+            A, B, C, D = -1j * C, -1j * D, -1j * A, -1j * B
         
         if np.sum(np.abs(B.coef)) > 1e-9:
             sCJB.append(D // B)
@@ -1160,13 +1194,169 @@ def FPE2M(epsilon, epsilonE, rootF, rootP, rootE, method=1):
         M[-1, :-1] = M[:-1, -1]
         
         return M
-        
+
     elif method == 5:
+        polyE = Polynomial.fromroots(rootE)
+        polyF = Polynomial(coefF)
+#        if len(rootP) > 0:
+#            polyP = Polynomial.fromroots(rootP)
+#        else:
+#            polyP = Polynomial([1.])
+        polyP = Polynomial(coefP)
+
+        N = len(coefF) - 1
+        temp1 = np.arange(N + 1)
+        temp2 = np.where(temp1 % 2 == 0, 0., 1.)
+
+        EF = polyE.coef + polyF.coef
+        realEF = np.real(EF)
+        imagEF = np.imag(EF)
+        m1 = (1. - temp2) * realEF + 1j * temp2 * imagEF
+        n1 = temp2 * realEF + 1j * (1. - temp2) * imagEF
+        
+        EF = polyE.coef - polyF.coef
+        realEF = np.real(EF)
+        imagEF = np.imag(EF)
+        m2 = (1. - temp2) * realEF + 1j * temp2 * imagEF
+        n2 = temp2 * realEF + 1j * (1. - temp2) * imagEF
+        
+        if N % 2 == 0:
+            A = Polynomial(n1)
+            B = Polynomial(m1)
+            C = Polynomial(m2)
+            D = Polynomial(n2)
+        else:
+            A = Polynomial(m1)
+            B = Polynomial(n1)
+            C = Polynomial(n2)
+            D = Polynomial(m2)
+        
+        A = Polynomial(A.coef[:-1])
+        D = Polynomial(D.coef[:-1])
+        if len(coefP) < len(coefF):
+            C = Polynomial(C.coef[:-2])
+
+        if (len(coefF) - len(coefP)) % 2 == 0:
+            pEpsilon = -polyP / np.abs(epsilon)
+        else:
+            pEpsilon = 1j * polyP / np.abs(epsilon)   
+
+        J = []
+        sCJB = np.zeros((N + 2, 2), dtype = complex)
+        sCJB2 = np.zeros((N + 2, 2), dtype = complex)
+        pointerS = 0
+        pointerE = N + 1
+#        print("AD-BC: ", (A*D - B*C).coef)
+#        print("pEpsilon^2: ", (pEpsilon*pEpsilon).coef)
+        for i in np.arange(int(N / 2) + 1):
+            if len(pEpsilon.coef) < len(B.coef):
+                tempJ = 0.0
+            else:
+                tempJ = np.real(-pEpsilon.coef[-1] / B.coef[-1])
+                C = C + 2 * tempJ * pEpsilon + tempJ * tempJ * B
+                pEpsilon = pEpsilon % B
+            J.append({"J": tempJ, "node1": pointerS, "node2": pointerE})
+        
+            if np.sum(np.abs(A.coef)) > 1e-9:
+                temp1 = (C // A).coef
+                sCJB2[pointerS, 0] = temp1[0]
+                if len(temp1) > 1:
+                    sCJB2[pointerS, 1] = temp1[1]
+                else:
+                    sCJB2[pointerS, 1] = 1.0
+                C = C % A
+            if np.sum(np.abs(B.coef)) > 1e-9:
+                temp1 = (D // B).coef
+                sCJB[pointerS, 0] = temp1[0]
+                if len(temp1) > 1:
+                    sCJB[pointerS, 1] = temp1[1]
+                else:
+                    sCJB[pointerS, 1] = 1.0
+                D = D % B
+
+            if not ((i == int(N / 2)) and (N % 2 == 0)):
+                A, B, C, D = -1j * C, -1j * D, -1j * A, -1j * B
+                pointerS += 1
+                
+                if len(pEpsilon.coef) < len(B.coef):
+                    tempJ = 0.0
+                else:
+                    tempJ = np.real(-pEpsilon.coef[-1] / B.coef[-1])
+                    C = C + 2 * tempJ * pEpsilon + tempJ * tempJ * B
+                    pEpsilon = pEpsilon % B
+                J.append({"J": tempJ, "node1": pointerS, "node2": pointerE})
+            
+            A, D = D, A
+            
+            if np.sum(np.abs(A.coef)) > 1e-9:
+                temp1 = (C // A).coef
+                sCJB2[pointerE, 0] = temp1[0]
+                if len(temp1) > 1:
+                    sCJB2[pointerE, 1] = temp1[1]
+                else:
+                    sCJB2[pointerE, 1] = 1.0
+                C = C % A
+            if np.sum(np.abs(B.coef)) > 1e-9:
+                temp1 = (D // B).coef
+                sCJB[pointerE, 0] = temp1[0]
+                if len(temp1) > 1:
+                    sCJB[pointerE, 1] = temp1[1]
+                else:
+                    sCJB[pointerE, 1] = 1.0
+                D = D % B
+
+            if i != int(N / 2):
+                A, B, C, D = -1j * C, -1j * D, -1j * A, -1j * B
+                pointerE -= 1
+
+            A, D = D, A
+
+        if (N % 2 == 1):
+            if np.sum(np.abs(A.coef)) > 1e-9:
+                temp1 = (C // A).coef
+                sCJB2[pointerS, 0] = temp1[0]
+                if len(temp1) > 1:
+                    sCJB2[pointerS, 1] = temp1[1]
+                else:
+                    sCJB2[pointerS, 1] = 1.0
+                C = C % A
+            if np.sum(np.abs(B.coef)) > 1e-9:
+                temp1 = (D // B).coef
+                sCJB[pointerS, 0] = temp1[0]
+                if len(temp1) > 1:
+                    sCJB[pointerS, 1] = temp1[1]
+                else:
+                    sCJB[pointerS, 1] = 1.0
+                D = D % B
+
+        B = np.imag([x[0] for x in sCJB])
+        C = np.real([x[1] if len(x) > 1 else 1.0 for x in sCJB])
+#        print(B, "\n", C)
+        C[C < 0] = 1.0
+        
+        M = np.zeros((N + 2, N + 2))
+        for i in np.arange(N + 2):
+            M[i, i] = B[i] / C[i]
+        for i in np.arange(N + 1):
+            M[i, i + 1] = 1 / np.sqrt(C[i] * C[i + 1])
+            M[i + 1, i] = M[i, i + 1]
+        
+        for i in J:
+            nd1 = i["node1"]
+            nd2 = i["node2"]
+            M[nd1, nd2] = i["J"] / np.sqrt(C[nd1] * C[nd2])
+            M[nd2, nd1] = M[nd1, nd2]
+
+        return M
+
+    elif method == 6:
+        rootF = Polynomial(coefF).roots()
+        rootP = Polynomial(coefP).roots()
         initM = GetTopology(rootF.shape[0])
         initialValue, folding = ExtractElementMFromMatrix(initM);
     
         specialFreq = np.array([-1., 0., 1.])
-        S11atSpecialFreq, S21atSpecialFreq = FPE2S(epsilon, epsilonE, rootF, rootP, rootE, specialFreq)
+        S11atSpecialFreq, S21atSpecialFreq = FPE2S(epsilon, epsilonE, coefF, coefP, rootE, specialFreq)
 
         def CostFunc(elementM, considerPhase=False):
             M = BuildMatrixFromElementM(elementM, folding);
@@ -1566,15 +1756,19 @@ def RotateArrow2CTCQ(M, topology, tranZeros):
                 break
     return AdjustPrimaryCouple(np.real(MRotated)), point
 
-def FPE2MComprehensive(epsilon, epsilonE, rootF, rootP, rootE, topology, method = 1):
+def FPE2MComprehensive(epsilon, epsilonE, coefF, coefP, rootE, topology, refRootP, method = 1):
     N = len(rootE)
-    transversalMatrix = FPE2M(epsilon, epsilonE, rootF, rootP, rootE, method = method)
+    transversalMatrix = FPE2M(epsilon, epsilonE, coefF, coefP, rootE, method = method)
     arrowMatrix = RotateM2Arrow(transversalMatrix)
+    rootP = Polynomial(coefP).roots()
+    rootP_perm = np.array([x for x in itertools.permutations(rootP)])
+    deltaRootP = np.sum(np.abs(rootP_perm - refRootP), axis=1)
+    rootP = rootP_perm[np.argmin(deltaRootP)]
     ctcqMatrix, ctcqPoint = RotateArrow2CTCQ(arrowMatrix, topology, rootP)
     if np.abs(ctcqPoint) < N * N * 1e-5:
         MRotated = ctcqMatrix
         MRotated[topology == 0] = 0
-        if len(rootP) > 0:
+        if len(coefP) > 1:
             message = "CTCQ detected!"
         else:
             message = "Chebyshev detected!"
