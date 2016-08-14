@@ -829,7 +829,7 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 		}
 	}, 300);
 	function extractMatrix(sFile) {
-		var synStoreState, topoM, tranZeros, captureStartFreqGHz, captureStopFreqGHz, response, numberOfPoints, stopFreq, freqGHz, sFromExtractM;
+		var synStoreState, topoM, tranZeros, captureStartFreqGHz, captureStopFreqGHz, response, freqGHz, sFromExtractM;
 		return regeneratorRuntime.async(function extractMatrix$(_context2) {
 			while (1) {
 				switch (_context2.prev = _context2.next) {
@@ -849,9 +849,9 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 
 					case 8:
 						response = _context2.sent;
-						numberOfPoints = synStoreState.numberOfPoints < 5000 ? synStoreState.numberOfPoints : 5000;
-						stopFreq = synStoreState.startFreq < synStoreState.stopFreq ? synStoreState.stopFreq : synStoreState.startFreq + synStoreState.bandwidth * 8;
-						freqGHz = numeric.linspace(synStoreState.startFreq, stopFreq, numberOfPoints);
+						freqGHz = sFile.freq.map(function (f, i) {
+							return f / 1000;
+						});
 						sFromExtractM = common.CM2S(response.extractedMatrix, freqGHz, response.q, synStoreState.centerFreq, synStoreState.bandwidth);
 
 
@@ -894,21 +894,21 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 						document.getElementById("p1-file").innerHTML = response.message;
 						document.querySelector('#deviationTable').click();
 						$scope.$digest();
-						_context2.next = 34;
+						_context2.next = 32;
 						break;
 
-					case 31:
-						_context2.prev = 31;
+					case 29:
+						_context2.prev = 29;
 						_context2.t0 = _context2['catch'](0);
 
 						document.getElementById("p1-file").innerHTML = _context2.t0.message;
 
-					case 34:
+					case 32:
 					case 'end':
 						return _context2.stop();
 				}
 			}
-		}, null, this, [[0, 31]]);
+		}, null, this, [[0, 29]]);
 	}
 
 	$scope.showChart = function (select) {

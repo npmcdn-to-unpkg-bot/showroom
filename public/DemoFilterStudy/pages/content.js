@@ -402,9 +402,10 @@ function handleChangeM(){
 				captureStartFreqGHz = $scope.data.captureStartFreqGHz || 0,
 				captureStopFreqGHz = $scope.data.captureStopFreqGHz || 0,
 				response = await common.xhr2('ExtractMatrix', {...sFile, ...synStoreState, tranZeros: tranZeros, topology: topoM, captureStartFreqGHz: captureStartFreqGHz, captureStopFreqGHz: captureStopFreqGHz}),
-				numberOfPoints = (synStoreState.numberOfPoints < 5000)? synStoreState.numberOfPoints : 5000,
+/* 				numberOfPoints = (synStoreState.numberOfPoints < 5000)? synStoreState.numberOfPoints : 5000,
 				stopFreq = (synStoreState.startFreq < synStoreState.stopFreq)? synStoreState.stopFreq : synStoreState.startFreq + synStoreState.bandwidth * 8,
-				freqGHz = numeric.linspace(synStoreState.startFreq, stopFreq, numberOfPoints),
+				freqGHz = numeric.linspace(synStoreState.startFreq, stopFreq, numberOfPoints), */
+				freqGHz = sFile.freq.map(function(f, i){return f / 1000}),
 				
 /* 				sFromTargetM = common.CM2S(synStoreState.targetMatrix, freqGHz, synStoreState.unloadedQ, synStoreState.centerFreq, synStoreState.bandwidth), */
 				
