@@ -793,8 +793,9 @@ def S2FP(inFreq, inS21, inS11, filterOrder, w1, w2, wga, wgb=0.1, method=0, star
         rootF, rootP = DeserializeFP(np.arange(filterOrder.shape[0] * 2), filterOrder)
         nF = len(rootF)
         nP = len(rootP)
-        for i in np.arange(0, 1):
-            normalizedS = 1j * normalizedFreq + 0*np.sqrt(w2 * w1) / (Qu * (w2 - w1))
+        for i in np.arange(0, 3):
+            toDoSymmetric = isSymmetric and (i == 2)
+            normalizedS = 1j * normalizedFreq + np.sqrt(w2 * w1) / (Qu * (w2 - w1))
             originalNF = nF
             nF += 2#int(0.49 * nF)
             if nP > 0:
@@ -832,7 +833,7 @@ def S2FP(inFreq, inS21, inS11, filterOrder, w1, w2, wga, wgb=0.1, method=0, star
                 riSeqF = np.where(np.arange(nF + 1) % 2 == 0, 1j, 1.0)
             riSeqP = np.where(np.arange(nP + 1) % 2 == 0, 1.0, 1j)
             weight = np.abs(S21)
-            if isSymmetric:
+            if toDoSymmetric:
                 vanderF = riSeqF * np.diag(S21 * weight).dot(np.vander(normalizedS, nF+1, increasing=True))
                 vanderP = -np.diag(S11 * weight).dot(np.vander(normalizedS, nP+1, increasing=True))
                 tempM = np.hstack((vanderF, vanderP, 1j * vanderP))
@@ -843,7 +844,7 @@ def S2FP(inFreq, inS21, inS11, filterOrder, w1, w2, wga, wgb=0.1, method=0, star
                 M = np.hstack((vanderF, vanderP))
             V = np.linalg.svd(M)[2]
             temp1 = np.conj(V[-1, :]) # b
-            if isSymmetric:
+            if toDoSymmetric:
                 coefF = temp1[:nF + 1] * riSeqF
             else:
                 coefF = temp1[:nF + 1]
@@ -865,16 +866,16 @@ def S2FP(inFreq, inS21, inS11, filterOrder, w1, w2, wga, wgb=0.1, method=0, star
             temp1 = np.conj(V[-1, :]) # b
             epsilon = temp1[0] / temp1[1]
 
-        if isSymmetric:
-            fp2eMethod = 1
-        else:
-            fp2eMethod = 2
-        epsilon, epsilonE, rootE = GetEpsilonRootE(coefF, coefP, S11, S21, normalizedFreq, Qu, epsilon, method=fp2eMethod)
-        Qu = GetQu(epsilon, epsilonE, Qu, rootF, rootP, rootE, S11, S21, normalizedFreq)
-        if not isSymmetric:
-            rootF += np.sqrt(w2 * w1) / (Qu * (w2 - w1))
-            coefF = Polynomial.fromroots(rootF).coef
-            rootE = FP2E(epsilon, coefF, coefP, method=fp2eMethod)
+            if toDoSymmetric:
+                fp2eMethod = 1
+            else:
+                fp2eMethod = 2
+            epsilon, epsilonE, rootE = GetEpsilonRootE(coefF, coefP, S11, S21, normalizedFreq, Qu, epsilon, method=fp2eMethod)
+            Qu = GetQu(epsilon, epsilonE, Qu, rootF, rootP, rootE, S11, S21, normalizedFreq)
+#        if not toDoSymmetric:
+#            rootF += np.sqrt(w2 * w1) / (Qu * (w2 - w1))
+#            coefF = Polynomial.fromroots(rootF).coef
+#            rootE = FP2E(epsilon, coefF, coefP, method=fp2eMethod)
 
 
 #        epsilon, epsilonE, rootE = GetEpsilonRootE(rootF, rootP, S11, S21, normalizedFreq, Qu)
@@ -1610,9 +1611,9 @@ def ReduceMAngleMethod(M, topology):
     
     MRotated = AdjustPrimaryCouple(MRotated)
     return MRotated
-    
+
 def RotateMReduce(M, pivotI, pivotJ, removeRow, removeCol, isComplex = False):
-    if np.abs(M[removeRow, removeCol]) < 1e-9:
+    if np.abs(M[removeRow, removeCol]) < 1e-12:
         return M
 
     if pivotI == removeRow:
@@ -1627,8 +1628,8 @@ def RotateMReduce(M, pivotI, pivotJ, removeRow, removeCol, isComplex = False):
     elif pivotJ == removeCol:
         otherRow = removeRow
         otherCol = pivotI
-    if np.abs(M[otherRow, otherCol]) < 1e-9:
-        tr = 1e9
+    if np.abs(M[otherRow, otherCol]) < 1e-12:
+        tr = 1e12
     elif (otherRow < removeRow) or (otherCol < removeCol):
         tr = -M[removeRow, removeCol] / M[otherRow, otherCol]
     else:
@@ -1636,6 +1637,32 @@ def RotateMReduce(M, pivotI, pivotJ, removeRow, removeCol, isComplex = False):
     cr = 1 / np.sqrt(1 + tr * tr)
     sr = tr * cr
     
+    N = M.shape[0] - 2
+    if isComplex == True:
+        tempEye = np.eye(N + 2, dtype = complex)
+    else:
+        tempEye = np.eye(N + 2)
+    tempEye[pivotI, pivotI] = cr
+    tempEye[pivotJ, pivotJ] = cr
+    tempEye[pivotI, pivotJ] = -sr
+    tempEye[pivotJ, pivotI] = sr
+    tempM = tempEye.dot(M).dot(tempEye.T)
+    return tempM
+
+def RotateMEqual(M, row, col, isComplex = False):
+    if np.abs(M[row, col] - M[row - 1, col - 1]) < 1e-12:
+        return M
+
+    if np.abs(M[row - 1, col - 2] + M[row + 1, col]) < 1e-12:
+        tr = 1e12
+    else:
+        tr = (M[row, col] - M[row - 1, col - 1]) / (M[row - 1, col - 2] + M[row + 1, col])
+    cr = 1 / np.sqrt(1 + tr * tr)
+    sr = tr * cr
+
+    pivotI = row
+    pivotJ = col - 1
+
     N = M.shape[0] - 2
     if isComplex == True:
         tempEye = np.eye(N + 2, dtype = complex)
@@ -1736,6 +1763,9 @@ def RotateArrow2CTCQ(M, topology, tranZeros):
                 point = np.sum(np.abs(MRotated[topology == 0]))
             if topology[i + 1, i + 3] == 0:
                 MRotated = RotateMReduce(MRotated, i + 1, i + 2, i + 1, i + 3, isComplex = True)
+                point = np.sum(np.abs(MRotated[topology == 0]))
+            if (topology[i, i + 2] == 1) and (topology[i + 1, i + 3] == 1):
+                MRotated = RotateMEqual(MRotated, i + 1, i + 3, isComplex = True)
                 point = np.sum(np.abs(MRotated[topology == 0]))
             if indexZeros > len(tranZeros) - 1:
                 break

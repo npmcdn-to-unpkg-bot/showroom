@@ -1,0 +1,15 @@
+//var fso = new ActiveXObject("Scripting.FileSystemObject"), fsoForWriting = 2, f = fso.OpenTextFile("./temp/tempGetVariableValue.txt", fsoForWriting, true);
+var variableNames = %s; // string array
+//f.Write("[");
+WScript.StdOut.Write("[");
+for (var i = 0; i < variableNames.length; i++){
+	//f.Write("\"" + oDesign.GetVariableValue(variableNames[i]) + "\"");
+	WScript.StdOut.Write("\"" + oDesign.GetVariableValue(variableNames[i]) + "\"");
+	if (i < variableNames.length - 1){
+		//f.Write(", ");
+		WScript.StdOut.Write(", ");
+	}
+}
+//f.Write("]");
+WScript.StdOut.Write("]");
+//f.Close();

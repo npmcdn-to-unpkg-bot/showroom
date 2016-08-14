@@ -97,6 +97,26 @@ def get_task(method):
         deviateMatrix = targetMatrix - extractedMatrix
         resJson = {'q': Qu, 'extractedMatrix': extractedMatrix.tolist(), 'deviateMatrix': deviateMatrix.tolist(), 'message': msg}
         return json.dumps(resJson, separators = (',', ':'))
+    elif method == "SpaceMappingCalculate":
+        reqJson = flask.request.get_json()
+        B = np.array(reqJson['B'])
+        h = np.array(reqJson['h'])
+        xc = np.array(reqJson['xc'])
+        xc_star = np.array(reqJson['xc_star'])
+        xf = np.array(reqJson['xf'])
+        lowerLimit = np.array(reqJson['lowerLimit'])
+        upperLimit = np.array(reqJson['upperLimit'])
+        f = xc - xc_star
+        B += np.array(np.mat(f).T * np.mat(h)) / h.dot(h)
+        h = np.linalg.solve(B, -f)
+        xf_old = xf
+        xf += h
+        xf = np.where(xf > lowerLimit, xf, lowerLimit)
+        xf = np.where(xf < upperLimit, xf, upperLimit)
+        h = xf - xf_old
+        toStop = np.abs(f) < 0.001
+        resJson = {'B': B.tolist(), 'h': h.tolist(), 'xf': xf.tolist(), 'toStop': toStop}
+        return json.dumps(resJson, separators = (',', ':'))
     else:
         flask.abort(404)
 

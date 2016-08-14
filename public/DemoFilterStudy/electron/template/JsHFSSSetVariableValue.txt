@@ -1,0 +1,5 @@
+var variableNames = %s, // string array
+	variableValues = %s; // number array
+for (var i = 0; i < variableNames.length; i++){
+	oDesign.SetVariableValue(variableNames[i], variableValues[i].toString + "in");
+}

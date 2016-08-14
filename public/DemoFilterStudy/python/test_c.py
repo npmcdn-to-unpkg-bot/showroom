@@ -30,7 +30,7 @@ with open("%s\\\\%s" % (sparaFolder, "_s_parameter.txt"), 'r') as json_file:
     testCases = np.array(json.load(json_file))
     
 plt.close("all")
-selectCases = np.array([19])
+selectCases = np.array([22])
 #selectCases = np.arange(1, 20)
 with backend_pdf.PdfPages("%s\\\\%s" % (sparaFolder, "summary.pdf")) as pdf:
     for testCase in testCases[selectCases - 1]:
@@ -38,6 +38,18 @@ with backend_pdf.PdfPages("%s\\\\%s" % (sparaFolder, "summary.pdf")) as pdf:
         freq = ntwk.frequency.f
         S11 = ntwk.s[:, 0, 0]
         S21 = ntwk.s[:, 1, 0]
+        
+        numDecimals = 6
+        S11_db = np.around(20 * np.log10(np.abs(S11)), numDecimals)
+        S21_db = np.around(20 * np.log10(np.abs(S21)), numDecimals)
+        S11_angRad = np.around(np.angle(S11), numDecimals)
+        S21_angRad = np.around(np.angle(S21), numDecimals)
+        
+        S11_amp = 10 ** (S11_db / 20)
+        S11 = S11_amp * (np.cos(S11_angRad) + 1j * np.sin(S11_angRad))
+        S21_amp = 10 ** (S21_db / 20)
+        S21 = S21_amp * (np.cos(S21_angRad) + 1j * np.sin(S21_angRad))
+        
         f0 = testCase["f0"]
         bw = testCase["BW"]
         w1 = testCase["f0"] - testCase["BW"] / 2

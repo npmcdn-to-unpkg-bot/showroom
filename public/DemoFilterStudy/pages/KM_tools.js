@@ -94,7 +94,9 @@
 						}
 					})
 					function toFixed3(num){return Math.round(num * 1000) / 1000;}
-					return {freq: freq, S21_db: S21_db.map(toFixed3), S21_angRad: S21_ang.map(toFixed3), S11_db: S11_db.map(toFixed3), S11_angRad: S11_ang.map(toFixed3)}
+					function toFixed6(num){return Math.round(num * 1000000) / 1000000;}
+					var toFixedN = toFixed6;
+					return {freq: freq, S21_db: S21_db.map(toFixedN), S21_angRad: S21_ang.map(toFixedN), S11_db: S11_db.map(toFixedN), S11_angRad: S11_ang.map(toFixedN)}
 				};
 				this.FPE2S = function(epsilon, epsilonE, coefF, coefP, coefE, freqGHz, q, centerFreq, bandwidth){
 					var N = coefF.length,

@@ -1,0 +1,6 @@
+var oAnsoftApp, oDesktop, oProject, oDesign;
+oAnsoftApp = new ActiveXObject("AnsoftHfss.HfssScriptInterface");
+oDesktop = oAnsoftApp.GetAppDesktop();
+oDesktop.RestoreWindow();
+oProject = oDesktop.GetActiveProject();
+oDesign = oProject.GetActiveDesign();

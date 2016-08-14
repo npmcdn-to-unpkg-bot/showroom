@@ -12,8 +12,8 @@ from numpy.polynomial import Polynomial
 from scipy import optimize, interpolate, signal, sparse
 import matplotlib.pyplot as plt
 
-rootP = np.array([1.5j, 1.8j])#np.array([1.0900j, 1.1691j, 1.5057j]) #np.array([-2j, 2j])
-N = 7
+rootP = np.array([-1.5j, 1.5j])#np.array([1.0900j, 1.1691j, 1.5057j]) #np.array([-2j, 2j])
+N = 6
 returnLoss= 22
 epsilon, coefP, coefF, rootE = CP.ChebyshevP2EF(rootP, N, returnLoss)
 
@@ -83,14 +83,14 @@ topology[-1, -1] = 0
 for i in np.arange(N + 1):
     topology[i, i + 1] = 1
     topology[i + 1, i] = 1
-topology[1, 3] = 1
-topology[3, 1] = 1
-topology[1, 4] = 1
-topology[4, 1] = 1
-topology[4, 6] = 1
-topology[6, 4] = 1
-#topology[3, 5] = 1
-#topology[5, 3] = 1
+#topology[1, 3] = 1
+#topology[3, 1] = 1
+topology[2, 4] = 1
+topology[4, 2] = 1
+topology[2, 5] = 1
+topology[5, 2] = 1
+topology[3, 5] = 1
+topology[5, 3] = 1
 #topology[5, 7] = 1
 #topology[7, 5] = 1
 #topology[8, 10] = 1
@@ -134,265 +134,6 @@ def SerializeM(M):
             index += 1
     return result
 
-def RotateM(M, i, j, cr, sr):
-    R = np.eye(M.shape[0])
-    R[i, i] = cr
-    R[j, j] = cr
-    R[i, j] = -sr
-    R[j, i] = sr
-    return R.dot(M).dot(R.T)
-
-
-
-def EvaluateR(M, serializedT, cr, sr):
-    N = M.shape[0] - 2
-    tempEye = np.eye(N + 2)
-    tempM = np.eye(N + 2)
-    indexTheta = 0
-    for j in np.arange(2, N + 1):
-        for i in np.arange(1, j):
-            tempEye[i, i] = cr[indexTheta]
-            tempEye[j, j] = cr[indexTheta]
-            tempEye[i, j] = -sr[indexTheta]
-            tempEye[j, i] = sr[indexTheta]
-            tempM = tempM.dot(tempEye)
-            tempEye[i, i] = 1
-            tempEye[j, j] = 1
-            tempEye[i, j] = 0
-            tempEye[j, i] = 0
-            indexTheta += 1
-    R = tempM
-    RT = tempM.T
-    MRotated = R.dot(M).dot(RT)
-    r = SerializeM(MRotated)[serializedT == 0]
-    return r, MRotated
-
-def EvaluateJ(M, serializedT, cr, sr):
-    N = M.shape[0] - 2
-    numR = np.count_nonzero(1 - serializedT)
-    numTheta = int(N * (N - 1) / 2)
-    MDeriv = np.zeros((numTheta, N + 2, N + 2))
-
-    tempEye = np.eye(N + 2)
-
-    R1 = np.zeros((numTheta, N + 2, N + 2))
-    R1T = np.zeros((numTheta, N + 2, N + 2))
-    tempM = np.eye(N + 2)
-    indexTheta = 0
-    for j in np.arange(2, N + 1):
-        for i in np.arange(1, j):
-            R1[indexTheta, :, :] = tempM
-            R1T[indexTheta, :, :] = tempM.T
-            tempEye[i, i] = cr[indexTheta]
-            tempEye[j, j] = cr[indexTheta]
-            tempEye[i, j] = -sr[indexTheta]
-            tempEye[j, i] = sr[indexTheta]
-            tempM = tempM.dot(tempEye)
-            tempEye[i, i] = 1
-            tempEye[j, j] = 1
-            tempEye[i, j] = 0
-            tempEye[j, i] = 0
-            indexTheta += 1
-    R = tempM
-    RT = tempM.T
-
-    R2 = np.zeros((numTheta, N + 2, N + 2))
-    R2T = np.zeros((numTheta, N + 2, N + 2))
-    tempM = np.eye(N + 2)
-    indexTheta = numTheta - 1
-    for j in np.arange(N, 1, -1):
-        for i in np.arange(j - 1, 0, -1):
-            R2[indexTheta, :, :] = tempM
-            R2T[indexTheta, :, :] = tempM.T
-            tempEye[i, i] = cr[indexTheta]
-            tempEye[j, j] = cr[indexTheta]
-            tempEye[i, j] = -sr[indexTheta]
-            tempEye[j, i] = sr[indexTheta]
-            tempM = tempEye.dot(tempM)
-            tempEye[i, i] = 1
-            tempEye[j, j] = 1
-            tempEye[i, j] = 0
-            tempEye[j, i] = 0
-            indexTheta -= 1
-    
-    tempZero = np.zeros((N + 2, N + 2))
-    indexTheta = 0
-    for j in np.arange(2, N + 1):
-        for i in np.arange(1, j):
-            tempZero[i, i] = -sr[indexTheta]
-            tempZero[j, j] = -sr[indexTheta]
-            tempZero[i, j] = -cr[indexTheta]
-            tempZero[j, i] = cr[indexTheta]
-            MDeriv[indexTheta, :, :] = R1[indexTheta, :, :].dot(tempZero).dot(R2[indexTheta, :, :]).dot(M).dot(RT) + R.dot(M).dot(R2T[indexTheta, :, :]).dot(tempZero.T).dot(R1T[indexTheta, :, :])
-            tempZero[i, i] = 0
-            tempZero[j, j] = 0
-            tempZero[i, j] = 0
-            tempZero[j, i] = 0
-            indexTheta += 1
-    J = np.zeros((numR, numTheta))
-    indexT = 0
-    indexR = 0
-    for i in np.arange(N + 2):
-        for j in np.arange(N + 2 - i):
-            if serializedT[indexT] == 0:
-                J[indexR, :] = MDeriv[:, j, i + j]
-                indexR += 1
-            indexT += 1
-
-    MRotated = R.dot(M).dot(RT)
-    r = SerializeM(MRotated)[serializedT == 0]
-    return J, r, MRotated
-
-
-def RotateMReduce(M, pivotI, pivotJ, removeRow, removeCol, isComplex = False):
-    if np.abs(M[removeRow, removeCol]) < 1e-9:
-        return M
-
-    if pivotI == removeRow:
-        otherRow = pivotJ
-        otherCol = removeCol
-    elif pivotJ == removeRow:
-        otherRow = pivotI
-        otherCol = removeCol
-    elif pivotI == removeCol:
-        otherRow = removeRow
-        otherCol = pivotJ
-    elif pivotJ == removeCol:
-        otherRow = removeRow
-        otherCol = pivotI
-    if np.abs(M[otherRow, otherCol]) < 1e-9:
-        tr = 1e9
-    elif (otherRow < removeRow) or (otherCol < removeCol):
-        tr = -M[removeRow, removeCol] / M[otherRow, otherCol]
-    else:
-        tr = M[removeRow, removeCol] / M[otherRow, otherCol]
-    cr = 1 / np.sqrt(1 + tr * tr)
-    sr = tr * cr
-    
-    N = M.shape[0] - 2
-    if isComplex == True:
-        tempEye = np.eye(N + 2, dtype = complex)
-    else:
-        tempEye = np.eye(N + 2)
-    tempEye[pivotI, pivotI] = cr
-    tempEye[pivotJ, pivotJ] = cr
-    tempEye[pivotI, pivotJ] = -sr
-    tempEye[pivotJ, pivotI] = sr
-    tempM = tempEye.dot(M).dot(tempEye.T)
-    return tempM
-
-def RotateM2Arrow(M):
-    N = M.shape[0] - 2
-    MRotated = M.copy()
-    for i in np.arange(N):
-        for j in np.arange(N, i + 1, -1):
-            MRotated = RotateMReduce(MRotated, i + 1, j, i, j)
-    for i in np.arange(N + 1):
-        if MRotated[i, i + 1] < 0:
-            MRotated[i + 1, :] *= -1
-            MRotated[:, i + 1] *= -1
-    return MRotated
-
-def AdjustPrimaryCouple(M):
-    N = M.shape[0] - 2
-    MRotated = M.copy()
-    for i in np.arange(N + 1):
-        if MRotated[i, i + 1] < 0:
-            MRotated[i + 1, :] *= -1
-            MRotated[:, i + 1] *= -1
-    return MRotated
-            
-def RotateArrow2Folded(M, topology):
-    N = M.shape[0] - 2
-    MRotated = M
-    tempM = M
-    point = np.sum(np.abs(tempM[topology == 0]))
-    if np.abs(point) < 1e-4:
-        return MRotated, point
-    for i in np.arange(N - 1, -(N - 2), -1):
-        for j in np.arange(int(1 + (N - 1 - i) / 2)):
-            row = i + j
-            col = N + 1 - j
-            if (row > 0) and (np.abs(tempM[row, col]) > 1e-6):
-                tempM = RotateMReduce(tempM, row, col - 1, row, col)
-                newpoint = np.sum(np.abs(tempM[topology == 0]))
-                if newpoint < point:
-                    point = newpoint
-                    MRotated = tempM
-                if np.abs(newpoint) < 1e-4:
-                    return AdjustPrimaryCouple(MRotated), newpoint
-
-    return AdjustPrimaryCouple(MRotated), point
-
-
-def MoveZero(M, startRow, stopRow, w):
-    N = M.shape[0] - 2
-    MRotated = M.astype(complex)
-    tempEye = np.eye(N + 2, dtype = complex)
-
-    if np.abs(w + M[startRow + 1, startRow + 1]) < 1e-9:
-        tr = 1e9
-    else:
-        tr = M[startRow, startRow + 1] / (w + M[startRow + 1, startRow + 1])
-    cr = 1 / np.sqrt(1 + tr * tr)
-    sr = tr * cr
-    tempEye[startRow, startRow] = cr
-    tempEye[startRow + 1, startRow + 1] = cr
-    tempEye[startRow, startRow + 1] = -sr
-    tempEye[startRow + 1, startRow] = sr
-    MRotated = tempEye.dot(MRotated).dot(tempEye.T)
-    for i in np.arange(startRow - 1, stopRow, -1):
-        MRotated = RotateMReduce(MRotated, i, i + 1, i, i + 2, isComplex = True)
-    return MRotated
-
-def RotateArrow2CTCQ(M, topology, tranZeros):
-    N = M.shape[0] - 2
-    indexZeros = 0
-    MRotated = M.copy()
-    point = np.sum(np.abs(MRotated[topology == 0]))
-    for i in np.arange(N):
-        if (i + 4 < N + 2) and np.any(topology[i, i + 4:]) :
-            break
-        if (i + 3 < N + 2) and (topology[i, i + 3] == 1):
-            if (i > 0) and np.any(topology[i - 1, i + 1:]):
-                break
-            if (i + 4 < N + 2) and (np.any(topology[i, i + 4:]) or np.any(topology[i + 1, i + 4:])):
-                break
-            if (i + 2 < N) and (i + 4 < N + 2) and np.any(topology[i + 2, i + 4:]):
-                break
-            if indexZeros < len(tranZeros):
-                MRotated = MoveZero(MRotated, N - 1, i, -1j * tranZeros[indexZeros])
-                point = np.sum(np.abs(MRotated[topology == 0]))
-                indexZeros += 1
-            if indexZeros < len(tranZeros):
-                MRotated = MoveZero(MRotated, N - 1, i + 1, -1j * tranZeros[indexZeros])
-                point = np.sum(np.abs(MRotated[topology == 0]))
-                indexZeros += 1
-            if topology[i, i + 2] == 0:
-                MRotated = RotateMReduce(MRotated, i + 1, i + 2, i, i + 2, isComplex = True)
-                point = np.sum(np.abs(MRotated[topology == 0]))
-            if topology[i + 1, i + 3] == 0:
-                MRotated = RotateMReduce(MRotated, i + 1, i + 2, i + 1, i + 3, isComplex = True)
-                point = np.sum(np.abs(MRotated[topology == 0]))
-            if indexZeros > len(tranZeros) - 1:
-                break
-        if (i + 2 < N + 2) and (topology[i, i + 2] == 1) and (topology[i, i + 3] != 1):
-            if (i > 0) and np.any(topology[i - 1, i + 3:]):
-                break
-            if (i + 4 < N + 2) and np.any(topology[i, i + 4:]):
-                break
-            if (i + 1 < N) and (i + 3 < N + 2) and np.any(topology[i + 1, i + 3:]):
-                break
-            if (i > 0) and (topology[i - 1, i + 2] == 1):
-                continue
-            MRotated = MoveZero(MRotated, N - 1, i, -1j * tranZeros[indexZeros])
-            point = np.sum(np.abs(MRotated[topology == 0]))
-            indexZeros += 1
-            if indexZeros > len(tranZeros) - 1:
-                break
-    return AdjustPrimaryCouple(np.real(MRotated)), point
-
-
 
 M = np.real(M)
 
@@ -403,13 +144,13 @@ pr.enable()
 #resultM = CP.FPE2MComprehensive(epsilon, epsilonE, rootF, rootP, rootE, topology)
 #print(np.round(resultM, 2), "\n")
 
-arrowM = RotateM2Arrow(M)
+arrowM = CP.RotateM2Arrow(M)
 print(np.round(arrowM, 2))
 tranZeros = rootP
 #foldedM, foldedPoint = RotateArrow2Folded(arrowM, topology)
 #print(np.round(np.real(foldedM), 4), "folded point:", foldedPoint, "\n")
-#ctcqM, ctcqPoint = RotateArrow2CTCQ(arrowM, topology, tranZeros)
-#print(np.round(np.real(ctcqM), 2), "ctcq point:", ctcqPoint, "\n")
+ctcqM, ctcqPoint = CP.RotateArrow2CTCQ(arrowM, topology, tranZeros)
+print(np.round(np.real(ctcqM), 2), "ctcq point:", ctcqPoint, "\n")
 #print("ctcq point:", ctcqPoint, "\n")
 #foldedM, point = RotateArrow2Folded(arrowM, topology)
 #print(np.round(M, 2), "\n")

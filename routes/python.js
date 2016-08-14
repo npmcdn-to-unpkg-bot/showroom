@@ -17,11 +17,15 @@ co(function *(){
 				.then(function(res) {
 					if (!res.ok) {
 						pythonServer = "https://gongfan99.pythonanywhere.com/";
+						console.log("python.js: Local python server not available. Use remote server instead.");
+					} else {
+						console.log("python.js: Connected to local python server.");
 					}
 					return res.ok;
 				});
 	} catch(e) {
 		pythonServer = "https://gongfan99.pythonanywhere.com/";
+		console.log("python.js: Local python server not available. Use remote server instead.");
 	}
 })
 .catch(function(err){

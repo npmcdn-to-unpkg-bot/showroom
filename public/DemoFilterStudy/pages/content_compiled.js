@@ -109,7 +109,11 @@
 				function toFixed3(num) {
 					return Math.round(num * 1000) / 1000;
 				}
-				return { freq: freq, S21_db: S21_db.map(toFixed3), S21_angRad: S21_ang.map(toFixed3), S11_db: S11_db.map(toFixed3), S11_angRad: S11_ang.map(toFixed3) };
+				function toFixed6(num) {
+					return Math.round(num * 1000000) / 1000000;
+				}
+				var toFixedN = toFixed6;
+				return { freq: freq, S21_db: S21_db.map(toFixedN), S21_angRad: S21_ang.map(toFixedN), S11_db: S11_db.map(toFixedN), S11_angRad: S11_ang.map(toFixedN) };
 			};
 			this.FPE2S = function (epsilon, epsilonE, coefF, coefP, coefE, freqGHz, q, centerFreq, bandwidth) {
 				var N = coefF.length,
@@ -838,8 +842,8 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 						}).filter(function (d) {
 							return d[0] !== 0 || d[1] !== 0;
 						});
-						captureStartFreqGHz = $scope.captureStartFreqGHz || 0;
-						captureStopFreqGHz = $scope.captureStopFreqGHz || 0;
+						captureStartFreqGHz = $scope.data.captureStartFreqGHz || 0;
+						captureStopFreqGHz = $scope.data.captureStopFreqGHz || 0;
 						_context2.next = 8;
 						return regeneratorRuntime.awrap(common.xhr2('ExtractMatrix', _extends({}, sFile, synStoreState, { tranZeros: tranZeros, topology: topoM, captureStartFreqGHz: captureStartFreqGHz, captureStopFreqGHz: captureStopFreqGHz })));
 
@@ -977,7 +981,416 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 		var fileList = this.files; /* now you can work with the file list */
 		reader.readAsText(fileList[0]);
 	}
-}]).controller("_optimize", ['$scope', '$timeout', function ($scope, $timeout) {}]).directive('hideTabs', ['$rootScope', function ($rootScope) {
+}]).controller("_optimize", ['$scope', '$timeout', function ($scope, $timeout) {
+	function SerializeM(topoM, M) {
+		var i,
+		    j,
+		    N = topoM.length - 2,
+		    result = [];
+		for (i = 0; i < N + 2; i++) {
+			for (j = 0; j < N + 2 - i; j++) {
+				if (topoM[j][j + i] === 1) {
+					result.push(M[j][j + i]);
+				}
+			}
+		}
+	}
+
+	function DeSerializeM(topoM, serM) {
+		var i,
+		    j,
+		    temp1,
+		    indexSerM = 0,
+		    N = topoM.length - 2,
+		    result = [];
+		for (i = 0; i < N + 2; i++) {
+			result.push(_.range(0, N + 2, 0));
+		}
+		for (i = 0; i < N + 2; i++) {
+			for (j = 0; j < N + 2 - i; j++) {
+				if (topoM[j][j + i] === 1) {
+					result[j][j + i] = serM[indexSerM];
+					indexSerM = indexSerM + 1;
+				}
+			}
+		}
+		return result;
+	}
+
+	function CoarseModelLinear() {
+		this.slope = [];
+		this.intep = [];
+	}
+
+	CoarseModelLinear.prototype.update = function (inputArray, outputArray) {
+		var x,
+		    y,
+		    x_a,
+		    y_a,
+		    xx_a,
+		    xy_a,
+		    N = inputArray[0].length,
+		    numSample = inputArray.length;
+		for (var i = 0; i < N; i++) {
+			x = inputArray.map(function (a) {
+				return a[i];
+			});
+			y = outputArray.map(function (a) {
+				return a[i];
+			});
+			x_a = x.reduce(function (a, b) {
+				return a + b;
+			}) / numSample;
+			y_a = y.reduce(function (a, b) {
+				return a + b;
+			}) / numSample;
+			xx_a = x.map(function (a) {
+				return a * a;
+			}).reduce(function (a, b) {
+				return a + b;
+			}) / numSample;
+			xy_a = x.map(function (a, ix) {
+				return a * y[ix];
+			}).reduce(function (a, b) {
+				return a + b;
+			}) / numSample;
+			this.slope[i] = (xy_a - x_a * y_a) / (xx_a - x_a * x_a);
+			this.intep[i] = y_a - this.slope[i] * x_a;
+		}
+	};
+
+	CoarseModelLinear.prototype.func = function (input) {
+		return input.map(function (a, i) {
+			return this.intep[i] + this.slope[i] * a;
+		});
+	};
+	CoarseModelLinear.prototype.defunc = function (output) {
+		return output.map(function (a, i) {
+			return (a - this.intep[i]) / this.slope[i];
+		});
+	};
+
+	var oDate = new Date();
+	function AddTimeLog(input) {
+		$scope.data.logs += "\n" + oDate.toLocaleString() + ": " + input;
+		/* console.log($scope.data.logs); */
+		/* $scope.$digest(); */
+		$timeout(function () {
+			document.getElementById("textarea1").scrollTop = document.getElementById("textarea1").scrollHeight;
+		}, 200);
+	}
+
+	var synStoreState = store.getState().savedSynthesisData,
+	    topoM = store.getState().topoM,
+	    linearChart1,
+	    linearChart2;
+	$timeout(function () {
+		var margin = {
+			top: 40,
+			right: 40,
+			bottom: 50,
+			left: 60
+		};
+		linearChart1 = new simpleD3LinearChart("graph-linear-chart1", margin, [0, 5], [-10, 50]);
+		linearChart2 = new simpleD3LinearChart("graph-linear-chart2", margin, [0, 5], [-10, 50]);
+	}, 80);
+
+	$scope.data = { logs: "", captureStartFreqGHz: "", captureStopFreqGHz: "", iterList: [], currentIter: { id: 0, q: 1e9 }, isSymmetric: synStoreState.isSymmetric || false };
+	$scope.changeCurrentIteration = function (iteration) {
+		var data, freqGHz, sFromExtractM;
+		$scope.data.currentIter = iteration;
+
+		freqGHz = iteration.sFile.freq.map(function (f, i) {
+			return f / 1000;
+		});
+
+		S11dB_fromSFile = iteration.sFile.freq.map(function (f, i) {
+			return [f / 1000, sFile.S11_db[i]];
+		});
+		S21dB_fromSFile = iteration.sFile.freq.map(function (f, i) {
+			return [f / 1000, sFile.S21_db[i]];
+		});
+
+		sFromExtractM = common.CM2S(iteration.extractedMatrix, freqGHz, iteration.q, synStoreState.centerFreq, synStoreState.bandwidth);
+
+		S11dB_fromExtractM = sFromExtractM.S11.map(function (s) {
+			return [s[0], 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10];
+		});
+		S21dB_fromExtractM = sFromExtractM.S21.map(function (s) {
+			return [s[0], 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10];
+		});
+
+		data = [{ label: "HFSS S11", data: S11dB_fromSFile }, { label: "Extracted S11", data: $scope.S11dB_fromExtractM }];
+		linearChart1.update(data, true);
+		data = [{ label: "HFSS S21", data: S21dB_fromSFile }, { label: "Extracted S21", data: $scope.S21dB_fromExtractM }];
+		linearChart2.update(data, true);
+	};
+	$scope.spacemapping = function _callee2() {
+		var tranZeros, captureStartFreqGHz, captureStopFreqGHz, numberOfPoints, stopFreq, freqGHz, response, sFile, i, j, N, variableNames, dimensionNames, indexIter, tempIter, coarseModel, temp1, Dim2M, lowerLimit, upperLimit, B, h;
+		return regeneratorRuntime.async(function _callee2$(_context4) {
+			while (1) {
+				switch (_context4.prev = _context4.next) {
+					case 0:
+						Dim2M = function Dim2M() {
+							return regeneratorRuntime.async(function Dim2M$(_context3) {
+								while (1) {
+									switch (_context3.prev = _context3.next) {
+										case 0:
+											_context3.prev = 0;
+
+											AddTimeLog("\n\nIteration " + indexIter.toString() + "starts.");
+											AddTimeLog("\nSimulate S parameter with the following dimension.\n\t" + JSON.stringify(dimensionNames) + "\n\t" + JSON.stringify(tempIter.dimension));
+											tempIter.s2p = "s" + indexIter + ".s2p";
+											_context3.next = 6;
+											return regeneratorRuntime.awrap(preloaded.EvaluateDimension(dimensionNames, tempIter.dimension, tempIter.s2p));
+
+										case 6:
+											sFile = _context3.sent;
+											_context3.next = 9;
+											return regeneratorRuntime.awrap(common.xhr2('ExtractMatrix', _extends({}, sFile, synStoreState, { tranZeros: tranZeros, topology: topoM, captureStartFreqGHz: captureStartFreqGHz, captureStopFreqGHz: captureStopFreqGHz })));
+
+										case 9:
+											response = _context3.sent;
+
+											tempIter.sFile = sFile;
+											tempIter.extractedMatrix = response.extractedMatrix;
+											tempIter.deviateMatrix = response.deviateMatrix;
+											tempIter.q = response.q;
+											document.querySelector('#iteration' + tempIter.id).click();
+											_context3.next = 21;
+											break;
+
+										case 17:
+											_context3.prev = 17;
+											_context3.t0 = _context3['catch'](0);
+
+											AddTimeLog(_context3.t0.message);
+											return _context3.abrupt('return', undefined);
+
+										case 21:
+										case 'end':
+											return _context3.stop();
+									}
+								}
+							}, null, this, [[0, 17]]);
+						};
+
+						tranZeros = synStoreState.tranZeros.map(function (d) {
+							return [Number(d[0]), Number(d[1])];
+						}).filter(function (d) {
+							return d[0] !== 0 || d[1] !== 0;
+						}), captureStartFreqGHz = $scope.data.captureStartFreqGHz || 0, captureStopFreqGHz = $scope.data.captureStopFreqGHz || 0, numberOfPoints = synStoreState.numberOfPoints < 5000 ? synStoreState.numberOfPoints : 5000, stopFreq = synStoreState.startFreq < synStoreState.stopFreq ? synStoreState.stopFreq : synStoreState.startFreq + synStoreState.bandwidth * 8, freqGHz = numeric.linspace(synStoreState.startFreq, stopFreq, numberOfPoints);
+
+
+						AddTimeLog("Space mapping started.");
+
+						if (window.hasOwnProperty("preloaded")) {
+							_context4.next = 6;
+							break;
+						}
+
+						AddTimeLog("Space mapping cannot be run in browser.");
+						return _context4.abrupt('return', 0);
+
+					case 6:
+						N = topoM.length - 2, dimensionNames = [], indexIter = 0, tempIter = {}, coarseModel = new CoarseModelLinear();
+						_context4.next = 9;
+						return regeneratorRuntime.awrap(preloaded.GetHFSSVariables());
+
+					case 9:
+						variableNames = _context4.sent;
+						i = 0;
+
+					case 11:
+						if (!(i < N + 2)) {
+							_context4.next = 27;
+							break;
+						}
+
+						j = 0;
+
+					case 13:
+						if (!(j < N + 2 - i)) {
+							_context4.next = 24;
+							break;
+						}
+
+						if (!(topoM[j][j + i] === 1)) {
+							_context4.next = 21;
+							break;
+						}
+
+						temp1 = variableNames.filter(function (a) {
+							var row = j < 10 ? j.toString() : String.fromCharCode(65 + j - 10),
+							    col = j + i < 10 ? (j + i).toString() : String.fromCharCode(65 + j + i - 10);
+							return a.length > 2 && a.slice(-3) === "M" + row + col;
+						});
+
+						if (!(temp1.length > 0)) {
+							_context4.next = 20;
+							break;
+						}
+
+						dimensionNames.push(temp1[0]);
+						_context4.next = 21;
+						break;
+
+					case 20:
+						return _context4.abrupt('return', 0);
+
+					case 21:
+						j++;
+						_context4.next = 13;
+						break;
+
+					case 24:
+						i++;
+						_context4.next = 11;
+						break;
+
+					case 27:
+
+						tempIter.id = indexIter;
+						_context4.next = 30;
+						return regeneratorRuntime.awrap(preloaded.GetHFSSVariableValue(dimensionNames));
+
+					case 30:
+						tempIter.dimension = _context4.sent;
+						lowerLimit = tempIter.dimension.map(function (a) {
+							return a * 0.5;
+						}), upperLimit = tempIter.dimension.map(function (a) {
+							return a * 2.0;
+						});
+
+						if (!(typeof Dim2M() === "undefined")) {
+							_context4.next = 34;
+							break;
+						}
+
+						return _context4.abrupt('return', 0);
+
+					case 34:
+						$scope.data.iterList.push(angular.copy(tempIter));
+
+						indexIter = indexIter + 1;
+						tempIter.id = indexIter;
+						tempIter.dimension = tempIter.dimension.map(function (a) {
+							return a + 0.01;
+						});
+
+						if (!(typeof Dim2M() === "undefined")) {
+							_context4.next = 40;
+							break;
+						}
+
+						return _context4.abrupt('return', 0);
+
+					case 40:
+						$scope.data.iterList.push(angular.copy(tempIter));
+
+						coarseModel.update(iterList.map(function (a) {
+							return a.dimension;
+						}), iterList.map(function (a) {
+							a.extractedMatrix;
+						}));
+
+						xc_star = coarseModel.defunc(SerializeM(topoM, synStoreState.targetMatrix));
+						xf = xc_star;
+						B = numeric.identity(xf.length), h = numeric.rep([xf.length], 1e9);
+						i = 0;
+
+					case 46:
+						if (!(i < 10)) {
+							_context4.next = 73;
+							break;
+						}
+
+						indexIter = indexIter + 1;
+						tempIter.id = indexIter;
+						tempIter.dimension = xf;
+
+						if (!(typeof Dim2M() === "undefined")) {
+							_context4.next = 52;
+							break;
+						}
+
+						return _context4.abrupt('return', 0);
+
+					case 52:
+						$scope.data.iterList.push(angular.copy(tempIter));
+						coarseModel.update(iterList.map(function (a) {
+							return a.dimension;
+						}), iterList.map(function (a) {
+							a.extractedMatrix;
+						}));
+						xc = coarseModel.defunc(tempIter.extractedMatrix);
+						_context4.prev = 55;
+						_context4.next = 58;
+						return regeneratorRuntime.awrap(common.xhr2('SpaceMappingCalculate', { B: B, h: h, xc: xc, xc_star: xc_star, xf: xf, lowerLimit: lowerLimit, upperLimit: upperLimit }));
+
+					case 58:
+						response = _context4.sent;
+						_context4.next = 65;
+						break;
+
+					case 61:
+						_context4.prev = 61;
+						_context4.t0 = _context4['catch'](55);
+
+						AddTimeLog(_context4.t0.message);
+						return _context4.abrupt('return', 0);
+
+					case 65:
+						B = response.B;
+						h = response.h;
+						xf = response.xf;
+
+						if (!response.toStop) {
+							_context4.next = 70;
+							break;
+						}
+
+						return _context4.abrupt('break', 73);
+
+					case 70:
+						i++;
+						_context4.next = 46;
+						break;
+
+					case 73:
+					case 'end':
+						return _context4.stop();
+				}
+			}
+		}, null, this, [[55, 61]]);
+	}; // end of $scope.spacemapping
+
+	if (window.hasOwnProperty("preloaded")) {
+		(function _callee3() {
+			var temp1;
+			return regeneratorRuntime.async(function _callee3$(_context5) {
+				while (1) {
+					switch (_context5.prev = _context5.next) {
+						case 0:
+							_context5.next = 2;
+							return regeneratorRuntime.awrap(preloaded.Try(['H', 'e', 'l', 'l', 'o', '!']));
+
+						case 2:
+							temp1 = _context5.sent.join("");
+
+							AddTimeLog(temp1);
+
+						case 4:
+						case 'end':
+							return _context5.stop();
+					}
+				}
+			}, null, this);
+		})();
+	} else {
+		AddTimeLog("Space mapping cannot be run in browser. Special client software required.");
+	}
+}]).directive('hideTabs', ['$rootScope', function ($rootScope) {
 	return {
 		restrict: 'A',
 		link: function link($scope, $el) {

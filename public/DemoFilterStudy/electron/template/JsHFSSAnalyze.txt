@@ -1,0 +1,3 @@
+oDesign.Analyze("Setup1 : Sweep1");
+oModule = oDesign.GetModule("Solutions");
+oModule.ExportNetworkData("", ["Setup1:Sweep1"], 3, "./s2p/%s", ["All"], false, 50, "S", -1, 2, 15);

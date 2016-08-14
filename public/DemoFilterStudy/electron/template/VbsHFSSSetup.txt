@@ -1,0 +1,10 @@
+Dim oAnsoftApp
+Dim oDesktop
+Dim oProject
+Dim oDesign
+
+Set oAnsoftApp = CreateObject("AnsoftHfss.HfssScriptInterface")
+Set oDesktop = oAnsoftApp.GetAppDesktop()
+oDesktop.RestoreWindow
+Set oProject = oDesktop.GetActiveProject()
+Set oDesign = oProject.GetActiveDesign()

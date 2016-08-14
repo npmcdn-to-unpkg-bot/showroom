@@ -1,4 +1,72 @@
-        <div id="page-wrapper-without-sidemenu" class="container-fluid">
-					Under contruction ...
-        </div>
-        <!-- /#page-wrapper -->
+<div id="page-wrapper-without-sidemenu" class="container-fluid">
+	<div class="row" style="padding-top: 10px;">
+		<div class="col-sm-5">
+			<form class="form-inline">
+				<div class="form-group">
+					<input type="number" class="form-control" id="exampleInputName2" placeholder="start freq" ng-model="data.captureStartFreqGHz">
+					<label for="exampleInputName2">GHz&nbsp&nbsp</label>
+				</div>
+				<div class="form-group">
+					<input type="number" class="form-control" id="exampleInputEmail2" placeholder="stop freq" ng-model="data.captureStopFreqGHz">
+					<label for="exampleInputEmail2">GHz&nbsp&nbsp</label>
+				</div>
+			</form>
+		</div>
+		<div class="col-sm-2">
+			<button type="button" class="btn btn-primary" ng-click="spacemapping()">
+				Start space mapping
+			</button>
+		</div>
+	</div>
+	
+	<div class="row last-row-fullheight" style="padding-top: 10px;">
+
+		<div class="col-sm-6">
+			<div class="panel panel-primary">
+				<div class="panel-body" style="height: 800px; overflow: auto;">
+					<label>Logs: </label>
+					<textarea id="textarea1" class="form-control" rows="30" name="content" ng-model="data.logs"></textarea>
+				</div>
+			</div>
+		</div>
+
+		<div class="col-sm-6">
+			<div class="panel panel-primary">
+				<div class="panel-body" style="height: 800px; overflow: auto;">
+				
+					<ul class="nav nav-pills" role="tablist"> 
+						<li role="presentation" class="">
+							<h5></h5>
+						</li>
+						<li role="presentation" class="dropdown">
+							<button id="dLabel" type="button" class="btn btn-default" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+								Iteration&nbsp;{{(100 + data.currentIter.id + 1).toString().slice(-2)}}, Q = {{(data.currentIter.q > 1e8)? "infinite" : data.currentIter.q.toFixed(1)}}&nbsp;<span class="caret"></span>
+							</button>
+
+							<div class="dropdown-menu list-group">
+								<button type="button" class="list-group-item" id="iteration{{iteration.id}}" ng-repeat="iteration in data.iterList track by $index" ng-click="changeCurrentIteration(iteration)">
+										<div>
+											Iteration&nbsp;{{(100 + iteration.id + 1).toString().slice(-2)}}, Q = {{(iteration.q > 1e8)? "infinite" : iteration.q.toFixed(1)}}
+										</div>
+								</button>
+							</div>
+						</li>
+						<li role="presentation" class="dropdown">
+						</li>
+					</ul>
+					
+					<div id="graph-linear-chart1" style="display: inline-block; width: 100%; height: 300px">
+					<div id="graph-linear-chart2" style="display: inline-block; width: 100%; height: 300px">
+
+					<div>
+						{{(data.isSymmetric)? "Note: symmetric structure selected." : ""}}
+					</div>
+
+				</div>
+			</div>
+		</div>
+
+	</div>
+
+</div>
+<!-- /#page-wrapper -->
