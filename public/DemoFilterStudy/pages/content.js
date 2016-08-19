@@ -135,13 +135,13 @@ angular
 		$scope.data = tempStoreState.savedSynthesisData;
 	} else {
 		$scope.data = {
-			filterOrder: 3,
-			returnLoss: 30,
-			centerFreq: 4,//14.36,
-			bandwidth: 0.02,//0.89,
-			unloadedQ: 2000,
-			startFreq: 3.75,//12.8,
-			stopFreq: 4.25,//15.5,
+			filterOrder: 6,
+			returnLoss: 26,
+			centerFreq: 14.5,//14.36,
+			bandwidth: 0.3,//0.89,
+			unloadedQ: 200000,
+			startFreq: 13.5,//12.8,
+			stopFreq: 15.5,//15.5,
 			numberOfPoints: 1000,
 			filterType: "BPF",
 			/* tranZeros: [['', 1.1], ['', 1.4], ['', 1.9]], */
@@ -391,7 +391,7 @@ function handleChangeM(){
 			store.dispatch({type: 'saveSFile', data: sFile});
 			extractMatrix(sFile);
 		}
-	}, 300);
+	}, 500);
 	async function extractMatrix(sFile){
 		try {
 			var synStoreState = store.getState().savedSynthesisData,
@@ -509,27 +509,33 @@ function handleChangeM(){
 	 reader.readAsText(fileList[0])
 	}
 }])
-.controller("_optimize", ['$scope', '$timeout', function ($scope, $timeout) {
-	function SerializeM(topoM, M) {
+.controller("_optimize", ['$scope', '$timeout', 'common', function ($scope, $timeout, common) {
+	function SerializeM(topoM, M, isSymmetric) {
 		var i, j, N = topoM.length - 2, result = [];
 		for (i = 0; i < N + 2; i++) {
 			for (j = 0; j < N + 2 - i; j++) {
-				if (topoM[j][j + i] === 1) {
+				if ((topoM[j][j + i] === 1) && (!(isSymmetric && (j + j + i) > (N + 1)))) {
 					result.push(M[j][j + i])
 				}
 			}
 		}
+		return result;
 	}
 
-	function DeSerializeM(topoM, serM) {
+	function DeSerializeM(topoM, serM, isSymmetric) {
 		var i, j, temp1, indexSerM = 0, N = topoM.length - 2, result = [];
 		for (i = 0; i < N + 2; i++) {
 			result.push(_.range(0, N + 2, 0));
 		}
 		for (i = 0; i < N + 2; i++) {
 			for (j = 0; j < N + 2 - i; j++) {
-				if (topoM[j][j + i] === 1) {
+				if ((topoM[j][j + i] === 1) && (!(isSymmetric && (j + j + i) > (N + 1)))) {
 					result[j][j + i] = serM[indexSerM];
+					result[j + i][j] = serM[indexSerM];
+					if (isSymmetric){
+						result[N + 1 - j][N + 1 - j - i] = serM[indexSerM];
+						result[N + 1 - j - i][N + 1 - j] = serM[indexSerM];
+					}
 					indexSerM = indexSerM + 1;
 				}
 			}
@@ -538,66 +544,77 @@ function handleChangeM(){
 	}
 
 	function CoarseModelLinear() {
-		this.slope = []
-		this.intep = []
+		this.slopeM = []
+		this.invSlopeM = []
+		this.intepM = []
 	}
 
-	CoarseModelLinear.prototype.update = function (inputArray, outputArray) {
-		var x, y, x_a, y_a, xx_a, xy_a, N = inputArray[0].length, numSample = inputArray.length;
-		for (var i = 0; i < N; i++) {
-			x = inputArray.map(function (a) {return a[i]});
-			y = outputArray.map(function (a) {return a[i]});
-			x_a = x.reduce(function (a, b) {return a + b}) / numSample;
-			y_a = y.reduce(function (a, b) {return a + b}) / numSample;
-			xx_a = x.map(function (a) {return a * a}).reduce(function (a, b) {return a + b}) / numSample;
-			xy_a = x.map(function (a, ix) {return a * y[ix]}).reduce(function (a, b) {return a + b}) / numSample;
-			this.slope[i] = (xy_a - x_a * y_a) / (xx_a - x_a * x_a);
-			this.intep[i] = y_a - this.slope[i] * x_a;
-		}
+	CoarseModelLinear.prototype.update = async function (dimension, extractedMatrix, topology, isSymmetric) {
+		var response = await common.xhr2('CoarseModelUpdate', {dimension: dimension, extractedMatrix: extractedMatrix, topology: topology, isSymmetric: isSymmetric});
+		this.slopeM = response.slopeM;
+		this.invSlopeM = response.invSlopeM;
+		this.intepM = response.intepM;
 	}
 
 	CoarseModelLinear.prototype.func = function (input) {
-		return input.map(function (a, i) {
-			return this.intep[i] + this.slope[i] * a
-		});
+		var _this = this;
+		return numeric.add(_this.intepM, numeric.dot(_this.slopeM, input));
 	}
 	CoarseModelLinear.prototype.defunc = function (output) {
-		return output.map(function (a, i) {
-			return (a - this.intep[i]) / this.slope[i]
-		});
+		var _this = this;
+		return numeric.dot(_this.invSlopeM, numeric.sub(output, _this.intepM));
 	}
 
-	var oDate = new Date();
-	function AddTimeLog(input){
-		$scope.data.logs += "\n" + oDate.toLocaleString() + ": " + input;
-		/* console.log($scope.data.logs); */
-		/* $scope.$digest(); */
+	function AddTimeLog(input, showTime){
+		if (typeof showTime === "undefined" || showTime){
+			var oDate = new Date();
+			$scope.data.logs += "\n" + oDate.toLocaleString() + ": " + input;
+		} else {
+			$scope.data.logs += "\n" + input;
+		}
 		$timeout(function(){
 			document.getElementById("textarea1").scrollTop = document.getElementById("textarea1").scrollHeight;
 		}, 200);
 	}
 
-	var synStoreState = store.getState().savedSynthesisData, topoM = store.getState().topoM, linearChart1, linearChart2;
-	$timeout(function(){
-		var margin = {
-			top: 40,
-			right: 40,
-			bottom: 50,
-			left: 60
-		};
-		linearChart1 = new simpleD3LinearChart("graph-linear-chart1", margin, [0, 5], [-10, 50]);
-		linearChart2 = new simpleD3LinearChart("graph-linear-chart2", margin, [0, 5], [-10, 50]);
-	}, 80);
-
-	$scope.data = {logs: "", captureStartFreqGHz: "", captureStopFreqGHz: "", iterList: [], currentIter: {id: 0, q: 1e9}, isSymmetric: synStoreState.isSymmetric || false};
+	$scope.reset = function(){
+		$scope.data = {logs: "", captureStartFreqGHz: "", captureStopFreqGHz: "", iterList: [], currentIter: {id: 0, q: 1e9}, isSymmetric: synStoreState.isSymmetric || false};
+	}
+		
+	$scope.showTable = function(select, tableDataFormat){
+		var data, synStoreState = store.getState().savedSynthesisData;
+		if (typeof select === "undefined"){
+			$scope.data.matrixToShow = $scope.data.deviateMatrix;
+		} else {
+			switch (select.toLowerCase()){
+				case "targetmatrix":
+					$scope.data.matrixToShow = synStoreState.targetMatrix;
+					break;
+				case "extractedmatrix":
+					$scope.data.matrixToShow = $scope.data.extractedMatrix;
+					break;
+				case "deviation":
+				default:
+					$scope.data.matrixToShow = $scope.data.deviateMatrix;
+			}
+		}
+		if (typeof tableDataFormat === "undefined"){
+			$scope.data.tableDataFormat = 0;
+		} else {
+			$scope.data.tableDataFormat = tableDataFormat;
+		}
+	}
+	
 	$scope.changeCurrentIteration = function(iteration){
-		var data, freqGHz, sFromExtractM;
+		var data, freqGHz, sFromExtractM, S11dB_fromExtractM, S21dB_fromExtractM, S11dB_fromSFile, S21dB_fromSFile;
 		$scope.data.currentIter = iteration;
+		$scope.data.extractedMatrix = iteration.extractedMatrix;
+		$scope.data.deviateMatrix = iteration.deviateMatrix;
 
 		freqGHz = iteration.sFile.freq.map(function(f, i){return f / 1000});
 
-		S11dB_fromSFile = iteration.sFile.freq.map(function(f, i){return [f / 1000, sFile.S11_db[i]]});
-		S21dB_fromSFile = iteration.sFile.freq.map(function(f, i){return [f / 1000, sFile.S21_db[i]]});
+		S11dB_fromSFile = iteration.sFile.freq.map(function(f, i){return [f / 1000, iteration.sFile.S11_db[i]]});
+		S21dB_fromSFile = iteration.sFile.freq.map(function(f, i){return [f / 1000, iteration.sFile.S21_db[i]]});
 		
 		sFromExtractM = common.CM2S(iteration.extractedMatrix, freqGHz, iteration.q, synStoreState.centerFreq, synStoreState.bandwidth);
 			
@@ -605,11 +622,52 @@ function handleChangeM(){
 		S21dB_fromExtractM = sFromExtractM.S21.map(function(s){return [s[0], 10 * Math.log(s[1].x * s[1].x + s[1].y * s[1].y) / Math.LN10]});
 
 		
-		data = [{label: "HFSS S11", data: S11dB_fromSFile}, {label: "Extracted S11", data: $scope.S11dB_fromExtractM}];
+		data = [{label: "HFSS S11", data: S11dB_fromSFile}, {label: "Extracted S11", data: S11dB_fromExtractM}];
 		linearChart1.update(data, true);
-		data = [{label: "HFSS S21", data: S21dB_fromSFile}, {label: "Extracted S21", data: $scope.S21dB_fromExtractM}];
+		data = [{label: "HFSS S21", data: S21dB_fromSFile}, {label: "Extracted S21", data: S21dB_fromExtractM}];
 		linearChart2.update(data, true);
+		
+		setTimeout(function(){
+			document.querySelector('#deviationTable').click();
+		}, 100);
 	}
+
+	$scope.assignVariables = async function(){
+		var i, j, k, N = topoM.length - 2, indexName = 0, predictNames = [];
+		$scope.data.variableNames = (await preloaded.GetHFSSVariables()).map(function(a, i){return {id: i, name: a}});
+		$scope.data.variableValue = await preloaded.GetHFSSVariableValue($scope.data.variableNames.map(function(a){return a.name}));
+		$scope.data.originVarNames = [];
+		for (i = 0; i < N + 2; i++) {
+			for (j = 0; j < N + 2 - i; j++) {
+				if ((topoM[j][j + i] === 1) && (!($scope.data.isSymmetric && (j + j + i) > (N + 1)))) {
+					var row = (j < 10) ? j.toString() : String.fromCharCode(65 + j - 10),
+						col = ((j + i) < 10) ? (j + i).toString() : String.fromCharCode(65 + j + i - 10),
+						temp1 = "M" + row.toString() + col.toString();
+					$scope.data.originVarNames.push({id: indexName, name: temp1});
+					predictNames.push(0);
+					for (k = 0; k < $scope.data.variableNames.length; k++) {
+						if ($scope.data.variableNames[k].name.toUpperCase().indexOf(temp1) !== -1){
+							predictNames[indexName] = k;
+							break;
+						}
+					}
+					indexName += 1;
+				}
+			}
+		}
+		$scope.data.dimensionNames = $scope.data.originVarNames.map(function(a, i){return $scope.data.variableNames[predictNames[i]]});
+		$scope.data.lowerLimit = $scope.data.originVarNames.map(function(a, i){return 0.5 * $scope.data.variableValue[predictNames[i]]});
+		$scope.data.upperLimit = $scope.data.originVarNames.map(function(a, i){return 2.0 * $scope.data.variableValue[predictNames[i]]});
+		/* console.log("$scope.data.dimensionNames\n", $scope.data.dimensionNames); */
+		$scope.$digest();
+	}
+	
+	$scope.changeVariableAssign = function(itemId){
+		var temp1 = $scope.data.variableNames.filter(function(a){return a.name === $scope.data.dimensionNames[itemId].name});
+		$scope.data.lowerLimit[itemId] = 0.5 * $scope.data.variableValue[temp1[0].id];
+		$scope.data.upperLimit[itemId] = 2.0 * $scope.data.variableValue[temp1[0].id];
+	}
+	
 	$scope.spacemapping = async function(){
 		var tranZeros = synStoreState.tranZeros
 			.map(function(d){return [Number(d[0]), Number(d[1])]})
@@ -619,81 +677,77 @@ function handleChangeM(){
 			numberOfPoints = (synStoreState.numberOfPoints < 5000)? synStoreState.numberOfPoints : 5000,
 			stopFreq = (synStoreState.startFreq < synStoreState.stopFreq)? synStoreState.stopFreq : synStoreState.startFreq + synStoreState.bandwidth * 8,
 			freqGHz = numeric.linspace(synStoreState.startFreq, stopFreq, numberOfPoints);
+		
+		var response, sFile, i, j, N = topoM.length - 2, indexIter = 0, tempIter = {}, coarseModel = new CoarseModelLinear(), resultDim2M, numPerturb = 5,
+			initDimension = await preloaded.GetHFSSVariableValue($scope.data.dimensionNames.map(function(a){return a.name}));
+		$scope.data.iterList = [];
 
 		AddTimeLog("Space mapping started.");
 		if (!window.hasOwnProperty("preloaded")) {
 			AddTimeLog("Space mapping cannot be run in browser.");
 			return 0;
 		}
-		
-		var response, sFile, i, j, N = topoM.length - 2, variableNames, dimensionNames = [], indexIter = 0, tempIter = {}, coarseModel = new CoarseModelLinear();
-
-		variableNames = await preloaded.GetHFSSVariables();
-		for (i = 0; i < N + 2; i++) {
-			for (j = 0; j < N + 2 - i; j++) {
-				if (topoM[j][j + i] === 1) {
-					var temp1 = variableNames.filter(function (a) {
-							var row = (j < 10) ? j.toString() : String.fromCharCode(65 + j - 10),
-							col = ((j + i) < 10) ? (j + i).toString() : String.fromCharCode(65 + j + i - 10);
-							return (a.length > 2) && (a.slice(-3) === ("M" + row + col));
-						});
-					if (temp1.length > 0) {
-						dimensionNames.push(temp1[0]);
-					} else {
-						return 0;
-					}
-				}
-			}
-		}
 
 		async function Dim2M(){
 			try {
-				AddTimeLog("\n\nIteration " + indexIter.toString() + "starts.");
-				AddTimeLog("\nSimulate S parameter with the following dimension.\n\t" + JSON.stringify(dimensionNames) + "\n\t" + JSON.stringify(tempIter.dimension));
-				tempIter.s2p = "s" + indexIter + ".s2p";
-				sFile = await preloaded.EvaluateDimension(dimensionNames, tempIter.dimension, tempIter.s2p);
+				var tempDimNames = $scope.data.dimensionNames.map(function(a){return a.name});
+				AddTimeLog("----------------------------------------------------------------------------------------", false);
+				AddTimeLog("Iteration " + (indexIter + 1).toString() + " starts.");
+				AddTimeLog("Simulation in process with the following dimension.\n\t" + JSON.stringify(tempDimNames).replace(/,/g, ", ") + "\n\t" + JSON.stringify(tempIter.dimension).replace(/,/g, ", "));
+				tempIter.s2p = "s" + indexIter.toString() + ".s2p";
+				sFile = await preloaded.EvaluateDimension(tempDimNames, tempIter.dimension, tempIter.s2p);
+				AddTimeLog("Simulation completed. Extracting coupling matrix.");
 				response = await common.xhr2('ExtractMatrix', {...sFile, ...synStoreState, tranZeros: tranZeros, topology: topoM, captureStartFreqGHz: captureStartFreqGHz, captureStopFreqGHz: captureStopFreqGHz});
+				AddTimeLog("Coupling matrix extracted.");
 				tempIter.sFile = sFile;
 				tempIter.extractedMatrix = response.extractedMatrix;
 				tempIter.deviateMatrix = response.deviateMatrix;
 				tempIter.q = response.q;
-				document.querySelector('#iteration' + tempIter.id).click();
+				$scope.data.iterList.push(angular.copy(tempIter));
+				$scope.$digest();
+				document.querySelector('#iteration' + tempIter.id.toString()).click();
+/* 				setTimeout(function(){
+					console.log(document.querySelector('#iteration' + tempIter.id.toString()))
+					document.querySelector('#iteration' + tempIter.id.toString()).click();
+				}, 3000); */
+				return 0;
 			} catch(e) {
 				AddTimeLog(e.message);
 				return undefined;
 			}
 		}
-		
-		tempIter.id = indexIter;
-		tempIter.dimension = await preloaded.GetHFSSVariableValue(dimensionNames);
-		var lowerLimit = tempIter.dimension.map(function (a) {return a * 0.5}),
-			upperLimit = tempIter.dimension.map(function (a) {return a * 2.0});
-		if (typeof Dim2M() === "undefined"){return 0;}
-		$scope.data.iterList.push(angular.copy(tempIter));
 
-		indexIter = indexIter + 1;
-		tempIter.id = indexIter;
-		tempIter.dimension = tempIter.dimension.map(function (a) {
-			return a + 0.01
-		});
-		if (typeof Dim2M() === "undefined"){return 0;}
-		$scope.data.iterList.push(angular.copy(tempIter));
-
-		coarseModel.update(iterList.map(function (a) {return a.dimension}), iterList.map(function (a) {a.extractedMatrix}));
-
-		xc_star = coarseModel.defunc(SerializeM(topoM, synStoreState.targetMatrix));
-		xf = xc_star;
-		var B = numeric.identity(xf.length), h = numeric.rep([xf.length], 1e9);
-		for (i = 0; i < 10; i++) {
-			indexIter = indexIter + 1;
+		for (i = 0; i < numPerturb; i++) {		
 			tempIter.id = indexIter;
-			tempIter.dimension = xf;
-			if (typeof Dim2M() === "undefined"){return 0;}
-			$scope.data.iterList.push(angular.copy(tempIter));
-			coarseModel.update(iterList.map(function (a) {return a.dimension}), iterList.map(function (a) {a.extractedMatrix}));
-			xc = coarseModel.defunc(tempIter.extractedMatrix);
+			if (i === 0){
+				tempIter.dimension = initDimension;
+			} else {
+				tempIter.dimension = initDimension.map(function (a, i) {
+					var N = topoM.length - 2, dev = (Math.random() * 2 - 1) * 0.005 * 30.0 / synStoreState.centerFreq, L = $scope.data.isSymmetric? Math.floor((N + 1) / 2) : N, temp1 = (i < L)? a + dev / 4 : a + dev;
+					return Math.round(temp1 * 10000) / 10000;
+				});
+			}
+			resultDim2M = await Dim2M();
+			if (typeof resultDim2M === "undefined"){return 0;}
+			indexIter = indexIter + 1;
+		}
+
+		await coarseModel.update($scope.data.iterList.map(function (a) {return a.dimension}), $scope.data.iterList.map(function (a) {return SerializeM(topoM, a.extractedMatrix, $scope.data.isSymmetric)}), topoM, $scope.data.isSymmetric);
+
+		var xc_star, xf, xc, B, h;
+		xc_star = coarseModel.defunc(SerializeM(topoM, synStoreState.targetMatrix, $scope.data.isSymmetric));
+		xf = xc_star;
+		B = numeric.identity(xf.length);
+		h = numeric.rep([xf.length], 1e9);
+		for (i = 0; i < 10; i++) {
+			tempIter.id = indexIter;
+			tempIter.dimension = xf.map(function (a){return Math.round(a * 10000) / 10000});
+			resultDim2M = await Dim2M();
+			if (typeof resultDim2M === "undefined"){return 0;}
+			/* coarseModel.update($scope.data.iterList.map(function (a) {return a.dimension}), $scope.data.iterList.map(function (a) {return SerializeM(topoM, a.extractedMatrix, $scope.data.isSymmetric)}), topoM, $scope.data.isSymmetric); */
+			xc = coarseModel.defunc(SerializeM(topoM, tempIter.extractedMatrix, $scope.data.isSymmetric));
 			try {
-				response = await common.xhr2('SpaceMappingCalculate', {B: B, h: h, xc: xc, xc_star: xc_star, xf: xf, lowerLimit: lowerLimit, upperLimit: upperLimit});
+				response = await common.xhr2('SpaceMappingCalculate', {B: B, h: h, xc: xc, xc_star: xc_star, xf: xf, lowerLimit: $scope.data.lowerLimit, upperLimit: $scope.data.upperLimit});
 			} catch(e) {
 				AddTimeLog(e.message);
 				return 0;
@@ -701,20 +755,48 @@ function handleChangeM(){
 			B = response.B;
 			h = response.h;
 			xf = response.xf;
-			if (response.toStop) {
+			console.log(xf, B, h, response.toStop);
+			if (response.toStop === 1) {
 				break;
 			}
+			indexIter = indexIter + 1;
 		}
+		AddTimeLog("----------------------------------------------------------------------------------------", false);
+		AddTimeLog("Space mapping finished.");
 	} // end of $scope.spacemapping
+
+	var synStoreState, topoM, linearChart1, linearChart2;
+	$timeout(function(){
+		synStoreState = store.getState().savedSynthesisData;
+		topoM = store.getState().topoM;
+		
+		var margin = {
+			top: 40,
+			right: 40,
+			bottom: 50,
+			left: 60
+		};
+		linearChart1 = new simpleD3LinearChart("graph-linear-chart1", margin, [0, 5], [-10, 50]);
+		linearChart2 = new simpleD3LinearChart("graph-linear-chart2", margin, [0, 5], [-10, 50]);
+
+		$scope.data = {logs: "", captureStartFreqGHz: "", captureStopFreqGHz: "", iterList: [], currentIter: {id: 0, q: 1e9}, isSymmetric: synStoreState.isSymmetric || false};
+		
+		if (window.hasOwnProperty("preloaded")) {
+			(async function(){
+				var temp1 = (await preloaded.Try(['H', 'e', 'l', 'l', 'o', '!', ' Please make sure:'])).join("");
+				AddTimeLog(temp1, false);
+				AddTimeLog("1. the current design is open", false);
+				AddTimeLog("2. \"Setup1:Sweep1\" is correctly set up", false);
+				AddTimeLog("3. variable value is number instead of expression in HFSS", false);
+				AddTimeLog("", false);
+			})();
+		} else {
+			AddTimeLog("Space mapping cannot be run in browser. Special client software required.", false);
+		}
+
+		$scope.assignVariables();
+	}, 500);
 	
-	if (window.hasOwnProperty("preloaded")) {
-		(async function(){
-			var temp1 = (await preloaded.Try(['H', 'e', 'l', 'l', 'o', '!'])).join("");
-			AddTimeLog(temp1);
-		})();
-	} else {
-		AddTimeLog("Space mapping cannot be run in browser. Special client software required.");
-	}
 }])
 .directive('hideTabs', ['$rootScope', function($rootScope) {
   return {

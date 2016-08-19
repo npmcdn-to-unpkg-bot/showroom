@@ -118,51 +118,73 @@ import matplotlib.pyplot as plt
 
 
 
-reqJson = np.load('tempData.npy')[0]
-freq = np.array(reqJson['freq']) * 1e6
-w1 = (reqJson['centerFreq'] - reqJson['bandwidth'] / 2) * 1e9
-w2 = (reqJson['centerFreq'] + reqJson['bandwidth'] / 2) * 1e9
-normalizedFreq = CP.NormalizeFreq(freq, w1, w2)
-S11_amp = 10 ** (np.array(reqJson['S11_db']) / 20)
-S11 = S11_amp * (np.cos(np.array(reqJson['S11_angRad'])) + 1j * np.sin(np.array(reqJson['S11_angRad'])))
-S21_amp = 10 ** (np.array(reqJson['S21_db']) / 20)
-S21 = S21_amp * (np.cos(np.array(reqJson['S21_angRad'])) + 1j * np.sin(np.array(reqJson['S21_angRad'])))
-N = reqJson['filterOrder']
-numZeros = len(reqJson['tranZeros'])
-filterOrder = np.hstack((np.zeros((N, )), 2 * np.ones((numZeros, ))))
+reqJson = np.load('tempData2.npy')[0]
+#freq = np.array(reqJson['freq']) * 1e6
+#w1 = (reqJson['centerFreq'] - reqJson['bandwidth'] / 2) * 1e9
+#w2 = (reqJson['centerFreq'] + reqJson['bandwidth'] / 2) * 1e9
+#normalizedFreq = CP.NormalizeFreq(freq, w1, w2)
+#S11_amp = 10 ** (np.array(reqJson['S11_db']) / 20)
+#S11 = S11_amp * (np.cos(np.array(reqJson['S11_angRad'])) + 1j * np.sin(np.array(reqJson['S11_angRad'])))
+#S21_amp = 10 ** (np.array(reqJson['S21_db']) / 20)
+#S21 = S21_amp * (np.cos(np.array(reqJson['S21_angRad'])) + 1j * np.sin(np.array(reqJson['S21_angRad'])))
+#N = reqJson['filterOrder']
+#numZeros = len(reqJson['tranZeros'])
+#filterOrder = np.hstack((np.zeros((N, )), 2 * np.ones((numZeros, ))))
+#
+#extractMethod = 6
+#isSymmetric = False
+#epsilon, epsilonE, Qu, coefF, coefP, rootE = CP.S2FP(freq, S21, S11, filterOrder, w1, w2, wga=1.122*0.0254, method=extractMethod, startFreq=0, stopFreq=0, isSymmetric=isSymmetric)
+#
+#matrixMethod = 5
+#transversalMatrix = CP.FPE2M(epsilon, epsilonE, coefF, coefP, rootE, method=matrixMethod)
+#
+#topology = np.array(reqJson['topology'])
+#extractedMatrix, msg1 = CP.FPE2MComprehensive(epsilon, epsilonE, coefF, coefP, rootE, topology, refRootP = reqJson['tranZeros'], method = matrixMethod)
+#print(msg1)
+#targetMatrix = np.array(reqJson['targetMatrix'])
+#temp1 = targetMatrix.copy()
+#temp1[np.abs(targetMatrix) < 1e-4] = 1e9
+#deviateMatrix = (extractedMatrix - targetMatrix) / temp1
+#
+#S11_new, S21_new = CP.FPE2S(epsilon, epsilonE, coefF, coefP, rootE, normalizedFreq - 1j * reqJson['centerFreq'] / (reqJson['bandwidth'] * Qu))
+#S21_new, S11_new = CP.CM2S(transversalMatrix, normalizedFreq - 1j * reqJson['centerFreq'] / (reqJson['bandwidth'] * Qu))
+#
+#plt.clf()
+#plt.subplot(2, 2, 1)
+#plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), 20*np.log10(np.abs(S11)), 'o');
+#plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), 20*np.log10(np.abs(S11_new)), '*');
+#plt.title('S11(dB)')
+#plt.subplot(2, 2, 3)
+#plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), np.angle(S11, deg=True), 'o');
+#plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), np.angle(S11_new, deg=True), '*');
+#plt.title('S11(degree)')
+#plt.subplot(2, 2, 2)
+#plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), 20*np.log10(np.abs(S21)), 'o');
+#plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), 20*np.log10(np.abs(S21_new)), '*');
+#plt.title('S21(dB)')
+#plt.subplot(2, 2, 4)
+#plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), np.angle(S21, deg=True), 'o');
+#plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), np.angle(S21_new, deg=True), '*');
+#plt.title('S21(degree)')
 
-extractMethod = 6
-isSymmetric = False
-epsilon, epsilonE, Qu, coefF, coefP, rootE = CP.S2FP(freq, S21, S11, filterOrder, w1, w2, wga=1.122*0.0254, method=extractMethod, startFreq=0, stopFreq=0, isSymmetric=isSymmetric)
-
-matrixMethod = 5
-transversalMatrix = CP.FPE2M(epsilon, epsilonE, coefF, coefP, rootE, method=matrixMethod)
-
-topology = np.array(reqJson['topology'])
-extractedMatrix, msg1 = CP.FPE2MComprehensive(epsilon, epsilonE, coefF, coefP, rootE, topology, refRootP = reqJson['tranZeros'], method = matrixMethod)
-print(msg1)
-targetMatrix = np.array(reqJson['targetMatrix'])
-temp1 = targetMatrix.copy()
-temp1[np.abs(targetMatrix) < 1e-4] = 1e9
-deviateMatrix = (extractedMatrix - targetMatrix) / temp1
-
-S11_new, S21_new = CP.FPE2S(epsilon, epsilonE, coefF, coefP, rootE, normalizedFreq - 1j * reqJson['centerFreq'] / (reqJson['bandwidth'] * Qu))
-S21_new, S11_new = CP.CM2S(transversalMatrix, normalizedFreq - 1j * reqJson['centerFreq'] / (reqJson['bandwidth'] * Qu))
-
-plt.clf()
-plt.subplot(2, 2, 1)
-plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), 20*np.log10(np.abs(S11)), 'o');
-plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), 20*np.log10(np.abs(S11_new)), '*');
-plt.title('S11(dB)')
-plt.subplot(2, 2, 3)
-plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), np.angle(S11, deg=True), 'o');
-plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), np.angle(S11_new, deg=True), '*');
-plt.title('S11(degree)')
-plt.subplot(2, 2, 2)
-plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), 20*np.log10(np.abs(S21)), 'o');
-plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), 20*np.log10(np.abs(S21_new)), '*');
-plt.title('S21(dB)')
-plt.subplot(2, 2, 4)
-plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), np.angle(S21, deg=True), 'o');
-plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), np.angle(S21_new, deg=True), '*');
-plt.title('S21(degree)')
+B = np.array(reqJson['B'], dtype = float)
+h = np.array(reqJson['h'], dtype = float)
+xc = np.array(reqJson['xc'], dtype = float)
+xc_star = np.array(reqJson['xc_star'], dtype = float)
+xf = np.array(reqJson['xf'], dtype = float)
+lowerLimit = np.array(reqJson['lowerLimit'], dtype = float)
+upperLimit = np.array(reqJson['upperLimit'], dtype = float)
+f = xc - xc_star
+B += np.array(np.mat(f).T * np.mat(h)) / h.dot(h)
+h = np.linalg.solve(B, -f)
+xf_old = xf.copy()
+xf += h
+xf = np.where(xf > lowerLimit, xf, lowerLimit)
+xf = np.where(xf < upperLimit, xf, upperLimit)
+h = xf - xf_old
+if np.abs(f.dot(f)) < 0.001:
+    toStop = 1
+else:
+    toStop = 0
+resJson = {'B': B.tolist(), 'h': h.tolist(), 'xf': xf.tolist(), 'toStop': toStop}
+print(json.dumps(resJson, separators = (',', ':')))

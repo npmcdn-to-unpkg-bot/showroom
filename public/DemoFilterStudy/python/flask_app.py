@@ -68,7 +68,7 @@ def get_task(method):
         return json.dumps(resJson, separators = (',', ':'))
     elif method == "ExtractMatrix":
         reqJson = flask.request.get_json()
-#        np.save("tempData", np.array([reqJson]))
+        np.save("tempData3", np.array([reqJson]))
         #print(json.dumps(reqJson, separators = (',', ':')))
         freq = np.array(reqJson['freq']) * 1e6
         S21_amp = 10 ** (np.array(reqJson['S21_db']) / 20)
@@ -99,23 +99,38 @@ def get_task(method):
         return json.dumps(resJson, separators = (',', ':'))
     elif method == "SpaceMappingCalculate":
         reqJson = flask.request.get_json()
-        B = np.array(reqJson['B'])
-        h = np.array(reqJson['h'])
-        xc = np.array(reqJson['xc'])
-        xc_star = np.array(reqJson['xc_star'])
-        xf = np.array(reqJson['xf'])
-        lowerLimit = np.array(reqJson['lowerLimit'])
-        upperLimit = np.array(reqJson['upperLimit'])
+        np.save("tempData2", np.array([reqJson]))
+        B = np.array(reqJson['B'], dtype = float)
+        h = np.array(reqJson['h'], dtype = float)
+        xc = np.array(reqJson['xc'], dtype = float)
+        xc_star = np.array(reqJson['xc_star'], dtype = float)
+        xf = np.array(reqJson['xf'], dtype = float)
+        lowerLimit = np.array(reqJson['lowerLimit'], dtype = float)
+        upperLimit = np.array(reqJson['upperLimit'], dtype = float)
         f = xc - xc_star
         B += np.array(np.mat(f).T * np.mat(h)) / h.dot(h)
         h = np.linalg.solve(B, -f)
-        xf_old = xf
+        xf_old = xf.copy()
         xf += h
         xf = np.where(xf > lowerLimit, xf, lowerLimit)
         xf = np.where(xf < upperLimit, xf, upperLimit)
         h = xf - xf_old
-        toStop = np.abs(f) < 0.001
+        if np.abs(np.sqrt(f.dot(f))) < 1e-4:
+            toStop = 1
+        else:
+            toStop = 0
         resJson = {'B': B.tolist(), 'h': h.tolist(), 'xf': xf.tolist(), 'toStop': toStop}
+        return json.dumps(resJson, separators = (',', ':'))
+    elif method == "CoarseModelUpdate":
+        reqJson = flask.request.get_json()
+        np.save("tempData", np.array([reqJson]))
+#        reqJson = np.load('tempData.npy')[0]
+        dimension = np.array(reqJson['dimension'])
+        extractedMatrix = np.array(reqJson['extractedMatrix'])
+        topology = np.array(reqJson['topology'])
+        isSymmetric = np.array(reqJson['isSymmetric'])
+        slopeM, invSlopeM, intepM = CP.CoarseModelUpdate(dimension, extractedMatrix, topology, isSymmetric)
+        resJson = {'slopeM': slopeM.tolist(), 'invSlopeM': invSlopeM.tolist(), 'intepM': intepM.tolist()}
         return json.dumps(resJson, separators = (',', ':'))
     else:
         flask.abort(404)

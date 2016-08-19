@@ -13,8 +13,19 @@
 			</form>
 		</div>
 		<div class="col-sm-2">
+			<!-- Button trigger modal -->
+			<button type="button" class="btn btn-default" data-toggle="modal" data-target="#assign-variable-modal" ng-click="assignVariables()">
+				Assign variables
+			</button>
+		</div>
+		<div class="col-sm-2">
 			<button type="button" class="btn btn-primary" ng-click="spacemapping()">
 				Start space mapping
+			</button>
+		</div>
+		<div class="col-sm-2">
+			<button type="button" class="btn btn-default" ng-click="reset()">
+				Reset
 			</button>
 		</div>
 	</div>
@@ -39,12 +50,12 @@
 							<h5></h5>
 						</li>
 						<li role="presentation" class="dropdown">
-							<button id="dLabel" type="button" class="btn btn-default" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+							<button id="iteration-list" type="button" class="btn btn-default" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 								Iteration&nbsp;{{(100 + data.currentIter.id + 1).toString().slice(-2)}}, Q = {{(data.currentIter.q > 1e8)? "infinite" : data.currentIter.q.toFixed(1)}}&nbsp;<span class="caret"></span>
 							</button>
 
 							<div class="dropdown-menu list-group">
-								<button type="button" class="list-group-item" id="iteration{{iteration.id}}" ng-repeat="iteration in data.iterList track by $index" ng-click="changeCurrentIteration(iteration)">
+								<button type="button" class="list-group-item" ng-attr-id="iteration{{iteration.id}}" ng-repeat="iteration in data.iterList track by $index" ng-click="changeCurrentIteration(iteration)">
 										<div>
 											Iteration&nbsp;{{(100 + iteration.id + 1).toString().slice(-2)}}, Q = {{(iteration.q > 1e8)? "infinite" : iteration.q.toFixed(1)}}
 										</div>
@@ -54,19 +65,79 @@
 						<li role="presentation" class="dropdown">
 						</li>
 					</ul>
-					
-					<div id="graph-linear-chart1" style="display: inline-block; width: 100%; height: 300px">
-					<div id="graph-linear-chart2" style="display: inline-block; width: 100%; height: 300px">
 
+					<ul class="nav nav-tabs" role="tablist">
+						<li role="presentation"><a href="" ng-click="showTable('TargetMatrix', 0)" aria-controls="home" role="tab" data-toggle="tab">TargetMatrix</a></li>
+						<li role="presentation"><a href="" ng-click="showTable('ExtractedMatrix', 0)" aria-controls="profile" role="tab" data-toggle="tab">ExtractedMatrix</a></li>
+						<li role="presentation" class="active"><a id="deviationTable" href="" ng-click="showTable('Deviation', 0)" aria-controls="profile" role="tab" data-toggle="tab">Deviation</a></li>
+					</ul>
+					<br>
+					<table class="table table-bordered" style="text-align: center; width: 100%;">
+						<thead>
+							<tr>
+								<th class="label-sm" style="text-align: center;"></th>
+								<th class="label-sm" style="text-align: center;" ng-repeat="r in data.matrixToShow track by $index">{{($first || $last)? (($first)? 'S' : 'L') : $index}}</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr ng-repeat="r in data.matrixToShow track by $index">
+								<td>{{($first || $last)? (($first)? 'S' : 'L') : $index}}</td>
+								<td ng-repeat="d in r track by $index">{{(data.tableDataFormat === 0)? ((d < 1e-4 && d > -1e-4)? '0' : d.toFixed(5)) : ((d < 1e-2 && d > -1e-2)? '0' : d.toFixed(1) + '%')}}</td>
+							</tr>
+						</tbody>
+					</table>
+					
 					<div>
 						{{(data.isSymmetric)? "Note: symmetric structure selected." : ""}}
 					</div>
 
+					<div id="graph-linear-chart1" style="display: inline-block; width: 100%; height: 300px"></div>
+					<div id="graph-linear-chart2" style="display: inline-block; width: 100%; height: 300px"></div>
+					
 				</div>
 			</div>
 		</div>
 
 	</div>
 
+	<!-- Modal -->
+	<div class="modal fade" id="assign-variable-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+		<div class="modal-dialog  modal-lg" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+					<h4 class="modal-title" id="myModalLabel">Assign variables and limits:</h4>
+				</div>
+				<div class="modal-body">
+					<div class="row" ng-repeat="item in data.originVarNames track by $index">
+						<div class="col-sm-1">
+							{{item.name}}
+						</div>
+						<div class="col-sm-2">
+							<select ng-options="option.name for option in data.variableNames" ng-model="data.dimensionNames[item.id]" ng-change="changeVariableAssign(item.id)">
+							</select>
+						</div>
+						<div class="col-sm-8">
+							<form class="form-inline">
+								<div class="form-group">
+									<input id="lower-limit-{{$index}}" type="number" class="form-control" ng-model="data.lowerLimit[item.id]" placeholder="lower limit">
+									<label for="lower-limit-{{$index}}">inch&nbsp&nbsp&nbsp&nbsp</label>
+								</div>
+								<div class="form-group">
+									<input id="upper-limit-{{$index}}" type="number" class="form-control" ng-model="data.upperLimit[item.id]" placeholder="upper limit">
+									<label for="upper-limit-{{$index}}">inch&nbsp&nbsp&nbsp&nbsp</label>
+								</div>
+							</form>
+						</div>
+					</div>
+					<hr>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	
 </div>
 <!-- /#page-wrapper -->

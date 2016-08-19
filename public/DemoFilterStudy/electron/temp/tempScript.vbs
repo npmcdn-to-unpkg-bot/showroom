@@ -5,7 +5,7 @@ Dim oDesign
 
 Set oAnsoftApp = CreateObject("AnsoftHfss.HfssScriptInterface")
 Set oDesktop = oAnsoftApp.GetAppDesktop()
-oDesktop.RestoreWindow
+'oDesktop.RestoreWindow
 Set oProject = oDesktop.GetActiveProject()
 Set oDesign = oProject.GetActiveDesign()
 
@@ -20,8 +20,8 @@ props = oDesign.GetVariables()
 ' f.Write("[")
 WScript.StdOut.Write "["
 For indexP = LBound(props) to UBound(props)
-	' f.Write("""" & props(indexA) & """")
-	WScript.StdOut.Write """" & props(indexA) & """"
+	' f.Write("""" & props(indexP) & """")
+	WScript.StdOut.Write """" & props(indexP) & """"
 	If indexP < UBound(props) Then
 		' f.Write(", ")
 		WScript.StdOut.Write ", "

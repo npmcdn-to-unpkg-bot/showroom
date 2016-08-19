@@ -56,7 +56,7 @@
 														
 														<div class="form-group">
 															<label class="label-sm" for="bandwidth">Band Width(GHz)</label>
-															<input type="number" class="form-control input-sm" id="bandwidth" placeholder="" ng-model="data.bandwidth">
+															<input type="number" class="form-control input-sm" id="bandwidth" placeholder="" ng-model="data.bandwidth" ng-change="data.startFreq=data.centerFreq-2*data.bandwidth; data.stopFreq=data.centerFreq+2*data.bandwidth">
 														</div>
 														
 														<div class="form-group">
@@ -187,6 +187,7 @@
 															</div>
 														</div>
 													</div>
+													
 												</div>
 											</div>
 										</div>

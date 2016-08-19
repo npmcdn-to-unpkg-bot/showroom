@@ -1816,3 +1816,56 @@ def FPE2MComprehensive(epsilon, epsilonE, coefF, coefP, rootE, topology, refRoot
             message = "Optimized."
     MRotated[np.abs(MRotated) < 1e-5] = 0.0
     return MRotated, message
+
+def CoarseModelUpdate(dimension, extractedMatrix, topology, isSymmetric):
+    N = topology.shape[0] - 2
+    seqM = np.zeros((N + 2, N + 2), dtype = int) - 1
+    index = 0
+    for i in np.arange(N + 2):
+        for j in np.arange(N + 2 - i):
+            if (topology[j, j + i] == 1) and not (isSymmetric and (j + j + i) > (N + 1)):
+                seqM[j, j + i] = index
+                index += 1
+                
+    numDim = dimension.shape[1]
+    impactM = np.zeros((numDim, numDim), dtype = int)
+    for i in np.arange(N + 2):
+        if seqM[i, i] != -1:
+            for j in np.arange(N + 2):
+                if seqM[i, j] != -1:
+                    impactM[seqM[i, j], seqM[i, i]] = 1
+                if seqM[j, i] != -1:
+                    impactM[seqM[j, i], seqM[i, i]] = 1
+                    
+    for i in np.arange(1, N + 2):
+        for j in np.arange(N + 2 - i):
+            if seqM[j, j + i] != -1:
+                if seqM[j, j] != -1:
+                    impactM[seqM[j, j], seqM[j, j + i]] = 1
+                if seqM[j + i, j + i] != -1:
+                    impactM[seqM[j + i, j + i], seqM[j, j + i]] = 1
+                elif seqM[N + 1 - j - i, N + 1 - j - i] != -1:
+                    impactM[seqM[N + 1 - j - i, N + 1 - j - i], seqM[j, j + i]] = 1
+    
+    A = np.zeros((numDim * dimension.shape[0], np.sum(impactM) + numDim))
+    B = extractedMatrix.reshape(numDim * dimension.shape[0])
+    for i in np.arange(dimension.shape[0]):
+        index = 0
+        for j in np.arange(numDim):
+            tempL = np.sum(impactM[j])
+            A[i * numDim + j, index : index + tempL] = dimension[i, impactM[j] == 1]
+            index += tempL
+            A[i * numDim + j, j - numDim] = 1.0
+    
+    x, residuals = np.linalg.lstsq(A, B)[0 : 2]
+    slopeM = np.zeros((numDim, numDim))
+    index = 0
+    for i in np.arange(numDim):
+        for j in np.arange(numDim):
+            if impactM[i, j] == 1:
+                slopeM[i, j] = x[index]
+                index += 1
+    intepM = x[index:]
+    invSlopeM = np.linalg.inv(slopeM)
+    
+    return slopeM, invSlopeM, intepM

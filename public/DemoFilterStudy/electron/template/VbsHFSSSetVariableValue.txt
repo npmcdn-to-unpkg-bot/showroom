@@ -1,0 +1,7 @@
+Dim variableNames
+Dim variableValue
+variableNames = Array(%s)
+variableValue = Array(%s)
+For indexP = LBound(variableNames) to UBound(variableNames)
+	oDesign.SetVariableValue variableNames(indexP), CStr(variableValue(indexP)) & "in"
+Next

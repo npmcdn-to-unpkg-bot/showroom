@@ -5,6 +5,6 @@ Dim oDesign
 
 Set oAnsoftApp = CreateObject("AnsoftHfss.HfssScriptInterface")
 Set oDesktop = oAnsoftApp.GetAppDesktop()
-oDesktop.RestoreWindow
+'oDesktop.RestoreWindow
 Set oProject = oDesktop.GetActiveProject()
 Set oDesign = oProject.GetActiveDesign()

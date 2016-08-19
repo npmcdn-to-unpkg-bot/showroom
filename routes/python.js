@@ -16,16 +16,16 @@ co(function *(){
 		var tryResponse = yield fetch(pythonServer, {method: 'get'})
 				.then(function(res) {
 					if (!res.ok) {
-						pythonServer = "https://gongfan99.pythonanywhere.com/";
-						console.log("python.js: Local python server not available. Use remote server instead.");
+						pythonServer = "https://synmatrix.pythonanywhere.com/";
+						console.log("python.js: Local python server not available. Use " + pythonServer + " instead.");
 					} else {
-						console.log("python.js: Connected to local python server.");
+						console.log("python.js: Connected to local python server" + pythonServer);
 					}
 					return res.ok;
 				});
 	} catch(e) {
-		pythonServer = "https://gongfan99.pythonanywhere.com/";
-		console.log("python.js: Local python server not available. Use remote server instead.");
+		pythonServer = "https://synmatrix.pythonanywhere.com/";
+		console.log("python.js: Local python server not available. Use " + pythonServer + " instead.");
 	}
 })
 .catch(function(err){
@@ -44,7 +44,7 @@ exports = module.exports = function (eventEmitter, io) {
 		co(function *(){
 			res.set('Content-Type', 'application/json');
 			try {
-				/* var pythonServer = "https://gongfan99.pythonanywhere.com/"; */
+				/* var pythonServer = "https://synmatrix.pythonanywhere.com/"; */
 				/* var pythonServer = "http://localhost:4000/"; */
 				var pythonResponse = yield fetch(pythonServer + req.params.method, {  
 					method: 'post',  

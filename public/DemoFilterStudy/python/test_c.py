@@ -63,6 +63,13 @@ with backend_pdf.PdfPages("%s\\\\%s" % (sparaFolder, "summary.pdf")) as pdf:
         isSymmetric = False
         epsilon, epsilonE, Qu, coefF, coefP, rootE = CP.S2FP(freq, S21, S11, filterOrder, w1, w2, wga=1.122*0.0254, method=extractMethod, startFreq=0, stopFreq=0, isSymmetric=isSymmetric)
         
+        polyF = Polynomial(coefF)
+        polyP = Polynomial(coefP)
+        polyE = Polynomial.fromroots(rootE)
+        
+        rootF = polyF.roots()
+        rootP = polyP.roots()
+        
         matrixMethod = 5
         transversalMatrix = CP.FPE2M(epsilon, epsilonE, coefF, coefP, rootE, method=matrixMethod)
 

@@ -134,10 +134,10 @@ preloaded.Try = function (names) {
 			return a;
 		})
 	})
-	.then(JSON.parse)
-	.catch (function (e) {
+	.then(JSON.parse);
+/* 	.catch (function (e) {
 		return e;
-	});
+	}); */
 }
 
 preloaded.GetHFSSVariables = function () {
@@ -151,10 +151,10 @@ preloaded.GetHFSSVariables = function () {
 			return a; //ReadFileAsync("./temp/tempGetVariables.txt");
 		})
 	})
-	.then(JSON.parse)
-	.catch (function (e) {
+	.then(JSON.parse);
+/* 	.catch (function (e) {
 		return undefined;
-	});
+	}); */
 }
 
 preloaded.GetHFSSVariableValue = function (names) { // names is string array
@@ -174,10 +174,10 @@ preloaded.GetHFSSVariableValue = function (names) { // names is string array
 		return a.map(function (x) {
 			return Number(x.slice(0, -2));
 		});
-	})
-	.catch (function (e) {
-		return undefined;
 	});
+/* 	.catch (function (e) {
+		return undefined;
+	}); */
 }
 
 preloaded.EvaluateDimension = function (names, dimension, s2p) {
@@ -194,10 +194,10 @@ preloaded.EvaluateDimension = function (names, dimension, s2p) {
 			return ReadFileAsync(util.format("./temp/%s", s2p));
 		})
 	})
-	.then(ParseS2P)
-	.catch (function (e) {
+	.then(ParseS2P);
+/* 	.catch (function (e) {
 		return undefined
-	});
+	}); */
 }
 
 process.once('loaded', () => {
