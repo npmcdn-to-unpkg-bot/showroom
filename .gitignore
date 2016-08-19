@@ -38,3 +38,4 @@ python/__pycache__
 *.pyc
 *.npy
 CP.cpython-35.pyc
+*.s2p
