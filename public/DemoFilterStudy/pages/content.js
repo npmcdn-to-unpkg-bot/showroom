@@ -578,7 +578,7 @@ function handleChangeM(){
 	}
 
 	$scope.reset = function(){
-		$scope.data = {logs: "", captureStartFreqGHz: "", captureStopFreqGHz: "", iterList: [], currentIter: {id: 0, q: 1e9}, isSymmetric: synStoreState.isSymmetric || false};
+		$scope.data = {logs: "", captureStartFreqGHz: "", captureStopFreqGHz: "", iterList: [], currentIter: {id: 0, q: 1e9}, isSymmetric: synStoreState.isSymmetric || false, spacemapButtonDisable: false};
 	}
 		
 	$scope.showTable = function(select, tableDataFormat){
@@ -633,36 +633,39 @@ function handleChangeM(){
 	}
 
 	$scope.assignVariables = async function(){
-		var i, j, k, N = topoM.length - 2, indexName = 0, predictNames = [];
-		$scope.data.variableNames = (await preloaded.GetHFSSVariables()).map(function(a, i){return {id: i, name: a}});
-		$scope.data.variableValue = await preloaded.GetHFSSVariableValue($scope.data.variableNames.map(function(a){return a.name}));
-		$scope.data.originVarNames = [];
-		for (i = 0; i < N + 2; i++) {
-			for (j = 0; j < N + 2 - i; j++) {
-				if ((topoM[j][j + i] === 1) && (!($scope.data.isSymmetric && (j + j + i) > (N + 1)))) {
-					var row = (j < 10) ? j.toString() : String.fromCharCode(65 + j - 10),
-						col = ((j + i) < 10) ? (j + i).toString() : String.fromCharCode(65 + j + i - 10),
-						temp1 = "M" + row.toString() + col.toString();
-					$scope.data.originVarNames.push({id: indexName, name: temp1});
-					predictNames.push(0);
-					for (k = 0; k < $scope.data.variableNames.length; k++) {
-						if ($scope.data.variableNames[k].name.toUpperCase().indexOf(temp1) !== -1){
-							predictNames[indexName] = k;
-							break;
+		if (!variableAssigned){
+			var i, j, k, N = topoM.length - 2, indexName = 0, predictNames = [];
+			$scope.data.variableNames = (await preloaded.GetHFSSVariables()).map(function(a, i){return {id: i, name: a}});
+			$scope.data.variableValue = await preloaded.GetHFSSVariableValue($scope.data.variableNames.map(function(a){return a.name}));
+			$scope.data.originVarNames = [];
+			for (i = 0; i < N + 2; i++) {
+				for (j = 0; j < N + 2 - i; j++) {
+					if ((topoM[j][j + i] === 1) && (!($scope.data.isSymmetric && (j + j + i) > (N + 1)))) {
+						var row = (j < 10) ? j.toString() : String.fromCharCode(65 + j - 10),
+							col = ((j + i) < 10) ? (j + i).toString() : String.fromCharCode(65 + j + i - 10),
+							temp1 = "M" + row.toString() + col.toString();
+						$scope.data.originVarNames.push({id: indexName, name: temp1});
+						predictNames.push(0);
+						for (k = 0; k < $scope.data.variableNames.length; k++) {
+							if ($scope.data.variableNames[k].name.toUpperCase().indexOf(temp1) !== -1){
+								predictNames[indexName] = k;
+								break;
+							}
 						}
+						indexName += 1;
 					}
-					indexName += 1;
 				}
 			}
+			$scope.data.dimensionNames = $scope.data.originVarNames.map(function(a, i){return $scope.data.variableNames[predictNames[i]]});
+			$scope.data.lowerLimit = $scope.data.originVarNames.map(function(a, i){return 0.5 * $scope.data.variableValue[predictNames[i]]});
+			$scope.data.upperLimit = $scope.data.originVarNames.map(function(a, i){return 2.0 * $scope.data.variableValue[predictNames[i]]});
+			/* console.log("$scope.data.dimensionNames\n", $scope.data.dimensionNames); */
+			$scope.$digest();
 		}
-		$scope.data.dimensionNames = $scope.data.originVarNames.map(function(a, i){return $scope.data.variableNames[predictNames[i]]});
-		$scope.data.lowerLimit = $scope.data.originVarNames.map(function(a, i){return 0.5 * $scope.data.variableValue[predictNames[i]]});
-		$scope.data.upperLimit = $scope.data.originVarNames.map(function(a, i){return 2.0 * $scope.data.variableValue[predictNames[i]]});
-		/* console.log("$scope.data.dimensionNames\n", $scope.data.dimensionNames); */
-		$scope.$digest();
 	}
 	
 	$scope.changeVariableAssign = function(itemId){
+		variableAssigned = true;
 		var temp1 = $scope.data.variableNames.filter(function(a){return a.name === $scope.data.dimensionNames[itemId].name});
 		$scope.data.lowerLimit[itemId] = 0.5 * $scope.data.variableValue[temp1[0].id];
 		$scope.data.upperLimit[itemId] = 2.0 * $scope.data.variableValue[temp1[0].id];
@@ -681,6 +684,7 @@ function handleChangeM(){
 		var response, sFile, i, j, N = topoM.length - 2, indexIter = 0, tempIter = {}, coarseModel = new CoarseModelLinear(), resultDim2M, numPerturb = 5,
 			initDimension = await preloaded.GetHFSSVariableValue($scope.data.dimensionNames.map(function(a){return a.name}));
 		$scope.data.iterList = [];
+		$scope.data.spacemapButtonDisable = true;
 
 		AddTimeLog("Space mapping started.");
 		if (!window.hasOwnProperty("preloaded")) {
@@ -765,7 +769,7 @@ function handleChangeM(){
 		AddTimeLog("Space mapping finished.");
 	} // end of $scope.spacemapping
 
-	var synStoreState, topoM, linearChart1, linearChart2;
+	var synStoreState, topoM, variableAssigned, linearChart1, linearChart2;
 	$timeout(function(){
 		synStoreState = store.getState().savedSynthesisData;
 		topoM = store.getState().topoM;
@@ -779,7 +783,7 @@ function handleChangeM(){
 		linearChart1 = new simpleD3LinearChart("graph-linear-chart1", margin, [0, 5], [-10, 50]);
 		linearChart2 = new simpleD3LinearChart("graph-linear-chart2", margin, [0, 5], [-10, 50]);
 
-		$scope.data = {logs: "", captureStartFreqGHz: "", captureStopFreqGHz: "", iterList: [], currentIter: {id: 0, q: 1e9}, isSymmetric: synStoreState.isSymmetric || false};
+		$scope.data = {logs: "", captureStartFreqGHz: "", captureStopFreqGHz: "", iterList: [], currentIter: {id: 0, q: 1e9}, isSymmetric: synStoreState.isSymmetric || false, spacemapButtonDisable: false};
 		
 		if (window.hasOwnProperty("preloaded")) {
 			(async function(){
