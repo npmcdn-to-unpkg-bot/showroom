@@ -3,6 +3,7 @@ const fs = require('fs'),
 path = require('path'),
 util = require('util'),
 exec = require('child_process').exec,
+visa32 = require(path.join(__dirname, 'visa32')),
 isWin = process.platform.indexOf('win') === 0;
 
 function execScript(scriptsArray, options) {
@@ -199,6 +200,10 @@ preloaded.EvaluateDimension = function (names, dimension, s2p) {
 		return undefined
 	}); */
 }
+
+preloaded.Visa32Find = visa32.Visa32Find;
+preloaded.Visa32Query = visa32.Visa32Query;
+preloaded.KeysightPNAReadS = visa32.KeysightPNAReadS;
 
 process.once('loaded', () => {
 	global.preloaded = preloaded;

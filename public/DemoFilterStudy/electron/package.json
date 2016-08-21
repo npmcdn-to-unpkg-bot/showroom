@@ -23,6 +23,10 @@
   },
   "homepage": "https://github.com/electron/electron-quick-start#readme",
   "devDependencies": {
-    "electron-prebuilt": "^1.2.0"
+    "electron-prebuilt": "^1.2.0",
+    "electron-rebuild": "^1.2.0"
+  },
+  "dependencies": {
+    "ffi": "^2.1.0"
   }
 }

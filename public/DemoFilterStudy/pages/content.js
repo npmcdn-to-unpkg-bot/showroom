@@ -18,6 +18,9 @@ angular
 		onExit: function(){ ReactDOM.unmountComponentAtNode(document.getElementById('matrix-topology-table'));}
 	})
 	.state('extractmatrix', {
+		resolve: {
+			resolveObj: function(){return {dataFromUpload: true}}
+		},
 		url: "/extractmatrix",
     views: {
       'mainpage': {
@@ -32,6 +35,18 @@ angular
       'mainpage': {
 				templateUrl: '_optimize.html',
 				controller: '_optimize'
+			}
+    }
+	})
+	.state('tune', {
+		resolve: {
+			resolveObj: function(){return {dataFromUpload: false}}
+		},
+		url: "/tune",
+    views: {
+      'mainpage': {
+				templateUrl: '_extractmatrix.html',
+				controller: '_extractmatrix'
 			}
     }
 	});
@@ -370,8 +385,8 @@ function handleChangeM(){
 		store.dispatch({type: 'savedSynthesisData', data: $scope.data});
 	});
 }])
-.controller("_extractmatrix", ['$scope', '$timeout', 'common', function ($scope, $timeout, common) {
-	var linearChart1;
+.controller("_extractmatrix", ['$scope', '$timeout', 'common', 'resolveObj', function ($scope, $timeout, common, resolveObj) {
+	var linearChart1, linearChart2;
 	$timeout(function(){
 		var margin = {
 			top: 40,
@@ -380,9 +395,10 @@ function handleChangeM(){
 			left: 60
 		};
 		linearChart1 = new simpleD3LinearChart("graph-linear-chart1", margin, [0, 5], [-10, 50]);
+		linearChart2 = new simpleD3LinearChart("graph-linear-chart1", margin, [0, 5], [-10, 50]);
 	}, 80);
 
-	$scope.data = {};
+	$scope.data = {dataFromUpload: resolveObj.dataFromUpload, currentInstr: {id: 0, name: "Select instrument"}};
 	
 	$timeout(function(){
 		var tempStoreState = store.getState();
@@ -426,7 +442,7 @@ function handleChangeM(){
 			$scope.S11ang_fromSFile = sFile.freq.map(function(f, i){return [f / 1000, sFile.S11_angRad[i] * 180 / Math.PI]});
 			$scope.S21ang_fromSFile = sFile.freq.map(function(f, i){return [f / 1000, sFile.S21_angRad[i] * 180 / Math.PI]});
 
-			document.querySelector('#s11dbChart').click();
+			document.querySelector('#magnitudeChart').click();
 			$scope.data.extractedMatrix = response.extractedMatrix;
 			$scope.data.deviateMatrix = response.deviateMatrix;
 			$scope.data.q = response.q;
@@ -440,22 +456,19 @@ function handleChangeM(){
 	}
 
 	$scope.showChart = function(select){
-		var data;
+		var data1, data2;
 		switch (select.toLowerCase()){
-			case "s21ang":
-				data = [{label: "S file", data: $scope.S21ang_fromSFile}, {label: "Extracted", data: $scope.S21ang_fromExtractM}];
+			case "phase":
+				data1 = [{label: "s2p S11", data: $scope.S11ang_fromSFile}, {label: "Extracted S11", data: $scope.S11ang_fromExtractM}];
+				data2 = [{label: "s2p S21", data: $scope.S21ang_fromSFile}, {label: "Extracted S21", data: $scope.S21ang_fromExtractM}];
 				break;
-			case "s11ang":
-				data = [{label: "S file", data: $scope.S11ang_fromSFile}, {label: "Extracted", data: $scope.S11ang_fromExtractM}];
-				break;
-			case "s21db":
-				data = [{label: "S file", data: $scope.S21dB_fromSFile}, {label: "Extracted", data: $scope.S21dB_fromExtractM}];
-				break;
-			case "s11db":
+			case "magnitude":
 			default:
-				data = [{label: "S file", data: $scope.S11dB_fromSFile}, {label: "Extracted", data: $scope.S11dB_fromExtractM}];
+				data1 = [{label: "s2p S11", data: $scope.S11dB_fromSFile}, {label: "Extracted S11", data: $scope.S11dB_fromExtractM}];
+				data2 = [{label: "s2p S21", data: $scope.S21dB_fromSFile}, {label: "Extracted S21", data: $scope.S21dB_fromExtractM}];
 		}
-		linearChart1.update(data, true);
+		linearChart1.update(data1, true);
+		linearChart2.update(data2, true);
 	}
 
 	$scope.showTable = function(select, tableDataFormat){
@@ -490,26 +503,39 @@ function handleChangeM(){
 		}
 	}
 
-	var reader = new FileReader();
-	reader.onload = function(evt){
-		var sFile;
-		try {
-			sFile = common.ParseS2P(evt.target.result);
-			document.getElementById("p1-file").innerHTML = "S parameter file parsed successfully!";			
-			store.dispatch({type: 'saveSFile', data: sFile})
-			extractMatrix(sFile);
-		} catch(e) {
-			document.getElementById("p1-file").innerHTML = e.message;
+	$scope.searchInstrument = async function(){
+		if (window.hasOwnProperty("preloaded")){
+			$scope.data.instrumentList = (await preloaded.Visa32Find()).map(function(a, i){return {id: i, name: a}});
+			$scope.$digest();
 		}
-	};
-	var inputElement = document.getElementById("input-s2p-file");
-	inputElement.addEventListener("change", handleFiles, false);
-	function handleFiles() {
-	 var fileList = this.files; /* now you can work with the file list */
-	 reader.readAsText(fileList[0])
+	}
+	
+	$scope.changeCurrentInstrument = function(instrument){
+		$scope.data.currentInstr = instrument;
+	}
+
+	if ($scope.data.dataFromUpload){
+		var reader = new FileReader();
+		reader.onload = function(evt){
+			var sFile;
+			try {
+				sFile = common.ParseS2P(evt.target.result);
+				document.getElementById("p1-file").innerHTML = "S parameter file parsed successfully!";			
+				store.dispatch({type: 'saveSFile', data: sFile})
+				extractMatrix(sFile);
+			} catch(e) {
+				document.getElementById("p1-file").innerHTML = e.message;
+			}
+		};
+		var inputElement = document.getElementById("input-s2p-file");
+		inputElement.addEventListener("change", handleFiles, false);
+		function handleFiles() {
+		 var fileList = this.files; /* now you can work with the file list */
+		 reader.readAsText(fileList[0])
+		}
 	}
 }])
-.controller("_optimize", ['$scope', '$timeout', 'common', function ($scope, $timeout, common) {
+.controller("_optimize", ['$scope', '$timeout', '$state', 'common', function ($scope, $timeout, $state, common) {
 	function SerializeM(topoM, M, isSymmetric) {
 		var i, j, N = topoM.length - 2, result = [];
 		for (i = 0; i < N + 2; i++) {
@@ -578,7 +604,8 @@ function handleChangeM(){
 	}
 
 	$scope.reset = function(){
-		$scope.data = {logs: "", captureStartFreqGHz: "", captureStopFreqGHz: "", iterList: [], currentIter: {id: 0, q: 1e9}, isSymmetric: synStoreState.isSymmetric || false, spacemapButtonDisable: false};
+		/* $scope.data = {logs: "", captureStartFreqGHz: "", captureStopFreqGHz: "", iterList: [], currentIter: {id: 0, q: 1e9}, isSymmetric: synStoreState.isSymmetric || false, spacemapButtonDisable: false}; */
+		$state.reload();
 	}
 		
 	$scope.showTable = function(select, tableDataFormat){
@@ -633,7 +660,7 @@ function handleChangeM(){
 	}
 
 	$scope.assignVariables = async function(){
-		if (!variableAssigned){
+		if (window.hasOwnProperty("preloaded") && !variableAssigned){
 			var i, j, k, N = topoM.length - 2, indexName = 0, predictNames = [];
 			$scope.data.variableNames = (await preloaded.GetHFSSVariables()).map(function(a, i){return {id: i, name: a}});
 			$scope.data.variableValue = await preloaded.GetHFSSVariableValue($scope.data.variableNames.map(function(a){return a.name}));
