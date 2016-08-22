@@ -66,14 +66,21 @@ function Visa32Query(visaAddress, queryString, replyLength){
 			visa32.viClose(resourceManager.deref());
 			resolve(ref.readCString(responseBuffer, 0));
 		});
-	}
+	});
+}
 
 function KeysightPNAReadS(visaAddress){
 	//Visa32Query(visaAddress, "ABORT;:INITIATE:IMMEDIATE;*OPC?");
-	Visa32Query(visaAddress, "MMEM:STOR:TRAC:FORM:SNP DB");
-	var result = Visa32Query(visaAddress, "CALC:DATA:SNP:PORTs? \"1,2\"", 3 * 1024 * 1024);
-	Visa32Query(visaAddress, "*OPC?");
-	return result;
+	Visa32Query(visaAddress, "MMEM:STOR:TRAC:FORM:SNP DB")
+	.then(function(){
+		Visa32Query(visaAddress, "CALC:DATA:SNP:PORTs? \"1,2\"", 3 * 1024 * 1024)
+		.then(function(result){
+			Visa32Query(visaAddress, "*OPC?")
+			.then(function(){
+				return result;
+			})
+		})
+	});
 }
 
 exports = exports || {};

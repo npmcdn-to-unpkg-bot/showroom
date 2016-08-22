@@ -50,7 +50,7 @@ function simpleD3LinearChart(domElementId, margin, xDomainInit, yDomainInit){
 		.call(yAxis)
 
 	svg.append("clipPath")
-		.attr("id", "clip")
+		.attr("id", domElementId + "-clip")
 		.append("rect")
 		.attr("width", width)
 		.attr("height", height);
@@ -66,7 +66,7 @@ function simpleD3LinearChart(domElementId, margin, xDomainInit, yDomainInit){
 		.attr("height", 0)
 		.attr("x", 0)
 		.attr("y", 0)
-		.attr("class", "zoombox");
+		.attr("class", domElementId + "-zoombox");
 
 	var updateAxisAndRedraw = function(xdomain, ydomain){
 		var t = svg.transition().duration(750);
@@ -88,7 +88,7 @@ function simpleD3LinearChart(domElementId, margin, xDomainInit, yDomainInit){
 
 	drag.on("drag", function() {
 		draggingPos = d3.mouse(this);
-		d3.select(".zoombox").transition().duration(1)
+		d3.select("." + domElementId + "-zoombox")//.transition().duration(1)
 			.attr("x", Math.min(dragStartPos[0], draggingPos[0]))
 			.attr("y", Math.min(dragStartPos[1], draggingPos[1]))
 			.attr("width", Math.abs(dragStartPos[0] - draggingPos[0]))
@@ -104,7 +104,7 @@ function simpleD3LinearChart(domElementId, margin, xDomainInit, yDomainInit){
 			y1 = yScale.invert( Math.max(dragStartPos[1], dragEndPos[1]) );
 			y2 = yScale.invert( Math.min(dragStartPos[1], dragEndPos[1]) );
 			
-			d3.select(".zoombox")
+			d3.select("." + domElementId + "-zoombox")
 				.attr("width", 0)
 				.attr("height", 0)
 				.attr("x", -1)
@@ -145,6 +145,7 @@ function simpleD3LinearChart(domElementId, margin, xDomainInit, yDomainInit){
 	this.line = line;
 	this.drag = drag;
 	this.updateAxisAndRedraw = updateAxisAndRedraw;
+	this.domElementId = domElementId;
 }
 
 simpleD3LinearChart.prototype.update = function(data, autoScale){
@@ -176,7 +177,7 @@ simpleD3LinearChart.prototype.update = function(data, autoScale){
 		.enter()
 		.append("path")
 		.attr("class", function(d, i){return "line line" + i})
-		.attr("clip-path", "url(#clip)")
+		.attr("clip-path", "url(#" + _this.domElementId + "-clip)")
 		.style("stroke", function(d, i){return (i < colors.length)? colors[i] : "red"})
 		.attr("d", this.line);
 

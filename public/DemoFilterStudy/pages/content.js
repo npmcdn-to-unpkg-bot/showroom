@@ -152,7 +152,7 @@ angular
 		$scope.data = {
 			filterOrder: 6,
 			returnLoss: 26,
-			centerFreq: 14.5,//14.36,
+			centerFreq: 14.36,//14.36,
 			bandwidth: 0.3,//0.89,
 			unloadedQ: 200000,
 			startFreq: 13.5,//12.8,
@@ -494,25 +494,6 @@ function handleChangeM(){
 			$scope.data.tableDataFormat = tableDataFormat;
 		}
 	}
-	
-	$scope.capture = function(){
-		var tempStoreState = store.getState();
-		if (tempStoreState.hasOwnProperty("sFile")){
-			var sFile = tempStoreState.sFile;
-			extractMatrix(sFile);
-		}
-	}
-
-	$scope.searchInstrument = async function(){
-		if (window.hasOwnProperty("preloaded")){
-			$scope.data.instrumentList = (await preloaded.Visa32Find()).map(function(a, i){return {id: i, name: a}});
-			$scope.$digest();
-		}
-	}
-	
-	$scope.changeCurrentInstrument = function(instrument){
-		$scope.data.currentInstr = instrument;
-	}
 
 	if ($scope.data.dataFromUpload){
 		var reader = new FileReader();
@@ -532,6 +513,40 @@ function handleChangeM(){
 		function handleFiles() {
 		 var fileList = this.files; /* now you can work with the file list */
 		 reader.readAsText(fileList[0])
+		}
+		
+		$scope.capture = function(){
+			var tempStoreState = store.getState();
+			if (tempStoreState.hasOwnProperty("sFile")){
+				var sFile = tempStoreState.sFile;
+				extractMatrix(sFile);
+			}
+		}
+	} else {
+		$scope.capture = async function(){
+			if (window.hasOwnProperty("preloaded")){
+				var sFile, instrData = (await preloaded.KeysightPNAReadS($scope.data.currentInstr.name)).split(",").map(Number)
+					numFreq = instrData.length / 9;
+				sFile = {
+					freq: instrData.slice(0, numFreq),
+					S11_db: instrData.slice(numFreq, 2 * numFreq),
+					S11_angRad: instrData.slice(2* numFreq, 3 * numFreq).map(function(a){return a * Math.PI / 180}),
+					S21_db: instrData.slice(3 * numFreq, 4 * numFreq),
+					S21_angRad: instrData.slice(4* numFreq, 5 * numFreq).map(function(a){return a * Math.PI / 180})
+				},
+				extractMatrix(sFile);
+			}
+		}
+		
+		$scope.searchInstrument = async function(){
+			if (window.hasOwnProperty("preloaded")){
+				$scope.data.instrumentList = (await preloaded.Visa32Find()).map(function(a, i){return {id: i, name: a}});
+				$scope.$digest();
+			}
+		}
+		
+		$scope.changeCurrentInstrument = function(instrument){
+			$scope.data.currentInstr = instrument;
 		}
 	}
 }])
@@ -708,7 +723,7 @@ function handleChangeM(){
 			stopFreq = (synStoreState.startFreq < synStoreState.stopFreq)? synStoreState.stopFreq : synStoreState.startFreq + synStoreState.bandwidth * 8,
 			freqGHz = numeric.linspace(synStoreState.startFreq, stopFreq, numberOfPoints);
 		
-		var response, sFile, i, j, N = topoM.length - 2, indexIter = 0, tempIter = {}, coarseModel = new CoarseModelLinear(), resultDim2M, numPerturb = 5,
+		var response, sFile, i, j, N = topoM.length - 2, indexIter = 0, tempIter = {}, coarseModel = new CoarseModelLinear(), resultDim2M, numPerturb = 5, numIteration = 10,
 			initDimension = await preloaded.GetHFSSVariableValue($scope.data.dimensionNames.map(function(a){return a.name}));
 		$scope.data.iterList = [];
 		$scope.data.spacemapButtonDisable = true;
@@ -722,8 +737,6 @@ function handleChangeM(){
 		async function Dim2M(){
 			try {
 				var tempDimNames = $scope.data.dimensionNames.map(function(a){return a.name});
-				AddTimeLog("----------------------------------------------------------------------------------------", false);
-				AddTimeLog("Iteration " + (indexIter + 1).toString() + " starts.");
 				AddTimeLog("Simulation in process with the following dimension.\n\t" + JSON.stringify(tempDimNames).replace(/,/g, ", ") + "\n\t" + JSON.stringify(tempIter.dimension).replace(/,/g, ", "));
 				tempIter.s2p = "s" + indexIter.toString() + ".s2p";
 				sFile = await preloaded.EvaluateDimension(tempDimNames, tempIter.dimension, tempIter.s2p);
@@ -758,6 +771,8 @@ function handleChangeM(){
 					return Math.round(temp1 * 10000) / 10000;
 				});
 			}
+			AddTimeLog("---------------------------------------------------------------------------------------------------------------", false);
+			AddTimeLog("Iteration " + (indexIter + 1).toString() + " starts. Perturbation " + (i + 1).toString() + " out of " + numPerturb.toString());
 			resultDim2M = await Dim2M();
 			if (typeof resultDim2M === "undefined"){return 0;}
 			indexIter = indexIter + 1;
@@ -770,12 +785,14 @@ function handleChangeM(){
 		xf = xc_star;
 		B = numeric.identity(xf.length);
 		h = numeric.rep([xf.length], 1e9);
-		for (i = 0; i < 10; i++) {
+		for (i = 0; i < numIteration; i++) {
 			tempIter.id = indexIter;
 			tempIter.dimension = xf.map(function (a){return Math.round(a * 10000) / 10000});
+			AddTimeLog("---------------------------------------------------------------------------------------------------------------", false);
+			AddTimeLog("Iteration " + (indexIter + 1).toString() + " starts. Run " + (i + 1).toString() + " out of " + numIteration.toString());
 			resultDim2M = await Dim2M();
 			if (typeof resultDim2M === "undefined"){return 0;}
-			/* coarseModel.update($scope.data.iterList.map(function (a) {return a.dimension}), $scope.data.iterList.map(function (a) {return SerializeM(topoM, a.extractedMatrix, $scope.data.isSymmetric)}), topoM, $scope.data.isSymmetric); */
+			await coarseModel.update($scope.data.iterList.map(function (a) {return a.dimension}).slice(-numPerturb), $scope.data.iterList.map(function (a) {return SerializeM(topoM, a.extractedMatrix, $scope.data.isSymmetric)}).slice(-numPerturb), topoM, $scope.data.isSymmetric);
 			xc = coarseModel.defunc(SerializeM(topoM, tempIter.extractedMatrix, $scope.data.isSymmetric));
 			try {
 				response = await common.xhr2('SpaceMappingCalculate', {B: B, h: h, xc: xc, xc_star: xc_star, xf: xf, lowerLimit: $scope.data.lowerLimit, upperLimit: $scope.data.upperLimit});

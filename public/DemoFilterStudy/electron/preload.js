@@ -7,9 +7,9 @@ visa32 = require(path.join(__dirname, 'visa32')),
 isWin = process.platform.indexOf('win') === 0;
 
 function execScript(scriptsArray, options) {
-	var file = './temp/tempScript.js';
+	var file = path.join(__dirname, './temp/tempScript.js');
 	if (typeof options === 'string' && options === 'vbs'){
-		file = './temp/tempScript.vbs';
+		file = path.join(__dirname, './temp/tempScript.vbs');
 	}
 	if (typeof scriptsArray === 'object'){
 		tempScript = scriptsArray.join("\n\n");
@@ -118,7 +118,8 @@ var preloaded = {};
 
 ReadFileAsync("./template/JsHFSSProvisioning.txt")
 .then(function (a) {
-	return execScript(a)
+	var tempScript = util.format(a, __dirname.replace(/\\/g, "\\\\"))
+	return execScript(tempScript)
 })
 .catch (function (e) {
 	return undefined;
@@ -188,7 +189,7 @@ preloaded.EvaluateDimension = function (names, dimension, s2p) {
 	return Promise.all([p1, p2, p3])
 	.then(function (values) {
 		var temp2 = util.format(values[1], JSON.stringify(names), JSON.stringify(dimension)),
-		temp3 = util.format(values[2], s2p),
+		temp3 = util.format(values[2], __dirname.replace(/\\/g, "\\\\"), s2p),
 		tempScript = [values[0], temp2, temp3].join("\n\n");
 		return execScript(tempScript)
 		.then(function () {

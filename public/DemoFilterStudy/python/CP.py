@@ -1840,6 +1840,7 @@ def CoarseModelUpdate(dimension, extractedMatrix, topology, isSymmetric):
     for i in np.arange(1, N + 2):
         for j in np.arange(N + 2 - i):
             if seqM[j, j + i] != -1:
+                impactM[seqM[j, j + i], seqM[j, j + i]] = 1
                 if seqM[j, j] != -1:
                     impactM[seqM[j, j], seqM[j, j + i]] = 1
                 if seqM[j + i, j + i] != -1:
@@ -1867,5 +1868,6 @@ def CoarseModelUpdate(dimension, extractedMatrix, topology, isSymmetric):
                 index += 1
     intepM = x[index:]
     invSlopeM = np.linalg.inv(slopeM)
+    #intepM + (slopeM.dot(dimension.T)).T - extractedMatrix
     
     return slopeM, invSlopeM, intepM

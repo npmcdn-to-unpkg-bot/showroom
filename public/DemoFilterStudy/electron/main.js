@@ -1,5 +1,6 @@
 const electron = require('electron')
 const path = require('path')
+const http = require('http')
 // Module to control application life.
 const app = electron.app
 // Module to create native browser window.
@@ -7,7 +8,7 @@ const BrowserWindow = electron.BrowserWindow
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
-let mainWindow
+let mainWindow;
 
 function createWindow () {
   // Create the browser window.
@@ -25,9 +26,22 @@ function createWindow () {
 	
   // and load the index.html of the app.
   // mainWindow.loadURL(`file://${__dirname}/index.html`)
-	/* mainWindow.loadURL('https://keydecision.tk') */
-	mainWindow.loadURL('http://localhost:3000')
-
+	/* mainWindow.loadURL('http://localhost:3000') */
+	var urlToLoad = "http://localhost:3000";
+	http.get({
+		hostname: "localhost",
+		port: 3000,
+		path: '/'
+	}, (res) => {
+		console.log("localhost connected");
+		mainWindow.loadURL(urlToLoad);
+	})
+	.on('error', (e) => {
+		urlToLoad = "https://keydecision.tk";
+		mainWindow.loadURL(urlToLoad);
+		console.log("localhost not available. connect to " + urlToLoad);
+	});
+		
   // Open the DevTools.
   // mainWindow.webContents.openDevTools()
 
@@ -58,7 +72,7 @@ app.on('activate', function () {
   // On OS X it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
   if (mainWindow === null) {
-    createWindow()
+		createWindow()
   }
 })
 

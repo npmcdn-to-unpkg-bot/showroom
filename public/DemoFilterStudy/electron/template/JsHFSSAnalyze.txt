@@ -1,4 +1,4 @@
-var WshShell = WScript.CreateObject ("WScript.Shell");
+var dirName = "%s";
 oDesign.Analyze("Setup1 : Sweep1");
 oModule = oDesign.GetModule("Solutions");
-oModule.ExportNetworkData("", ["Setup1:Sweep1"], 3, WshShell.CurrentDirectory + "\\temp\\%s", ["All"], false, 50, "S", -1, 2, 15);
+oModule.ExportNetworkData("", ["Setup1:Sweep1"], 3, dirName + "\\temp\\%s", ["All"], false, 50, "S", -1, 2, 15);
