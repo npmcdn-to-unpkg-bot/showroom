@@ -3,7 +3,7 @@ const fs = require('fs'),
 path = require('path'),
 util = require('util'),
 exec = require('child_process').exec,
-visa32 = require(path.join(__dirname, 'visa32')),
+visa32 = require('./visa32'),
 isWin = process.platform.indexOf('win') === 0;
 
 function execScript(scriptsArray, options) {

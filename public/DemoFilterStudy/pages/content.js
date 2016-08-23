@@ -838,11 +838,10 @@ function handleChangeM(){
 				AddTimeLog("3. variable value is number instead of expression in HFSS", false);
 				AddTimeLog("", false);
 			})();
+			$scope.assignVariables();
 		} else {
 			AddTimeLog("Space mapping cannot be run in browser. Special client software required.", false);
 		}
-
-		$scope.assignVariables();
 	}, 500);
 	
 }])

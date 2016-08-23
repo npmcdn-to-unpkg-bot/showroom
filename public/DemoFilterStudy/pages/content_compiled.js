@@ -1630,11 +1630,10 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 					}
 				}, null, this);
 			})();
+			$scope.assignVariables();
 		} else {
 			AddTimeLog("Space mapping cannot be run in browser. Special client software required.", false);
 		}
-
-		$scope.assignVariables();
 	}, 500);
 }]).directive('hideTabs', ['$rootScope', function ($rootScope) {
 	return {

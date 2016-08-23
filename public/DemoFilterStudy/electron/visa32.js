@@ -9,16 +9,20 @@ int32:  ViStatus
 char*:  ViRsrc, ViString
 **************************************************************/
 var VI_SUCCESS = 0,
-uint32Ptr = ref.refType('uint32'),
-visa32 = ffi.Library('visa32', {
-	'viOpenDefaultRM': ['int32', [uint32Ptr] ],																				//ViStatus viOpenDefaultRM(ViPSession sesn)
-	'viFindRsrc' : ['int32', ['uint32', 'string', uint32Ptr, uint32Ptr, 'pointer']],	//ViStatus viFindRsrc(ViSession sesn, ViString expr, ViPFindList findList, ViPUInt32 retcnt, ViChar instrDesc[])
-	'viFindNext' : ['int32', ['uint32', 'pointer'] ],																	//ViStatus viFindNext(ViFindList findList, ViChar instrDesc[])
-	'viOpen' : ['int32', ['uint32', 'string', 'uint32', 'uint32', uint32Ptr]],				//ViStatus viOpen(ViSession sesn, ViRsrc rsrcName, ViAccessMode accessMode, ViUInt32 openTimeout, ViPSession vi)
-	'viPrintf' : ['int32', ['uint32', 'string']],																			//ViStatus viPrintf(ViSession vi, ViString writeFmt, ...)
-	'viScanf' : ['int32', ['uint32', 'string', 'pointer']],														//ViStatus viScanf(ViSession vi, ViString readFmt, ...)
-	'viClose' : ['int32', ['uint32']]																									//ViStatus viClose(ViObject vi)
-});
+uint32Ptr = ref.refType('uint32'), visa32;
+try {
+	visa32 = ffi.Library('visa32', {
+		'viOpenDefaultRM': ['int32', [uint32Ptr] ],																				//ViStatus viOpenDefaultRM(ViPSession sesn)
+		'viFindRsrc' : ['int32', ['uint32', 'string', uint32Ptr, uint32Ptr, 'pointer']],	//ViStatus viFindRsrc(ViSession sesn, ViString expr, ViPFindList findList, ViPUInt32 retcnt, ViChar instrDesc[])
+		'viFindNext' : ['int32', ['uint32', 'pointer'] ],																	//ViStatus viFindNext(ViFindList findList, ViChar instrDesc[])
+		'viOpen' : ['int32', ['uint32', 'string', 'uint32', 'uint32', uint32Ptr]],				//ViStatus viOpen(ViSession sesn, ViRsrc rsrcName, ViAccessMode accessMode, ViUInt32 openTimeout, ViPSession vi)
+		'viPrintf' : ['int32', ['uint32', 'string']],																			//ViStatus viPrintf(ViSession vi, ViString writeFmt, ...)
+		'viScanf' : ['int32', ['uint32', 'string', 'pointer']],														//ViStatus viScanf(ViSession vi, ViString readFmt, ...)
+		'viClose' : ['int32', ['uint32']]																									//ViStatus viClose(ViObject vi)
+	});
+} catch(e){
+	console.log(e.message, " hint: Keysight IO library needs to be installed.");
+}
 
 function Visa32Find(findExpr){
 	var i, viStatus, resourceManager = ref.alloc('uint32'), maxInstrDescLength = 256,
