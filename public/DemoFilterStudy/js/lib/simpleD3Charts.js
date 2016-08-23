@@ -59,6 +59,7 @@ function simpleD3LinearChart(domElementId, margin, xDomainInit, yDomainInit){
 		.attr("width", width - 10)
 		.attr("height", height)
 		.attr("class", "zoomOverlay")
+		.attr("id", domElementId + "-zoomOverlay")
 		.call(drag);
 
 	var zoombox = svg.append("rect")

@@ -834,7 +834,7 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 			left: 60
 		};
 		linearChart1 = new simpleD3LinearChart("graph-linear-chart1", margin, [0, 5], [-10, 50]);
-		linearChart2 = new simpleD3LinearChart("graph-linear-chart1", margin, [0, 5], [-10, 50]);
+		linearChart2 = new simpleD3LinearChart("graph-linear-chart2", margin, [0, 5], [-10, 50]);
 	}, 80);
 
 	$scope.data = { dataFromUpload: resolveObj.dataFromUpload, currentInstr: { id: 0, name: "Select instrument" } };
