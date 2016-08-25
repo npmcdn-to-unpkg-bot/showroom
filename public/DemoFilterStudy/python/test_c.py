@@ -18,10 +18,10 @@ topology[-1, -1] = 0
 for i in np.arange(N + 1):
     topology[i, i + 1] = 1
     topology[i + 1, i] = 1
-topology[1, 3] = 1
-topology[3, 1] = 1
-topology[1, 4] = 1
-topology[4, 1] = 1
+#topology[1, 3] = 1
+#topology[3, 1] = 1
+#topology[1, 4] = 1
+#topology[4, 1] = 1
 #topology[4, 6] = 1
 #topology[6, 4] = 1
 
@@ -30,8 +30,8 @@ with open("%s\\\\%s" % (sparaFolder, "_s_parameter.txt"), 'r') as json_file:
     testCases = np.array(json.load(json_file))
     
 plt.close("all")
-selectCases = np.array([22])
-#selectCases = np.arange(1, 20)
+selectCases = np.array([23])
+selectCases = np.arange(1, 24)
 with backend_pdf.PdfPages("%s\\\\%s" % (sparaFolder, "summary.pdf")) as pdf:
     for testCase in testCases[selectCases - 1]:
         ntwk = skrf.Network("%s\\\\%s" % (sparaFolder, testCase["fileName"]))
@@ -60,8 +60,10 @@ with backend_pdf.PdfPages("%s\\\\%s" % (sparaFolder, "summary.pdf")) as pdf:
         filterOrder = np.hstack((np.zeros((N, )), 2 * np.ones((numZeros, ))))
         
         extractMethod = 6
-        isSymmetric = False
-        epsilon, epsilonE, Qu, coefF, coefP, rootE = CP.S2FP(freq, S21, S11, filterOrder, w1, w2, wga=1.122*0.0254, method=extractMethod, startFreq=0, stopFreq=0, isSymmetric=isSymmetric)
+        isSymmetric = (testCase['isSymmetric'] == 1)
+        captureStartFreq = testCase['captureStartFreq']
+        captureStopFreq = testCase['captureStopFreq']
+        epsilon, epsilonE, Qu, coefF, coefP, rootE = CP.S2FP(freq, S21, S11, filterOrder, w1, w2, wga=1.122*0.0254, method=extractMethod, startFreq=captureStartFreq, stopFreq=captureStopFreq, isSymmetric=isSymmetric)
         
         polyF = Polynomial(coefF)
         polyP = Polynomial(coefP)
@@ -84,7 +86,7 @@ with backend_pdf.PdfPages("%s\\\\%s" % (sparaFolder, "summary.pdf")) as pdf:
 #        print(np.round(np.imag(ctcqM), 4))
         
         S11_new, S21_new = CP.FPE2S(epsilon, epsilonE, coefF, coefP, rootE, normalizedFreq - 1j * f0 / (bw * Qu))
-        S21_new, S11_new = CP.CM2S(transversalMatrix, normalizedFreq - 1j * f0 / (bw * Qu))
+#        S21_new, S11_new = CP.CM2S(transversalMatrix, normalizedFreq - 1j * f0 / (bw * Qu))
         
         fig = plt.figure(testCase["No"])
         plt.subplot(2, 2, 1)
@@ -104,4 +106,4 @@ with backend_pdf.PdfPages("%s\\\\%s" % (sparaFolder, "summary.pdf")) as pdf:
         plt.plot(normalizedFreq, np.angle(S21_new, deg=True), '*');
         plt.title('S21(degree)')
         
-        pdf.savefig(fig)
+#        pdf.savefig(fig)

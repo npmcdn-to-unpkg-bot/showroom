@@ -1530,27 +1530,23 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 						return _context8.abrupt('return', 0);
 
 					case 49:
-						_context8.next = 51;
-						return regeneratorRuntime.awrap(coarseModel.update($scope.data.iterList.map(function (a) {
-							return a.dimension;
-						}).slice(-numPerturb), $scope.data.iterList.map(function (a) {
-							return SerializeM(topoM, a.extractedMatrix, $scope.data.isSymmetric);
-						}).slice(-numPerturb), topoM, $scope.data.isSymmetric));
-
-					case 51:
+						/* await coarseModel.update($scope.data.iterList.map(function (a) {return a.dimension}).slice(-numPerturb), $scope.data.iterList.map(function (a) {return SerializeM(topoM, a.extractedMatrix, $scope.data.isSymmetric)}).slice(-numPerturb), topoM, $scope.data.isSymmetric); */
 						xc = coarseModel.defunc(SerializeM(topoM, tempIter.extractedMatrix, $scope.data.isSymmetric));
-						_context8.prev = 52;
-						_context8.next = 55;
+						_context8.prev = 50;
+						_context8.next = 53;
 						return regeneratorRuntime.awrap(common.xhr2('SpaceMappingCalculate', { B: B, h: h, xc: xc, xc_star: xc_star, xf: xf, lowerLimit: $scope.data.lowerLimit, upperLimit: $scope.data.upperLimit }));
 
-					case 55:
+					case 53:
 						response = _context8.sent;
+
+						AddTimeLog("h: " + JSON.stringify(response.h).replace(/,/g, ", "));
+						AddTimeLog("f: " + JSON.stringify(response.f).replace(/,/g, ", "));
 						_context8.next = 62;
 						break;
 
 					case 58:
 						_context8.prev = 58;
-						_context8.t0 = _context8['catch'](52);
+						_context8.t0 = _context8['catch'](50);
 
 						AddTimeLog(_context8.t0.message);
 						return _context8.abrupt('return', 0);
@@ -1585,7 +1581,7 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 						return _context8.stop();
 				}
 			}
-		}, null, this, [[52, 58]]);
+		}, null, this, [[50, 58]]);
 	}; // end of $scope.spacemapping
 
 	var synStoreState, topoM, variableAssigned, linearChart1, linearChart2;

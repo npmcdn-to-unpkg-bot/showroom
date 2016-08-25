@@ -119,7 +119,7 @@ def get_task(method):
             toStop = 1
         else:
             toStop = 0
-        resJson = {'B': B.tolist(), 'h': h.tolist(), 'xf': xf.tolist(), 'toStop': toStop}
+        resJson = {'B': B.tolist(), 'h': h.tolist(), 'xf': xf.tolist(), 'f': f.tolist(), 'toStop': toStop}
         return json.dumps(resJson, separators = (',', ':'))
     elif method == "CoarseModelUpdate":
         reqJson = flask.request.get_json()

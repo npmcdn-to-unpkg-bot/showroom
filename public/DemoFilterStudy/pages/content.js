@@ -792,10 +792,12 @@ function handleChangeM(){
 			AddTimeLog("Iteration " + (indexIter + 1).toString() + " starts. Run " + (i + 1).toString() + " out of " + numIteration.toString());
 			resultDim2M = await Dim2M();
 			if (typeof resultDim2M === "undefined"){return 0;}
-			await coarseModel.update($scope.data.iterList.map(function (a) {return a.dimension}).slice(-numPerturb), $scope.data.iterList.map(function (a) {return SerializeM(topoM, a.extractedMatrix, $scope.data.isSymmetric)}).slice(-numPerturb), topoM, $scope.data.isSymmetric);
+			/* await coarseModel.update($scope.data.iterList.map(function (a) {return a.dimension}).slice(-numPerturb), $scope.data.iterList.map(function (a) {return SerializeM(topoM, a.extractedMatrix, $scope.data.isSymmetric)}).slice(-numPerturb), topoM, $scope.data.isSymmetric); */
 			xc = coarseModel.defunc(SerializeM(topoM, tempIter.extractedMatrix, $scope.data.isSymmetric));
 			try {
 				response = await common.xhr2('SpaceMappingCalculate', {B: B, h: h, xc: xc, xc_star: xc_star, xf: xf, lowerLimit: $scope.data.lowerLimit, upperLimit: $scope.data.upperLimit});
+				AddTimeLog("h: " + JSON.stringify(response.h).replace(/,/g, ", "));
+				AddTimeLog("f: " + JSON.stringify(response.f).replace(/,/g, ", "));
 			} catch(e) {
 				AddTimeLog(e.message);
 				return 0;

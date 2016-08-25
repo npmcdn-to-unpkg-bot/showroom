@@ -395,6 +395,7 @@ def S2FP(inFreq, inS21, inS11, filterOrder, w1, w2, wga, wgb=0.1, method=0, star
         temp1 = np.arange(indexMin, indexMax, step, dtype=int)
         freq, S21, S11 = inFreq[temp1], inS21[temp1], inS11[temp1]
 #        print(temp1[0], temp1[-1])
+#        print(inFreq[temp1[0]], inFreq[temp1[-1]])
         return freq, S21, S11
         
     def SerializeFP(rootF, rootP):
@@ -791,21 +792,21 @@ def S2FP(inFreq, inS21, inS11, filterOrder, w1, w2, wga, wgb=0.1, method=0, star
     elif method == 6:
 #        print(normalizedFreq[0], normalizedFreq[-1])
         rootF, rootP = DeserializeFP(np.arange(filterOrder.shape[0] * 2), filterOrder)
-        nF = len(rootF)
-        nP = len(rootP)
+        originalNF = len(rootF)
+        originalNP = len(rootP)
         for i in np.arange(0, 3):
             toDoSymmetric = isSymmetric and (i == 2)
             normalizedS = 1j * normalizedFreq + np.sqrt(w2 * w1) / (Qu * (w2 - w1))
-            originalNF = nF
-            nF += 2#int(0.49 * nF)
-            if nP > 0:
+            if originalNP > 0:
+                nP = originalNP
+                nF = originalNF + 2
                 if ((nF + nP + 3) % 2 == 1) and (nF % 2 == 0):
                     riSeqF = np.where(np.arange(nF + 1) % 2 == 0, 1.0, 1j)
                 else:
                     riSeqF = np.where(np.arange(nF + 1) % 2 == 0, 1j, 1.0)
                 riSeqP = np.where(np.arange(nP + 1) % 2 == 0, 1.0, 1j)
                 
-                weight = 1.0#np.abs(S21 / S21)
+                weight = 1.0 / np.sqrt(np.abs(S21))
 #                vanderF = riSeqF * np.diag(S21 * weight).dot(np.vander(normalizedS, nF+1, increasing=True))
                 vanderF = np.diag(S21 * weight).dot(np.vander(normalizedS, nF+1, increasing=True))
                 vanderP = -riSeqP * np.diag(S11 * weight).dot(np.vander(normalizedS, nP+1, increasing=True))
@@ -823,9 +824,37 @@ def S2FP(inFreq, inS21, inS11, filterOrder, w1, w2, wga, wgb=0.1, method=0, star
             else:
                 coefP = np.array([1.0])
                 rootP = np.array([])
-
-            originalNP = nP
-            nP += 2
+            
+#            if np.max(np.abs(normalizedFreq[[0, -1]])) > 2.5:
+#                nP = originalNP + 2 #int(originalNP * 1.5)
+#            else:
+#                nP = originalNP + 2
+#            nF = originalNF + 0
+#            if ((nF + nP + 3) % 2 == 1) and (nF % 2 == 0):
+#                riSeqF = np.where(np.arange(nF + 1) % 2 == 0, 1.0, 1j)
+#            else:
+#                riSeqF = np.where(np.arange(nF + 1) % 2 == 0, 1j, 1.0)
+#            riSeqP = np.where(np.arange(nP + 1) % 2 == 0, 1.0, 1j)
+#            weight = np.abs(S21)
+#            if toDoSymmetric:
+#                vanderF = riSeqF * np.diag(S21 * weight).dot(np.vander(normalizedS, nF+1, increasing=True))
+#                vanderP = -np.diag(S11 * weight).dot(np.vander(normalizedS, nP+1, increasing=True))
+#                tempM = np.hstack((vanderF, vanderP, 1j * vanderP))
+#                M = np.vstack((np.real(tempM), np.imag(tempM)))
+#            else:
+#                vanderF = np.diag(S21 * weight).dot(np.vander(normalizedS, nF+1, increasing=True))
+#                vanderP = -np.diag(S11 * weight).dot(np.vander(normalizedS, nP+1, increasing=True))
+#                M = np.hstack((vanderF, vanderP))
+#            V = np.linalg.svd(M)[2]
+#            temp1 = np.conj(V[-1, :]) # b
+#            if toDoSymmetric:
+#                coefF = temp1[:nF + 1] * riSeqF
+#            else:
+#                coefF = temp1[:nF + 1]
+#            coefF /= coefF[-1]
+#            rootF = Polynomial(coefF).roots()
+            
+            nP = originalNP + 0
             nF = originalNF + 0
             if ((nF + nP + 3) % 2 == 1) and (nF % 2 == 0):
                 riSeqF = np.where(np.arange(nF + 1) % 2 == 0, 1.0, 1j)
@@ -835,19 +864,21 @@ def S2FP(inFreq, inS21, inS11, filterOrder, w1, w2, wga, wgb=0.1, method=0, star
             weight = np.abs(S21)
             if toDoSymmetric:
                 vanderF = riSeqF * np.diag(S21 * weight).dot(np.vander(normalizedS, nF+1, increasing=True))
-                vanderP = -np.diag(S11 * weight).dot(np.vander(normalizedS, nP+1, increasing=True))
-                tempM = np.hstack((vanderF, vanderP, 1j * vanderP))
+                vanderP = -riSeqP * np.diag(S11 * weight).dot(np.vander(normalizedS, nP+1, increasing=True))
+                tempM = np.hstack((vanderF, vanderP))
                 M = np.vstack((np.real(tempM), np.imag(tempM)))
             else:
                 vanderF = np.diag(S21 * weight).dot(np.vander(normalizedS, nF+1, increasing=True))
-                vanderP = -np.diag(S11 * weight).dot(np.vander(normalizedS, nP+1, increasing=True))
-                M = np.hstack((vanderF, vanderP))
+                vanderP = -riSeqP * np.diag(S11 * weight).dot(np.vander(normalizedS, nP+1, increasing=True))
+                tempM = np.hstack((vanderF, 1j * vanderF, vanderP))
+                M = np.vstack((np.real(tempM), np.imag(tempM)))
             V = np.linalg.svd(M)[2]
             temp1 = np.conj(V[-1, :]) # b
             if toDoSymmetric:
                 coefF = temp1[:nF + 1] * riSeqF
             else:
-                coefF = temp1[:nF + 1]
+                coefF = temp1[:nF + 1] + 1j * temp1[nF + 1 : 2 * nF + 2]
+#                print(Polynomial(temp1[-nP-1:] * riSeqP).roots())
             coefF /= coefF[-1]
             rootF = Polynomial(coefF).roots()
 #            tempSort = np.argsort(np.abs(rootF))
@@ -872,6 +903,7 @@ def S2FP(inFreq, inS21, inS11, filterOrder, w1, w2, wga, wgb=0.1, method=0, star
                 fp2eMethod = 2
             epsilon, epsilonE, rootE = GetEpsilonRootE(coefF, coefP, S11, S21, normalizedFreq, Qu, epsilon, method=fp2eMethod)
             Qu = GetQu(epsilon, epsilonE, Qu, rootF, rootP, rootE, S11, S21, normalizedFreq)
+
 #        if not toDoSymmetric:
 #            rootF += np.sqrt(w2 * w1) / (Qu * (w2 - w1))
 #            coefF = Polynomial.fromroots(rootF).coef
