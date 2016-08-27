@@ -86,7 +86,8 @@ def get_task(method):
         stopFreq = reqJson['captureStopFreqGHz'] * 1e9
         isSymmetric = reqJson['isSymmetric']
         extractMethod = 6
-        epsilon, epsilonE, Qu, coefF, coefP, rootE = CP.S2FP(freq, S21, S11, filterOrder, w1, w2, wga=1.122*0.0254, method=extractMethod, startFreq=startFreq, stopFreq=stopFreq, isSymmetric=isSymmetric)
+        fc = (w1 + w2) / 4
+        epsilon, epsilonE, Qu, coefF, coefP, rootE, port1, port2 = CP.S2FP(freq, S21, S11, filterOrder, w1, w2, fc=fc, method=extractMethod, startFreq=startFreq, stopFreq=stopFreq, isSymmetric=isSymmetric)
         if Qu == np.inf:
             Qu = 1e9
 #        print(Qu)

@@ -31,7 +31,7 @@ with open("%s\\\\%s" % (sparaFolder, "_s_parameter.txt"), 'r') as json_file:
     
 plt.close("all")
 selectCases = np.array([23])
-selectCases = np.arange(1, 24)
+#selectCases = np.arange(1, 24)
 with backend_pdf.PdfPages("%s\\\\%s" % (sparaFolder, "summary.pdf")) as pdf:
     for testCase in testCases[selectCases - 1]:
         ntwk = skrf.Network("%s\\\\%s" % (sparaFolder, testCase["fileName"]))
@@ -63,7 +63,8 @@ with backend_pdf.PdfPages("%s\\\\%s" % (sparaFolder, "summary.pdf")) as pdf:
         isSymmetric = (testCase['isSymmetric'] == 1)
         captureStartFreq = testCase['captureStartFreq']
         captureStopFreq = testCase['captureStopFreq']
-        epsilon, epsilonE, Qu, coefF, coefP, rootE = CP.S2FP(freq, S21, S11, filterOrder, w1, w2, wga=1.122*0.0254, method=extractMethod, startFreq=captureStartFreq, stopFreq=captureStopFreq, isSymmetric=isSymmetric)
+        fc = f0 / 2
+        epsilon, epsilonE, Qu, coefF, coefP, rootE, port1, port2 = CP.S2FP(freq, S21, S11, filterOrder, w1, w2, fc=fc, method=extractMethod, startFreq=captureStartFreq, stopFreq=captureStopFreq, isSymmetric=isSymmetric)
         
         polyF = Polynomial(coefF)
         polyP = Polynomial(coefP)
@@ -74,7 +75,8 @@ with backend_pdf.PdfPages("%s\\\\%s" % (sparaFolder, "summary.pdf")) as pdf:
         
         matrixMethod = 5
         transversalMatrix = CP.FPE2M(epsilon, epsilonE, coefF, coefP, rootE, method=matrixMethod)
-
+#        print(np.round(transversalMatrix, 3))
+        
 #        extractedMatrix, msg = CP.FPE2MComprehensive(epsilon, epsilonE, rootF, rootP, rootE, topology, method = matrixMethod)
 #        arrowM = CP.RotateM2Arrow(transversalMatrix, isComplex = True)
 #        ctcqM, ctcqPoint = CP.RotateArrow2CTCQ(arrowM, topology, rootP)
@@ -85,8 +87,11 @@ with backend_pdf.PdfPages("%s\\\\%s" % (sparaFolder, "summary.pdf")) as pdf:
 #        print(np.round(np.real(ctcqM), 2))
 #        print(np.round(np.imag(ctcqM), 4))
         
+        port1["L"] *= 1.2
+        port1["phi"] += 0.6
         S11_new, S21_new = CP.FPE2S(epsilon, epsilonE, coefF, coefP, rootE, normalizedFreq - 1j * f0 / (bw * Qu))
-#        S21_new, S11_new = CP.CM2S(transversalMatrix, normalizedFreq - 1j * f0 / (bw * Qu))
+        S21_new, S11_new = CP.CM2S(transversalMatrix, normalizedFreq - 1j * f0 / (bw * Qu))
+        S11_new, S21_new = CP.embedS(freq, S11_new, S21_new, fc, port1, port2)
         
         fig = plt.figure(testCase["No"])
         plt.subplot(2, 2, 1)

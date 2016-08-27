@@ -767,7 +767,7 @@ function handleChangeM(){
 				tempIter.dimension = initDimension;
 			} else {
 				tempIter.dimension = initDimension.map(function (a, i) {
-					var N = topoM.length - 2, dev = (Math.random() * 2 - 1) * 0.005 * 30.0 / synStoreState.centerFreq, L = $scope.data.isSymmetric? Math.floor((N + 1) / 2) : N, temp1 = (i < L)? a + dev / 4 : a + dev;
+					var N = topoM.length - 2, dev = (Math.random() * 2 - 1) * $scope.data.perturbationStep, L = $scope.data.isSymmetric? Math.floor((N + 1) / 2) : N, temp1 = (i < L)? a + dev / 2 : a + dev;
 					return Math.round(temp1 * 10000) / 10000;
 				});
 			}
@@ -829,7 +829,7 @@ function handleChangeM(){
 		linearChart1 = new simpleD3LinearChart("graph-linear-chart1", margin, [0, 5], [-10, 50]);
 		linearChart2 = new simpleD3LinearChart("graph-linear-chart2", margin, [0, 5], [-10, 50]);
 
-		$scope.data = {logs: "", captureStartFreqGHz: "", captureStopFreqGHz: "", iterList: [], currentIter: {id: 0, q: 1e9}, isSymmetric: synStoreState.isSymmetric || false, spacemapButtonDisable: false};
+		$scope.data = {logs: "", captureStartFreqGHz: "", captureStopFreqGHz: "", iterList: [], currentIter: {id: 0, q: 1e9}, isSymmetric: synStoreState.isSymmetric || false, spacemapButtonDisable: false, perturbationStep: Math.round(0.005 * 30.0 / synStoreState.centerFreq * 1000) / 1000};
 		
 		if (window.hasOwnProperty("preloaded")) {
 			(async function(){

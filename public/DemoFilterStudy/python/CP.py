@@ -1,4 +1,6 @@
 import numpy as np
+import scipy as sp
+import scipy.constants
 from numpy.polynomial import Polynomial
 from scipy import optimize, interpolate, signal
 #import matplotlib.pyplot as plt
@@ -365,7 +367,7 @@ def S2CM(freq, S21, S11, initM, w1, w2, wga, wgb=0.1):
 
     return resultM, normalizedFreq;
 
-def S2FP(inFreq, inS21, inS11, filterOrder, w1, w2, wga, wgb=0.1, method=0, startFreq=0, stopFreq=0, isSymmetric=False):
+def S2FP(inFreq, inS21, inS11, filterOrder, w1, w2, fc=np.nan, method=0, startFreq=0, stopFreq=0, isSymmetric=False):
     def RectifyInputData(inFreq, inS21, inS11):
         widths = np.arange(5, 15)
         sig = -20. * np.log10(np.abs(inS11))
@@ -444,7 +446,8 @@ def S2FP(inFreq, inS21, inS11, filterOrder, w1, w2, wga, wgb=0.1, method=0, star
         return rootF, rootP
 
     def GetEpsilonRootE(coefF, coefP, S11, S21, normalizedFreq, Qu=5000., epsilon=1.e10, method=2):
-        normalizedS = 1j * normalizedFreq + 1./Qu
+#        normalizedS = 1j * normalizedFreq + 1./Qu
+        normalizedS = 1j * normalizedFreq + np.sqrt(w2 * w1) / (Qu * (w2 - w1))
         polyF = Polynomial(coefF)
 #        if len(rootP) == 0:
 #            polyP = Polynomial([1])
@@ -562,13 +565,14 @@ def S2FP(inFreq, inS21, inS11, filterOrder, w1, w2, wga, wgb=0.1, method=0, star
                 elif filterOrder[i] == 4:
                     initialValue = np.append(initialValue, [np.random.random(), np.random.random()])
         elif method == 1:
-            epsilon, epsilonE, Qu, rootF, rootP, rootE = S2FP(freq, S21, S11, filterOrder, w1, w2, wga, wgb=0.1, method=1)
+            epsilon, epsilonE, Qu, rootF, rootP, rootE = S2FP(freq, S21, S11, filterOrder, w1, w2, fc, method=1)
             initialValue = SerializeFP(rootF, rootP)[0]
         return initialValue
 
     freq, S21, S11 = RectifyInputData(inFreq, inS21, inS11)
-    normalizedFreq = NormalizeFreq(freq, w1, w2);
-    cutoffFrequency = 299792458. / (2. * wga);
+    normalizedFreq = NormalizeFreq(freq, w1, w2)
+    if np.isnan(fc):
+        fc = (w1 + w2) / 4
     Qu = 1e9 # initial Qu value
     
     if method == 0:
@@ -794,8 +798,17 @@ def S2FP(inFreq, inS21, inS11, filterOrder, w1, w2, wga, wgb=0.1, method=0, star
         rootF, rootP = DeserializeFP(np.arange(filterOrder.shape[0] * 2), filterOrder)
         originalNF = len(rootF)
         originalNP = len(rootP)
-        for i in np.arange(0, 3):
-            toDoSymmetric = isSymmetric and (i == 2)
+        originalS11 = S11
+        originalS21 = S21
+        bandIndS21 = FindEdge(S21)
+        tempArg1 = bandIndS21[0] + int(0.2 * (bandIndS21[1] - bandIndS21[0]))
+        tempArg2 = bandIndS21[0] + int(0.8 * (bandIndS21[1] - bandIndS21[0]))
+        freq_ExtractPort = freq[tempArg1 : tempArg2]
+        S11_ExtractPort = S11[tempArg1 : tempArg2]
+        S21_ExtractPort = S21[tempArg1 : tempArg2]
+        numIter = 3
+        for i in np.arange(0, numIter):
+            toDoSymmetric = isSymmetric and (i == numIter - 1)
             normalizedS = 1j * normalizedFreq + np.sqrt(w2 * w1) / (Qu * (w2 - w1))
             if originalNP > 0:
                 nP = originalNP
@@ -825,36 +838,10 @@ def S2FP(inFreq, inS21, inS11, filterOrder, w1, w2, wga, wgb=0.1, method=0, star
                 coefP = np.array([1.0])
                 rootP = np.array([])
             
-#            if np.max(np.abs(normalizedFreq[[0, -1]])) > 2.5:
-#                nP = originalNP + 2 #int(originalNP * 1.5)
-#            else:
-#                nP = originalNP + 2
-#            nF = originalNF + 0
-#            if ((nF + nP + 3) % 2 == 1) and (nF % 2 == 0):
-#                riSeqF = np.where(np.arange(nF + 1) % 2 == 0, 1.0, 1j)
-#            else:
-#                riSeqF = np.where(np.arange(nF + 1) % 2 == 0, 1j, 1.0)
-#            riSeqP = np.where(np.arange(nP + 1) % 2 == 0, 1.0, 1j)
-#            weight = np.abs(S21)
-#            if toDoSymmetric:
-#                vanderF = riSeqF * np.diag(S21 * weight).dot(np.vander(normalizedS, nF+1, increasing=True))
-#                vanderP = -np.diag(S11 * weight).dot(np.vander(normalizedS, nP+1, increasing=True))
-#                tempM = np.hstack((vanderF, vanderP, 1j * vanderP))
-#                M = np.vstack((np.real(tempM), np.imag(tempM)))
-#            else:
-#                vanderF = np.diag(S21 * weight).dot(np.vander(normalizedS, nF+1, increasing=True))
-#                vanderP = -np.diag(S11 * weight).dot(np.vander(normalizedS, nP+1, increasing=True))
-#                M = np.hstack((vanderF, vanderP))
-#            V = np.linalg.svd(M)[2]
-#            temp1 = np.conj(V[-1, :]) # b
-#            if toDoSymmetric:
-#                coefF = temp1[:nF + 1] * riSeqF
-#            else:
-#                coefF = temp1[:nF + 1]
-#            coefF /= coefF[-1]
-#            rootF = Polynomial(coefF).roots()
-            
-            nP = originalNP + 0
+            if np.abs(w1 - w2) > 0.08 * np.sqrt(w1 * w2):
+                nP = originalNP + 0 #int(originalNP * 1.5)
+            else:
+                nP = originalNP + 2
             nF = originalNF + 0
             if ((nF + nP + 3) % 2 == 1) and (nF % 2 == 0):
                 riSeqF = np.where(np.arange(nF + 1) % 2 == 0, 1.0, 1j)
@@ -864,23 +851,49 @@ def S2FP(inFreq, inS21, inS11, filterOrder, w1, w2, wga, wgb=0.1, method=0, star
             weight = np.abs(S21)
             if toDoSymmetric:
                 vanderF = riSeqF * np.diag(S21 * weight).dot(np.vander(normalizedS, nF+1, increasing=True))
-                vanderP = -riSeqP * np.diag(S11 * weight).dot(np.vander(normalizedS, nP+1, increasing=True))
-                tempM = np.hstack((vanderF, vanderP))
+                vanderP = -np.diag(S11 * weight).dot(np.vander(normalizedS, nP+1, increasing=True))
+                tempM = np.hstack((vanderF, vanderP, 1j * vanderP))
                 M = np.vstack((np.real(tempM), np.imag(tempM)))
             else:
                 vanderF = np.diag(S21 * weight).dot(np.vander(normalizedS, nF+1, increasing=True))
-                vanderP = -riSeqP * np.diag(S11 * weight).dot(np.vander(normalizedS, nP+1, increasing=True))
-                tempM = np.hstack((vanderF, 1j * vanderF, vanderP))
-                M = np.vstack((np.real(tempM), np.imag(tempM)))
+                vanderP = -np.diag(S11 * weight).dot(np.vander(normalizedS, nP+1, increasing=True))
+                M = np.hstack((vanderF, vanderP))
             V = np.linalg.svd(M)[2]
             temp1 = np.conj(V[-1, :]) # b
             if toDoSymmetric:
                 coefF = temp1[:nF + 1] * riSeqF
             else:
-                coefF = temp1[:nF + 1] + 1j * temp1[nF + 1 : 2 * nF + 2]
-#                print(Polynomial(temp1[-nP-1:] * riSeqP).roots())
+                coefF = temp1[:nF + 1]
             coefF /= coefF[-1]
             rootF = Polynomial(coefF).roots()
+            
+#            nP = originalNP + 0
+#            nF = originalNF + 0
+#            if ((nF + nP + 3) % 2 == 1) and (nF % 2 == 0):
+#                riSeqF = np.where(np.arange(nF + 1) % 2 == 0, 1.0, 1j)
+#            else:
+#                riSeqF = np.where(np.arange(nF + 1) % 2 == 0, 1j, 1.0)
+#            riSeqP = np.where(np.arange(nP + 1) % 2 == 0, 1.0, 1j)
+#            weight = np.abs(S21)
+#            if toDoSymmetric:
+#                vanderF = riSeqF * np.diag(S21 * weight).dot(np.vander(normalizedS, nF+1, increasing=True))
+#                vanderP = -riSeqP * np.diag(S11 * weight).dot(np.vander(normalizedS, nP+1, increasing=True))
+#                tempM = np.hstack((vanderF, vanderP))
+#                M = np.vstack((np.real(tempM), np.imag(tempM)))
+#            else:
+#                vanderF = np.diag(S21 * weight).dot(np.vander(normalizedS, nF+1, increasing=True))
+#                vanderP = -riSeqP * np.diag(S11 * weight).dot(np.vander(normalizedS, nP+1, increasing=True))
+#                tempM = np.hstack((vanderF, 1j * vanderF, vanderP))
+#                M = np.vstack((np.real(tempM), np.imag(tempM)))
+#            V = np.linalg.svd(M)[2]
+#            temp1 = np.conj(V[-1, :]) # b
+#            if toDoSymmetric:
+#                coefF = temp1[:nF + 1] * riSeqF
+#            else:
+#                coefF = temp1[:nF + 1] + 1j * temp1[nF + 1 : 2 * nF + 2]
+##                print(Polynomial(temp1[-nP-1:] * riSeqP).roots())
+#            coefF /= coefF[-1]
+#            rootF = Polynomial(coefF).roots()
 #            tempSort = np.argsort(np.abs(rootF))
 #            rootF = rootF[tempSort]
 
@@ -901,8 +914,13 @@ def S2FP(inFreq, inS21, inS11, filterOrder, w1, w2, wga, wgb=0.1, method=0, star
                 fp2eMethod = 1
             else:
                 fp2eMethod = 2
-            epsilon, epsilonE, rootE = GetEpsilonRootE(coefF, coefP, S11, S21, normalizedFreq, Qu, epsilon, method=fp2eMethod)
+#            epsilon, epsilonE, rootE = GetEpsilonRootE(coefF, coefP, S11, S21, normalizedFreq, Qu, epsilon, method=fp2eMethod)
+            rootE = FP2E(epsilon, coefF, coefP, method=fp2eMethod)
+            epsilonE = epsilon
             Qu = GetQu(epsilon, epsilonE, Qu, rootF, rootP, rootE, S11, S21, normalizedFreq)
+#            port1, port2 = ExtractPort(freq_ExtractPort, S11_ExtractPort, S21_ExtractPort, w1, w2, fc, epsilon, coefP, coefF, rootE, Qu)
+#            print(fc, port1, port2, coefF, Qu)
+#            S11, S21 = DeembedS(freq, originalS11, originalS21, fc, port1, port2)
 
 #        if not toDoSymmetric:
 #            rootF += np.sqrt(w2 * w1) / (Qu * (w2 - w1))
@@ -922,7 +940,52 @@ def S2FP(inFreq, inS21, inS11, filterOrder, w1, w2, wga, wgb=0.1, method=0, star
 #    print('rootF:', rootF)
 #    print('rootP:', rootP)
 #    print('rootE:', rootE)
-    return epsilon, epsilonE, Qu, coefF, coefP, rootE
+    port1, port2 = ExtractPort(freq_ExtractPort, S11_ExtractPort, S21_ExtractPort, w1, w2, fc, epsilon, coefP, coefF, rootE, Qu)
+    return epsilon, epsilonE, Qu, coefF, coefP, rootE, port1, port2
+
+def WaveguideDelay(freq, fc, L):
+    return -2 * np.pi * np.sqrt(freq * freq - fc * fc) * L / sp.constants.speed_of_light
+
+def ExtractWaveguide(freq, angleRad, fc):
+    np.save("tempData4", np.array([{"freq": freq, "angleRad": angleRad}]))
+    unwrappedAngleRad = np.unwrap(angleRad)
+#    A = np.ones((len(freq), 2))
+#    A[:, 0] = -2 * np.pi * np.sqrt(freq * freq - fc * fc) / sp.constants.speed_of_light
+#    B = unwrappedAngleRad
+#    x, residuals = np.linalg.lstsq(A, B)[0:2]
+#    return x[0], x[1]
+    A = np.matrix(-2 * np.pi * np.sqrt(freq * freq - fc * fc) / sp.constants.speed_of_light).T
+    B = unwrappedAngleRad
+    x, residuals = np.linalg.lstsq(A, B)[0:2]
+    return x[0], 0.0
+
+def ExtractPort(freq, S11, S21, w1, w2, fc, epsilon, coefP, coefF, rootE, Qu):
+    normalizedFreq = NormalizeFreq(freq, w1, w2)
+    normalizedS = 1j * normalizedFreq + np.sqrt(w2 * w1) / (Qu * (w2 - w1))
+    polyP = Polynomial(coefP)
+    polyF = Polynomial(coefF)
+    polyE = Polynomial.fromroots(rootE)
+    angleRad = np.angle(S21 / S11) - np.angle(polyP(normalizedS) / (signedEpsilon(len(coefF) - 1, len(coefP) - 1, epsilon) * polyF(normalizedS)))
+    L1, phi1 = ExtractWaveguide(freq, angleRad, fc)
+    angleRad = np.angle(S21) - np.angle(polyP(normalizedS) / (signedEpsilon(len(coefF) - 1, len(coefP) - 1, epsilon) * polyE(normalizedS)))
+    L2, phi2 = ExtractWaveguide(freq, angleRad, fc)
+    port1 = {"L": (L1 + L2) / 2, "phi": (phi1 + phi2) / 2}
+    port2 = {"L": (L2 - L1) / 2, "phi": (phi2 - phi1) / 2}
+    return port1, port2
+
+def DeembedS(freq, S11, S21, fc, port1, port2):
+    temp1 = WaveguideDelay(freq, fc, 2 * port1["L"]) + 2 * port1["phi"]
+    S11_new = S11 / (np.cos(temp1) + 1j * np.sin(temp1))
+    temp1 = WaveguideDelay(freq, fc, port1["L"] + port2["L"]) + port1["phi"] + port2["phi"]
+    S21_new = S21 / (np.cos(temp1) + 1j * np.sin(temp1))
+    return S11_new, S21_new
+
+def embedS(freq, S11, S21, fc, port1, port2):
+    temp1 = 1.5*np.pi + WaveguideDelay(freq, fc, 2 * port1["L"]) + 2 * port1["phi"]
+    S11_new = S11 * (np.cos(temp1) + 1j * np.sin(temp1))
+    temp1 = WaveguideDelay(freq, fc, port1["L"] + port2["L"]) + port1["phi"] + port2["phi"]
+    S21_new = S21 * (np.cos(temp1) + 1j * np.sin(temp1))
+    return S11_new, S21_new
 
 def Y2Ladder(yn, yd, evenModeOddDegree = False):
     tempYn = yn
@@ -1903,3 +1966,5 @@ def CoarseModelUpdate(dimension, extractedMatrix, topology, isSymmetric):
     #intepM + (slopeM.dot(dimension.T)).T - extractedMatrix
     
     return slopeM, invSlopeM, intepM
+
+

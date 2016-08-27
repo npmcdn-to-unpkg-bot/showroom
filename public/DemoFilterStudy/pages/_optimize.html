@@ -19,6 +19,12 @@
 			</button>
 		</div>
 		<div class="col-sm-2">
+			<!-- Button trigger modal -->
+			<button type="button" class="btn btn-default" data-toggle="modal" data-target="#option-modal">
+				Options
+			</button>
+		</div>
+		<div class="col-sm-2">
 			<button type="button" class="btn btn-primary" ng-click="spacemapping()" ng-disabled="data.spacemapButtonDisable">
 				Start space mapping
 			</button>
@@ -138,6 +144,37 @@
 			</div>
 		</div>
 	</div>
-	
+
+	<!-- Modal -->
+	<div class="modal fade" id="option-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+		<div class="modal-dialog  modal-lg" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+					<h4 class="modal-title">Options:</h4>
+				</div>
+				<div class="modal-body">
+					<div class="row">
+						<div class="col-sm-2">
+							Perturbation step:
+						</div>
+						<div class="col-sm-6">
+							<form class="form-inline">
+								<div class="form-group">
+									<input id="perturbation-step" type="number" class="form-control" ng-model="data.perturbationStep" placeholder="Perturbation Step">
+									<label for="perturbation-step">inch&nbsp&nbsp&nbsp&nbsp</label>
+								</div>
+							</form>
+						</div>
+					</div>
+					<hr>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
 </div>
 <!-- /#page-wrapper -->
