@@ -5,13 +5,18 @@ oDesktop = oAnsoftApp.GetAppDesktop();
 oProject = oDesktop.GetActiveProject();
 oDesign = oProject.GetActiveDesign();
 
-var variableNames = ["M11","M22","M01","M12"], // string array
-	variableValues = [0.2126,0.2362,0.166,0.1115]; // number array
+//var fso = new ActiveXObject("Scripting.FileSystemObject"), fsoForWriting = 2, f = fso.OpenTextFile("./temp/tempGetVariableValue.txt", fsoForWriting, true);
+var variableNames = ["A","PL","B","M01","TT","M11","M12","M22","M23","M33","M34","M44","M45","M55","M56","M66","M0L","Rs","S01","S12","S23","S34","S45","S56","S0L","S11","S22","S33","S44","S55","S66","TT1"]; // string array
+//f.Write("[");
+WScript.StdOut.Write("[");
 for (var i = 0; i < variableNames.length; i++){
-	oDesign.SetVariableValue(variableNames[i], variableValues[i].toString() + "in");
+	//f.Write("\"" + oDesign.GetVariableValue(variableNames[i]) + "\"");
+	WScript.StdOut.Write("\"" + oDesign.GetVariableValue(variableNames[i]) + "\"");
+	if (i < variableNames.length - 1){
+		//f.Write(", ");
+		WScript.StdOut.Write(", ");
+	}
 }
-
-var dirName = "C:\\Users\\sam\\Documents\\User\\Embeded\\ServerApp\\Heroku\\showroom\\public\\DemoFilterStudy\\electron";
-oDesign.Analyze("Setup1 : Sweep1");
-oModule = oDesign.GetModule("Solutions");
-oModule.ExportNetworkData("", ["Setup1:Sweep1"], 3, dirName + "\\temp\\s0.s2p", ["All"], false, 50, "S", -1, 2, 15);
+//f.Write("]");
+WScript.StdOut.Write("]");
+//f.Close();

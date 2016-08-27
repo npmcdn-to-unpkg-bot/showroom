@@ -693,6 +693,16 @@ function handleChangeM(){
 								predictNames[indexName] = k;
 								break;
 							}
+							if ((j === N) && ((j + i) === (N + 1))){
+								if ($scope.data.variableNames[k].name.toUpperCase().indexOf("M" + row.toString() + "L") !== -1){
+									predictNames[indexName] = k;
+									break;
+								}
+								if ($scope.data.variableNames[k].name.toUpperCase().indexOf("M" + "0" + "L") !== -1){
+									predictNames[indexName] = k;
+									break;
+								}
+							}
 						}
 						indexName += 1;
 					}

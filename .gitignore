@@ -39,3 +39,4 @@ python/__pycache__
 *.npy
 CP.cpython-35.pyc
 *.s2p
+tempScript.*
