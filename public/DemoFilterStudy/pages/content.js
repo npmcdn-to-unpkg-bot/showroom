@@ -162,7 +162,7 @@ angular
 			/* tranZeros: [['', 1.1], ['', 1.4], ['', 1.9]], */
 			tranZeros: [['', '']],
 			matrixDisplay: "M",
-			isSymmetric: true,
+			isSymmetric: false,
 			focusZero: 0
 		}
 	}	
@@ -722,7 +722,13 @@ function handleChangeM(){
 			$scope.data.write2EMButtonHtml = "Update HFSS";
 		}, 500)
 	}
-	
+
+	$scope.stopSimulation = function(){
+		$scope.data.stopSimulation = true;
+		AddTimeLog("---------------------------------------------------------------------------------------------------------------", false);
+		AddTimeLog("Interrupted by user. Waiting for the last iteration to finish ...");
+	}
+
 	$scope.spacemapping = async function(){
 		var tranZeros = synStoreState.tranZeros
 			.map(function(d){return [Number(d[0]), Number(d[1])]})
@@ -733,7 +739,7 @@ function handleChangeM(){
 			stopFreq = (synStoreState.startFreq < synStoreState.stopFreq)? synStoreState.stopFreq : synStoreState.startFreq + synStoreState.bandwidth * 8,
 			freqGHz = numeric.linspace(synStoreState.startFreq, stopFreq, numberOfPoints);
 		
-		var response, sFile, i, j, N = topoM.length - 2, indexIter = 0, tempIter = {}, coarseModel = new CoarseModelLinear(), resultDim2M, numPerturb = 5, numIteration = 10,
+		var response, sFile, i, j, N = topoM.length - 2, indexIter = 0, tempIter = {}, coarseModel = new CoarseModelLinear(), resultDim2M,
 			initDimension = await preloaded.GetHFSSVariableValue($scope.data.dimensionNames.map(function(a){return a.name}));
 		$scope.data.iterList = [];
 		$scope.data.spacemapButtonDisable = true;
@@ -772,8 +778,13 @@ function handleChangeM(){
 			}
 		}
 
-		for (i = 0; i < numPerturb; i++) {
-			if ($scope.data.stopSimulation){return 0};
+		for (i = 0; i < $scope.data.numPerturb; i++) {
+			if ($scope.data.stopSimulation){
+				$scope.data.spacemapButtonDisable = false;
+				AddTimeLog("", false);
+				AddTimeLog("Simulation stopped by user.");
+				return 0
+			};
 			tempIter.id = indexIter;
 			if (i === 0){
 				tempIter.dimension = initDimension;
@@ -784,7 +795,7 @@ function handleChangeM(){
 				});
 			}
 			AddTimeLog("---------------------------------------------------------------------------------------------------------------", false);
-			AddTimeLog("Iteration " + (indexIter + 1).toString() + " starts. Perturbation " + (i + 1).toString() + " out of " + numPerturb.toString());
+			AddTimeLog("Iteration " + (indexIter + 1).toString() + " starts. Perturbation " + (i + 1).toString() + " out of " + $scope.data.numPerturb.toString());
 			resultDim2M = await Dim2M();
 			if (typeof resultDim2M === "undefined"){return 0;}
 			indexIter = indexIter + 1;
@@ -797,12 +808,17 @@ function handleChangeM(){
 		xf = xc_star;
 		B = numeric.identity(xf.length);
 		h = numeric.rep([xf.length], 1e9);
-		for (i = 0; i < numIteration; i++) {
-			if ($scope.data.stopSimulation){return 0};
+		for (i = 0; i < $scope.data.numIteration; i++) {
+			if ($scope.data.stopSimulation){
+				$scope.data.spacemapButtonDisable = false;
+				AddTimeLog("", false);
+				AddTimeLog("Simulation stopped by user.");
+				return 0
+			};
 			tempIter.id = indexIter;
 			tempIter.dimension = xf.map(function (a){return Math.round(a * 10000) / 10000});
 			AddTimeLog("---------------------------------------------------------------------------------------------------------------", false);
-			AddTimeLog("Iteration " + (indexIter + 1).toString() + " starts. Run " + (i + 1).toString() + " out of " + numIteration.toString());
+			AddTimeLog("Iteration " + (indexIter + 1).toString() + " starts. Run " + (i + 1).toString() + " out of " + $scope.data.numIteration.toString());
 			resultDim2M = await Dim2M();
 			if (typeof resultDim2M === "undefined"){return 0;}
 			/* await coarseModel.update($scope.data.iterList.map(function (a) {return a.dimension}).slice(-numPerturb), $scope.data.iterList.map(function (a) {return SerializeM(topoM, a.extractedMatrix, $scope.data.isSymmetric)}).slice(-numPerturb), topoM, $scope.data.isSymmetric); */
@@ -842,7 +858,19 @@ function handleChangeM(){
 		linearChart1 = new simpleD3LinearChart("graph-linear-chart1", margin, [0, 5], [-10, 50]);
 		linearChart2 = new simpleD3LinearChart("graph-linear-chart2", margin, [0, 5], [-10, 50]);
 
-		$scope.data = {logs: "", captureStartFreqGHz: "", captureStopFreqGHz: "", iterList: [], currentIter: {id: 0, q: 1e9}, isSymmetric: synStoreState.isSymmetric || false, spacemapButtonDisable: false, perturbationStep: Math.round(0.003 * 30.0 / synStoreState.centerFreq * 1000) / 1000, write2EMButtonHtml: "Update HFSS"};
+		$scope.data = {
+			logs: "",
+			captureStartFreqGHz: "",
+			captureStopFreqGHz: "",
+			iterList: [],
+			currentIter: {id: 0, q: 1e9},
+			isSymmetric: synStoreState.isSymmetric || false,
+			spacemapButtonDisable: false,
+			perturbationStep: Math.round(0.003 * 30.0 / synStoreState.centerFreq * 1000) / 1000,
+			write2EMButtonHtml: "Update HFSS",
+			numPerturb: 5,
+			numIteration: 10
+		};
 		
 		if (window.hasOwnProperty("preloaded")) {
 			(async function(){

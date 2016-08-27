@@ -30,7 +30,7 @@
 			</button>
 		</div>
 		<div class="col-sm-1">
-			<button type="button" class="btn btn-warning" ng-click="data.stopSimulation=true">
+			<button type="button" class="btn btn-warning" ng-click="stopSimulation()">
 				Stop
 			</button>
 		</div>
@@ -162,6 +162,7 @@
 					<h4 class="modal-title">Options:</h4>
 				</div>
 				<div class="modal-body">
+				
 					<div class="row">
 						<div class="col-sm-2">
 							Perturbation step:
@@ -170,11 +171,40 @@
 							<form class="form-inline">
 								<div class="form-group">
 									<input id="perturbation-step" type="number" class="form-control" ng-model="data.perturbationStep" placeholder="Perturbation Step">
-									<label for="perturbation-step">inch&nbsp&nbsp&nbsp&nbsp</label>
+									<label for="perturbation-step">inch&nbsp;&nbsp;&nbsp;&nbsp;</label>
 								</div>
 							</form>
 						</div>
 					</div>
+					
+					<div class="row">
+						<div class="col-sm-2">
+							Perturbation:
+						</div>
+						<div class="col-sm-6">
+							<form class="form-inline">
+								<div class="form-group">
+									<input id="perturbation-times" type="number" class="form-control" ng-model="data.numPerturb">
+									<label for="perturbation-times">times</label>
+								</div>
+							</form>
+						</div>
+					</div>
+					
+					<div class="row">
+						<div class="col-sm-2">
+							Run:
+						</div>
+						<div class="col-sm-6">
+							<form class="form-inline">
+								<div class="form-group">
+									<input id="run-times" type="number" class="form-control" ng-model="data.numIteration">
+									<label for="run-times">times</label>
+								</div>
+							</form>
+						</div>
+					</div>
+					
 					<hr>
 				</div>
 				<div class="modal-footer">
