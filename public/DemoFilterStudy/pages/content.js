@@ -685,11 +685,16 @@ function handleChangeM(){
 					if ((topoM[j][j + i] === 1) && (!($scope.data.isSymmetric && (j + j + i) > (N + 1)))) {
 						var row = (j < 10) ? j.toString() : String.fromCharCode(65 + j - 10),
 							col = ((j + i) < 10) ? (j + i).toString() : String.fromCharCode(65 + j + i - 10),
-							temp1 = "M" + row.toString() + col.toString();
+							temp1 = "M" + row.toString() + col.toString(),
+							temp2 = "M" + j.toString() + (j + i).toString();
 						$scope.data.originVarNames.push({id: indexName, name: temp1});
 						predictNames.push(0);
 						for (k = 0; k < $scope.data.variableNames.length; k++) {
 							if ($scope.data.variableNames[k].name.toUpperCase().indexOf(temp1) !== -1){
+								predictNames[indexName] = k;
+								break;
+							}
+							if ($scope.data.variableNames[k].name.toUpperCase().indexOf(temp2) !== -1){
 								predictNames[indexName] = k;
 								break;
 							}

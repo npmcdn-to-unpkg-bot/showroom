@@ -1234,13 +1234,13 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 	};
 
 	$scope.assignVariables = function _callee5() {
-		var i, j, k, N, indexName, predictNames, row, col, temp1;
+		var i, j, k, N, indexName, predictNames, row, col, temp1, temp2;
 		return regeneratorRuntime.async(function _callee5$(_context6) {
 			while (1) {
 				switch (_context6.prev = _context6.next) {
 					case 0:
 						if (!(window.hasOwnProperty("preloaded") && !variableAssigned)) {
-							_context6.next = 44;
+							_context6.next = 47;
 							break;
 						}
 
@@ -1267,7 +1267,7 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 
 					case 11:
 						if (!(i < N + 2)) {
-							_context6.next = 40;
+							_context6.next = 43;
 							break;
 						}
 
@@ -1275,16 +1275,16 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 
 					case 13:
 						if (!(j < N + 2 - i)) {
-							_context6.next = 37;
+							_context6.next = 40;
 							break;
 						}
 
 						if (!(topoM[j][j + i] === 1 && !($scope.data.isSymmetric && j + j + i > N + 1))) {
-							_context6.next = 34;
+							_context6.next = 37;
 							break;
 						}
 
-						row = j < 10 ? j.toString() : String.fromCharCode(65 + j - 10), col = j + i < 10 ? (j + i).toString() : String.fromCharCode(65 + j + i - 10), temp1 = "M" + row.toString() + col.toString();
+						row = j < 10 ? j.toString() : String.fromCharCode(65 + j - 10), col = j + i < 10 ? (j + i).toString() : String.fromCharCode(65 + j + i - 10), temp1 = "M" + row.toString() + col.toString(), temp2 = "M" + j.toString() + (j + i).toString();
 
 						$scope.data.originVarNames.push({ id: indexName, name: temp1 });
 						predictNames.push(0);
@@ -1292,7 +1292,7 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 
 					case 19:
 						if (!(k < $scope.data.variableNames.length)) {
-							_context6.next = 33;
+							_context6.next = 36;
 							break;
 						}
 
@@ -1302,50 +1302,59 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 						}
 
 						predictNames[indexName] = k;
-						return _context6.abrupt('break', 33);
+						return _context6.abrupt('break', 36);
 
 					case 23:
+						if (!($scope.data.variableNames[k].name.toUpperCase().indexOf(temp2) !== -1)) {
+							_context6.next = 26;
+							break;
+						}
+
+						predictNames[indexName] = k;
+						return _context6.abrupt('break', 36);
+
+					case 26:
 						if (!(j === N && j + i === N + 1)) {
-							_context6.next = 30;
+							_context6.next = 33;
 							break;
 						}
 
 						if (!($scope.data.variableNames[k].name.toUpperCase().indexOf("M" + row.toString() + "L") !== -1)) {
-							_context6.next = 27;
-							break;
-						}
-
-						predictNames[indexName] = k;
-						return _context6.abrupt('break', 33);
-
-					case 27:
-						if (!($scope.data.variableNames[k].name.toUpperCase().indexOf("M" + "0" + "L") !== -1)) {
 							_context6.next = 30;
 							break;
 						}
 
 						predictNames[indexName] = k;
-						return _context6.abrupt('break', 33);
+						return _context6.abrupt('break', 36);
 
 					case 30:
+						if (!($scope.data.variableNames[k].name.toUpperCase().indexOf("M" + "0" + "L") !== -1)) {
+							_context6.next = 33;
+							break;
+						}
+
+						predictNames[indexName] = k;
+						return _context6.abrupt('break', 36);
+
+					case 33:
 						k++;
 						_context6.next = 19;
 						break;
 
-					case 33:
+					case 36:
 						indexName += 1;
 
-					case 34:
+					case 37:
 						j++;
 						_context6.next = 13;
 						break;
 
-					case 37:
+					case 40:
 						i++;
 						_context6.next = 11;
 						break;
 
-					case 40:
+					case 43:
 						$scope.data.dimensionNames = $scope.data.originVarNames.map(function (a, i) {
 							return $scope.data.variableNames[predictNames[i]];
 						});
@@ -1358,7 +1367,7 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 						/* console.log("$scope.data.dimensionNames\n", $scope.data.dimensionNames); */
 						$scope.$digest();
 
-					case 44:
+					case 47:
 					case 'end':
 						return _context6.stop();
 				}
