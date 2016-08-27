@@ -800,12 +800,12 @@ def S2FP(inFreq, inS21, inS11, filterOrder, w1, w2, fc=np.nan, method=0, startFr
         originalNP = len(rootP)
         originalS11 = S11
         originalS21 = S21
-        bandIndS21 = FindEdge(S21)
-        tempArg1 = bandIndS21[0] + int(0.2 * (bandIndS21[1] - bandIndS21[0]))
-        tempArg2 = bandIndS21[0] + int(0.8 * (bandIndS21[1] - bandIndS21[0]))
-        freq_ExtractPort = freq[tempArg1 : tempArg2]
-        S11_ExtractPort = S11[tempArg1 : tempArg2]
-        S21_ExtractPort = S21[tempArg1 : tempArg2]
+#        bandIndS21 = FindEdge(S21)
+#        tempArg1 = bandIndS21[0] + int(0.2 * (bandIndS21[1] - bandIndS21[0]))
+#        tempArg2 = bandIndS21[0] + int(0.8 * (bandIndS21[1] - bandIndS21[0]))
+#        freq_ExtractPort = freq[tempArg1 : tempArg2]
+#        S11_ExtractPort = S11[tempArg1 : tempArg2]
+#        S21_ExtractPort = S21[tempArg1 : tempArg2]
         numIter = 3
         for i in np.arange(0, numIter):
             toDoSymmetric = isSymmetric and (i == numIter - 1)
@@ -940,7 +940,8 @@ def S2FP(inFreq, inS21, inS11, filterOrder, w1, w2, fc=np.nan, method=0, startFr
 #    print('rootF:', rootF)
 #    print('rootP:', rootP)
 #    print('rootE:', rootE)
-    port1, port2 = ExtractPort(freq_ExtractPort, S11_ExtractPort, S21_ExtractPort, w1, w2, fc, epsilon, coefP, coefF, rootE, Qu)
+    port1 = {"L": 0, "phi": 0}
+    port2 = {"L": 0, "phi": 0}
     return epsilon, epsilonE, Qu, coefF, coefP, rootE, port1, port2
 
 def WaveguideDelay(freq, fc, L):

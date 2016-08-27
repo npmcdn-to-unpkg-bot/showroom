@@ -12,10 +12,10 @@
 				</div>
 			</form>
 		</div>
-		<div class="col-sm-2">
+		<div class="col-sm-1">
 			<!-- Button trigger modal -->
 			<button type="button" class="btn btn-default" data-toggle="modal" data-target="#assign-variable-modal" ng-click="assignVariables()">
-				Assign variables
+				Assign
 			</button>
 		</div>
 		<div class="col-sm-1">
@@ -24,9 +24,14 @@
 				Options
 			</button>
 		</div>
-		<div class="col-sm-2">
+		<div class="col-sm-1">
 			<button type="button" class="btn btn-primary" ng-click="spacemapping()" ng-disabled="data.spacemapButtonDisable">
-				Start space mapping
+				Start
+			</button>
+		</div>
+		<div class="col-sm-1">
+			<button type="button" class="btn btn-warning" ng-click="data.stopSimulation=true">
+				Stop
 			</button>
 		</div>
 		<div class="col-sm-1">
@@ -57,16 +62,19 @@
 						</li>
 						<li role="presentation" class="dropdown">
 							<button id="iteration-list" type="button" class="btn btn-default" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-								Iteration&nbsp;{{(100 + data.currentIter.id + 1).toString().slice(-2)}}, Q = {{(data.currentIter.q > 1e8)? "infinite" : data.currentIter.q.toFixed(1)}}&nbsp;<span class="caret"></span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+								Iteration&nbsp;{{(100 + data.currentIter.id + 1).toString().slice(-2)}}, Q = {{(data.currentIter.q > 1e8)? "infinite" : data.currentIter.q.toFixed(0)}}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="caret"></span>
 							</button>
 
 							<div class="dropdown-menu list-group">
 								<button type="button" class="list-group-item" ng-attr-id="iteration{{iteration.id}}" ng-repeat="iteration in data.iterList track by $index" ng-click="changeCurrentIteration(iteration)">
 										<div>
-											Iteration&nbsp;{{(100 + iteration.id + 1).toString().slice(-2)}}, Q = {{(iteration.q > 1e8)? "infinite" : iteration.q.toFixed(1)}}
+											Iteration&nbsp;{{(100 + iteration.id + 1).toString().slice(-2)}}, Q = {{(iteration.q > 1e8)? "infinite" : iteration.q.toFixed(0)}}
 										</div>
 								</button>
 							</div>
+						</li>
+						<li role="presentation">
+							<button type="button" class="btn btn-primary" ng-click="write2EM()" ng-bind-html="data.write2EMButtonHtml"></button>
 						</li>
 						<li role="presentation" class="dropdown">
 						</li>

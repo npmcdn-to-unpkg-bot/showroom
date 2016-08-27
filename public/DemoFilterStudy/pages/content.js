@@ -150,19 +150,19 @@ angular
 		$scope.data = tempStoreState.savedSynthesisData;
 	} else {
 		$scope.data = {
-			filterOrder: 6,
+			filterOrder: 3,
 			returnLoss: 26,
-			centerFreq: 14.36,//14.36,
-			bandwidth: 0.3,//0.89,
+			centerFreq: 28.75,//14.36,
+			bandwidth: 0.6,//0.89,
 			unloadedQ: 200000,
-			startFreq: 13.5,//12.8,
-			stopFreq: 15.5,//15.5,
+			startFreq: 28,//12.8,
+			stopFreq: 29.5,//15.5,
 			numberOfPoints: 1000,
 			filterType: "BPF",
 			/* tranZeros: [['', 1.1], ['', 1.4], ['', 1.9]], */
 			tranZeros: [['', '']],
 			matrixDisplay: "M",
-			isSymmetric: false,
+			isSymmetric: true,
 			focusZero: 0
 		}
 	}	
@@ -550,7 +550,7 @@ function handleChangeM(){
 		}
 	}
 }])
-.controller("_optimize", ['$scope', '$timeout', '$state', 'common', function ($scope, $timeout, $state, common) {
+.controller("_optimize", ['$scope', '$sanitize', '$timeout', '$state', 'common', function ($scope, $sanitize, $timeout, $state, common) {
 	function SerializeM(topoM, M, isSymmetric) {
 		var i, j, N = topoM.length - 2, result = [];
 		for (i = 0; i < N + 2; i++) {
@@ -712,6 +712,16 @@ function handleChangeM(){
 		$scope.data.lowerLimit[itemId] = 0.5 * $scope.data.variableValue[temp1[0].id];
 		$scope.data.upperLimit[itemId] = 2.0 * $scope.data.variableValue[temp1[0].id];
 	}
+
+	$scope.write2EM = async function(){
+		var tempDimNames = $scope.data.dimensionNames.map(function(a){return a.name});
+		$scope.data.write2EMButtonHtml = "Setting ... " + "<i class='fa fa-refresh fa-spin fa-fw'></i>";
+		/* console.log(tempDimNames, $scope.data.currentIter.dimension); */
+		await preloaded.SetHFSSVariableValue(tempDimNames, $scope.data.currentIter.dimension);
+		$timeout(function(){
+			$scope.data.write2EMButtonHtml = "Update HFSS";
+		}, 500)
+	}
 	
 	$scope.spacemapping = async function(){
 		var tranZeros = synStoreState.tranZeros
@@ -727,6 +737,7 @@ function handleChangeM(){
 			initDimension = await preloaded.GetHFSSVariableValue($scope.data.dimensionNames.map(function(a){return a.name}));
 		$scope.data.iterList = [];
 		$scope.data.spacemapButtonDisable = true;
+		$scope.data.stopSimulation = false;
 
 		AddTimeLog("Space mapping started.");
 		if (!window.hasOwnProperty("preloaded")) {
@@ -761,13 +772,14 @@ function handleChangeM(){
 			}
 		}
 
-		for (i = 0; i < numPerturb; i++) {		
+		for (i = 0; i < numPerturb; i++) {
+			if ($scope.data.stopSimulation){return 0};
 			tempIter.id = indexIter;
 			if (i === 0){
 				tempIter.dimension = initDimension;
 			} else {
 				tempIter.dimension = initDimension.map(function (a, i) {
-					var N = topoM.length - 2, dev = (Math.random() * 2 - 1) * $scope.data.perturbationStep, L = $scope.data.isSymmetric? Math.floor((N + 1) / 2) : N, temp1 = (i < L)? a + dev / 2 : a + dev;
+					var N = topoM.length - 2, randNum = Math.random(), dev = ((randNum < 0.5)? randNum - 1 : randNum) * $scope.data.perturbationStep, L = $scope.data.isSymmetric? Math.floor((N + 1) / 2) : N, temp1 = (i < L)? a + dev / 2 : a + dev;
 					return Math.round(temp1 * 10000) / 10000;
 				});
 			}
@@ -786,6 +798,7 @@ function handleChangeM(){
 		B = numeric.identity(xf.length);
 		h = numeric.rep([xf.length], 1e9);
 		for (i = 0; i < numIteration; i++) {
+			if ($scope.data.stopSimulation){return 0};
 			tempIter.id = indexIter;
 			tempIter.dimension = xf.map(function (a){return Math.round(a * 10000) / 10000});
 			AddTimeLog("---------------------------------------------------------------------------------------------------------------", false);
@@ -829,7 +842,7 @@ function handleChangeM(){
 		linearChart1 = new simpleD3LinearChart("graph-linear-chart1", margin, [0, 5], [-10, 50]);
 		linearChart2 = new simpleD3LinearChart("graph-linear-chart2", margin, [0, 5], [-10, 50]);
 
-		$scope.data = {logs: "", captureStartFreqGHz: "", captureStopFreqGHz: "", iterList: [], currentIter: {id: 0, q: 1e9}, isSymmetric: synStoreState.isSymmetric || false, spacemapButtonDisable: false, perturbationStep: Math.round(0.005 * 30.0 / synStoreState.centerFreq * 1000) / 1000};
+		$scope.data = {logs: "", captureStartFreqGHz: "", captureStopFreqGHz: "", iterList: [], currentIter: {id: 0, q: 1e9}, isSymmetric: synStoreState.isSymmetric || false, spacemapButtonDisable: false, perturbationStep: Math.round(0.003 * 30.0 / synStoreState.centerFreq * 1000) / 1000, write2EMButtonHtml: "Update HFSS"};
 		
 		if (window.hasOwnProperty("preloaded")) {
 			(async function(){

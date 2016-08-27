@@ -557,19 +557,19 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 		$scope.data = tempStoreState.savedSynthesisData;
 	} else {
 		$scope.data = {
-			filterOrder: 6,
+			filterOrder: 3,
 			returnLoss: 26,
-			centerFreq: 14.36, //14.36,
-			bandwidth: 0.3, //0.89,
+			centerFreq: 28.75, //14.36,
+			bandwidth: 0.6, //0.89,
 			unloadedQ: 200000,
-			startFreq: 13.5, //12.8,
-			stopFreq: 15.5, //15.5,
+			startFreq: 28, //12.8,
+			stopFreq: 29.5, //15.5,
 			numberOfPoints: 1000,
 			filterType: "BPF",
 			/* tranZeros: [['', 1.1], ['', 1.4], ['', 1.9]], */
 			tranZeros: [['', '']],
 			matrixDisplay: "M",
-			isSymmetric: false,
+			isSymmetric: true,
 			focusZero: 0
 		};
 	}
@@ -1074,7 +1074,7 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 			$scope.data.currentInstr = instrument;
 		};
 	}
-}]).controller("_optimize", ['$scope', '$timeout', '$state', 'common', function ($scope, $timeout, $state, common) {
+}]).controller("_optimize", ['$scope', '$sanitize', '$timeout', '$state', 'common', function ($scope, $sanitize, $timeout, $state, common) {
 	function SerializeM(topoM, M, isSymmetric) {
 		var i,
 		    j,
@@ -1352,37 +1352,65 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 		$scope.data.upperLimit[itemId] = 2.0 * $scope.data.variableValue[temp1[0].id];
 	};
 
-	$scope.spacemapping = function _callee6() {
-		var tranZeros, captureStartFreqGHz, captureStopFreqGHz, numberOfPoints, stopFreq, freqGHz, response, sFile, i, j, N, indexIter, tempIter, coarseModel, resultDim2M, numPerturb, numIteration, initDimension, Dim2M, xc_star, xf, xc, B, h;
-		return regeneratorRuntime.async(function _callee6$(_context8) {
+	$scope.write2EM = function _callee6() {
+		var tempDimNames;
+		return regeneratorRuntime.async(function _callee6$(_context7) {
 			while (1) {
-				switch (_context8.prev = _context8.next) {
+				switch (_context7.prev = _context7.next) {
+					case 0:
+						tempDimNames = $scope.data.dimensionNames.map(function (a) {
+							return a.name;
+						});
+
+						$scope.data.write2EMButtonHtml = "Setting ... " + "<i class='fa fa-refresh fa-spin fa-fw'></i>";
+						/* console.log(tempDimNames, $scope.data.currentIter.dimension); */
+						_context7.next = 4;
+						return regeneratorRuntime.awrap(preloaded.SetHFSSVariableValue(tempDimNames, $scope.data.currentIter.dimension));
+
+					case 4:
+						$timeout(function () {
+							$scope.data.write2EMButtonHtml = "Update HFSS";
+						}, 500);
+
+					case 5:
+					case 'end':
+						return _context7.stop();
+				}
+			}
+		}, null, this);
+	};
+
+	$scope.spacemapping = function _callee7() {
+		var tranZeros, captureStartFreqGHz, captureStopFreqGHz, numberOfPoints, stopFreq, freqGHz, response, sFile, i, j, N, indexIter, tempIter, coarseModel, resultDim2M, numPerturb, numIteration, initDimension, Dim2M, xc_star, xf, xc, B, h;
+		return regeneratorRuntime.async(function _callee7$(_context9) {
+			while (1) {
+				switch (_context9.prev = _context9.next) {
 					case 0:
 						Dim2M = function Dim2M() {
 							var tempDimNames;
-							return regeneratorRuntime.async(function Dim2M$(_context7) {
+							return regeneratorRuntime.async(function Dim2M$(_context8) {
 								while (1) {
-									switch (_context7.prev = _context7.next) {
+									switch (_context8.prev = _context8.next) {
 										case 0:
-											_context7.prev = 0;
+											_context8.prev = 0;
 											tempDimNames = $scope.data.dimensionNames.map(function (a) {
 												return a.name;
 											});
 
 											AddTimeLog("Simulation in process with the following dimension.\n\t" + JSON.stringify(tempDimNames).replace(/,/g, ", ") + "\n\t" + JSON.stringify(tempIter.dimension).replace(/,/g, ", "));
 											tempIter.s2p = "s" + indexIter.toString() + ".s2p";
-											_context7.next = 6;
+											_context8.next = 6;
 											return regeneratorRuntime.awrap(preloaded.EvaluateDimension(tempDimNames, tempIter.dimension, tempIter.s2p));
 
 										case 6:
-											sFile = _context7.sent;
+											sFile = _context8.sent;
 
 											AddTimeLog("Simulation completed. Extracting coupling matrix.");
-											_context7.next = 10;
+											_context8.next = 10;
 											return regeneratorRuntime.awrap(common.xhr2('ExtractMatrix', _extends({}, sFile, synStoreState, { tranZeros: tranZeros, topology: topoM, captureStartFreqGHz: captureStartFreqGHz, captureStopFreqGHz: captureStopFreqGHz })));
 
 										case 10:
-											response = _context7.sent;
+											response = _context8.sent;
 
 											AddTimeLog("Coupling matrix extracted.");
 											tempIter.sFile = sFile;
@@ -1396,18 +1424,18 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
            					console.log(document.querySelector('#iteration' + tempIter.id.toString()))
            					document.querySelector('#iteration' + tempIter.id.toString()).click();
            				}, 3000); */
-											return _context7.abrupt('return', 0);
+											return _context8.abrupt('return', 0);
 
 										case 22:
-											_context7.prev = 22;
-											_context7.t0 = _context7['catch'](0);
+											_context8.prev = 22;
+											_context8.t0 = _context8['catch'](0);
 
-											AddTimeLog(_context7.t0.message);
-											return _context7.abrupt('return', undefined);
+											AddTimeLog(_context8.t0.message);
+											return _context8.abrupt('return', undefined);
 
 										case 26:
 										case 'end':
-											return _context7.stop();
+											return _context8.stop();
 									}
 								}
 							}, null, this, [[0, 22]]);
@@ -1424,43 +1452,54 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 						coarseModel = new CoarseModelLinear();
 						numPerturb = 5;
 						numIteration = 10;
-						_context8.next = 10;
+						_context9.next = 10;
 						return regeneratorRuntime.awrap(preloaded.GetHFSSVariableValue($scope.data.dimensionNames.map(function (a) {
 							return a.name;
 						})));
 
 					case 10:
-						initDimension = _context8.sent;
+						initDimension = _context9.sent;
 
 						$scope.data.iterList = [];
 						$scope.data.spacemapButtonDisable = true;
+						$scope.data.stopSimulation = false;
 
 						AddTimeLog("Space mapping started.");
 
 						if (window.hasOwnProperty("preloaded")) {
-							_context8.next = 17;
+							_context9.next = 18;
 							break;
 						}
 
 						AddTimeLog("Space mapping cannot be run in browser.");
-						return _context8.abrupt('return', 0);
-
-					case 17:
-						i = 0;
+						return _context9.abrupt('return', 0);
 
 					case 18:
+						i = 0;
+
+					case 19:
 						if (!(i < numPerturb)) {
-							_context8.next = 32;
+							_context9.next = 36;
 							break;
 						}
 
+						if (!$scope.data.stopSimulation) {
+							_context9.next = 22;
+							break;
+						}
+
+						return _context9.abrupt('return', 0);
+
+					case 22:
+						;
 						tempIter.id = indexIter;
 						if (i === 0) {
 							tempIter.dimension = initDimension;
 						} else {
 							tempIter.dimension = initDimension.map(function (a, i) {
 								var N = topoM.length - 2,
-								    dev = (Math.random() * 2 - 1) * $scope.data.perturbationStep,
+								    randNum = Math.random(),
+								    dev = (randNum < 0.5 ? randNum - 1 : randNum) * $scope.data.perturbationStep,
 								    L = $scope.data.isSymmetric ? Math.floor((N + 1) / 2) : N,
 								    temp1 = i < L ? a + dev / 2 : a + dev;
 								return Math.round(temp1 * 10000) / 10000;
@@ -1468,120 +1507,129 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 						}
 						AddTimeLog("---------------------------------------------------------------------------------------------------------------", false);
 						AddTimeLog("Iteration " + (indexIter + 1).toString() + " starts. Perturbation " + (i + 1).toString() + " out of " + numPerturb.toString());
-						_context8.next = 25;
+						_context9.next = 29;
 						return regeneratorRuntime.awrap(Dim2M());
 
-					case 25:
-						resultDim2M = _context8.sent;
+					case 29:
+						resultDim2M = _context9.sent;
 
 						if (!(typeof resultDim2M === "undefined")) {
-							_context8.next = 28;
+							_context9.next = 32;
 							break;
 						}
 
-						return _context8.abrupt('return', 0);
-
-					case 28:
-						indexIter = indexIter + 1;
-
-					case 29:
-						i++;
-						_context8.next = 18;
-						break;
+						return _context9.abrupt('return', 0);
 
 					case 32:
-						_context8.next = 34;
+						indexIter = indexIter + 1;
+
+					case 33:
+						i++;
+						_context9.next = 19;
+						break;
+
+					case 36:
+						_context9.next = 38;
 						return regeneratorRuntime.awrap(coarseModel.update($scope.data.iterList.map(function (a) {
 							return a.dimension;
 						}), $scope.data.iterList.map(function (a) {
 							return SerializeM(topoM, a.extractedMatrix, $scope.data.isSymmetric);
 						}), topoM, $scope.data.isSymmetric));
 
-					case 34:
+					case 38:
 						xc_star = coarseModel.defunc(SerializeM(topoM, synStoreState.targetMatrix, $scope.data.isSymmetric));
 						xf = xc_star;
 						B = numeric.identity(xf.length);
 						h = numeric.rep([xf.length], 1e9);
 						i = 0;
 
-					case 39:
+					case 43:
 						if (!(i < numIteration)) {
-							_context8.next = 72;
+							_context9.next = 79;
 							break;
 						}
 
+						if (!$scope.data.stopSimulation) {
+							_context9.next = 46;
+							break;
+						}
+
+						return _context9.abrupt('return', 0);
+
+					case 46:
+						;
 						tempIter.id = indexIter;
 						tempIter.dimension = xf.map(function (a) {
 							return Math.round(a * 10000) / 10000;
 						});
 						AddTimeLog("---------------------------------------------------------------------------------------------------------------", false);
 						AddTimeLog("Iteration " + (indexIter + 1).toString() + " starts. Run " + (i + 1).toString() + " out of " + numIteration.toString());
-						_context8.next = 46;
+						_context9.next = 53;
 						return regeneratorRuntime.awrap(Dim2M());
 
-					case 46:
-						resultDim2M = _context8.sent;
+					case 53:
+						resultDim2M = _context9.sent;
 
 						if (!(typeof resultDim2M === "undefined")) {
-							_context8.next = 49;
+							_context9.next = 56;
 							break;
 						}
 
-						return _context8.abrupt('return', 0);
+						return _context9.abrupt('return', 0);
 
-					case 49:
+					case 56:
 						/* await coarseModel.update($scope.data.iterList.map(function (a) {return a.dimension}).slice(-numPerturb), $scope.data.iterList.map(function (a) {return SerializeM(topoM, a.extractedMatrix, $scope.data.isSymmetric)}).slice(-numPerturb), topoM, $scope.data.isSymmetric); */
 						xc = coarseModel.defunc(SerializeM(topoM, tempIter.extractedMatrix, $scope.data.isSymmetric));
-						_context8.prev = 50;
-						_context8.next = 53;
+						_context9.prev = 57;
+						_context9.next = 60;
 						return regeneratorRuntime.awrap(common.xhr2('SpaceMappingCalculate', { B: B, h: h, xc: xc, xc_star: xc_star, xf: xf, lowerLimit: $scope.data.lowerLimit, upperLimit: $scope.data.upperLimit }));
 
-					case 53:
-						response = _context8.sent;
+					case 60:
+						response = _context9.sent;
 
 						AddTimeLog("h: " + JSON.stringify(response.h).replace(/,/g, ", "));
 						AddTimeLog("f: " + JSON.stringify(response.f).replace(/,/g, ", "));
-						_context8.next = 62;
+						_context9.next = 69;
 						break;
 
-					case 58:
-						_context8.prev = 58;
-						_context8.t0 = _context8['catch'](50);
+					case 65:
+						_context9.prev = 65;
+						_context9.t0 = _context9['catch'](57);
 
-						AddTimeLog(_context8.t0.message);
-						return _context8.abrupt('return', 0);
+						AddTimeLog(_context9.t0.message);
+						return _context9.abrupt('return', 0);
 
-					case 62:
+					case 69:
 						B = response.B;
 						h = response.h;
 						xf = response.xf;
 						console.log(xf, B, h, response.toStop);
 
 						if (!(response.toStop === 1)) {
-							_context8.next = 68;
+							_context9.next = 75;
 							break;
 						}
 
-						return _context8.abrupt('break', 72);
+						return _context9.abrupt('break', 79);
 
-					case 68:
+					case 75:
 						indexIter = indexIter + 1;
 
-					case 69:
+					case 76:
 						i++;
-						_context8.next = 39;
+						_context9.next = 43;
 						break;
 
-					case 72:
+					case 79:
 						AddTimeLog("----------------------------------------------------------------------------------------", false);
 						AddTimeLog("Space mapping finished.");
 
-					case 74:
+					case 81:
 					case 'end':
-						return _context8.stop();
+						return _context9.stop();
 				}
 			}
-		}, null, this, [[50, 58]]);
+		}, null, this, [[57, 65]]);
 	}; // end of $scope.spacemapping
 
 	var synStoreState, topoM, variableAssigned, linearChart1, linearChart2;
@@ -1598,20 +1646,20 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 		linearChart1 = new simpleD3LinearChart("graph-linear-chart1", margin, [0, 5], [-10, 50]);
 		linearChart2 = new simpleD3LinearChart("graph-linear-chart2", margin, [0, 5], [-10, 50]);
 
-		$scope.data = { logs: "", captureStartFreqGHz: "", captureStopFreqGHz: "", iterList: [], currentIter: { id: 0, q: 1e9 }, isSymmetric: synStoreState.isSymmetric || false, spacemapButtonDisable: false, perturbationStep: Math.round(0.005 * 30.0 / synStoreState.centerFreq * 1000) / 1000 };
+		$scope.data = { logs: "", captureStartFreqGHz: "", captureStopFreqGHz: "", iterList: [], currentIter: { id: 0, q: 1e9 }, isSymmetric: synStoreState.isSymmetric || false, spacemapButtonDisable: false, perturbationStep: Math.round(0.003 * 30.0 / synStoreState.centerFreq * 1000) / 1000, write2EMButtonHtml: "Update HFSS" };
 
 		if (window.hasOwnProperty("preloaded")) {
-			(function _callee7() {
+			(function _callee8() {
 				var temp1;
-				return regeneratorRuntime.async(function _callee7$(_context9) {
+				return regeneratorRuntime.async(function _callee8$(_context10) {
 					while (1) {
-						switch (_context9.prev = _context9.next) {
+						switch (_context10.prev = _context10.next) {
 							case 0:
-								_context9.next = 2;
+								_context10.next = 2;
 								return regeneratorRuntime.awrap(preloaded.Try(['H', 'e', 'l', 'l', 'o', '!', ' Please make sure:']));
 
 							case 2:
-								temp1 = _context9.sent.join("");
+								temp1 = _context10.sent.join("");
 
 								AddTimeLog(temp1, false);
 								AddTimeLog("1. the current design is open", false);
@@ -1621,7 +1669,7 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 
 							case 8:
 							case 'end':
-								return _context9.stop();
+								return _context10.stop();
 						}
 					}
 				}, null, this);

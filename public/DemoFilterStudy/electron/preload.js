@@ -144,7 +144,7 @@ preloaded.Try = function (names) {
 
 preloaded.GetHFSSVariables = function () {
 	var p1 = ReadFileAsync("./template/VbsHFSSSetup.txt"),
-	p2 = ReadFileAsync("./template/VbsHFSSGetVariables.txt");
+		p2 = ReadFileAsync("./template/VbsHFSSGetVariables.txt");
 	return Promise.all([p1, p2])
 	.then(function (values) {
 		tempScript = values.join("\n\n");
@@ -159,9 +159,23 @@ preloaded.GetHFSSVariables = function () {
 	}); */
 }
 
+preloaded.SetHFSSVariableValue = function (names, dimension) { // names is string array
+	var p1 = ReadFileAsync("./template/JsHFSSSetup.txt"),
+		p2 = ReadFileAsync("./template/JsHFSSSetVariableValue.txt");
+	return Promise.all([p1, p2])
+	.then(function (values) {
+		var temp2 = util.format(values[1], JSON.stringify(names), JSON.stringify(dimension)),
+		tempScript = [values[0], temp2].join("\n\n");
+		return execScript(tempScript)
+		.then(function (a) {
+			return a;
+		})
+	})
+}
+
 preloaded.GetHFSSVariableValue = function (names) { // names is string array
 	var p1 = ReadFileAsync("./template/JsHFSSGetVariableValue.txt"),
-	p2 = ReadFileAsync("./template/JsHFSSSetup.txt");
+		p2 = ReadFileAsync("./template/JsHFSSSetup.txt");
 	return Promise.all([p1, p2])
 	.then(function (values) {
 		var temp1 = util.format(values[0], JSON.stringify(names)),
@@ -184,8 +198,8 @@ preloaded.GetHFSSVariableValue = function (names) { // names is string array
 
 preloaded.EvaluateDimension = function (names, dimension, s2p) {
 	var p1 = ReadFileAsync("./template/JsHFSSSetup.txt"),
-	p2 = ReadFileAsync("./template/JsHFSSSetVariableValue.txt"),
-	p3 = ReadFileAsync("./template/JsHFSSAnalyze.txt");
+		p2 = ReadFileAsync("./template/JsHFSSSetVariableValue.txt"),
+		p3 = ReadFileAsync("./template/JsHFSSAnalyze.txt");
 	return Promise.all([p1, p2, p3])
 	.then(function (values) {
 		var temp2 = util.format(values[1], JSON.stringify(names), JSON.stringify(dimension)),
