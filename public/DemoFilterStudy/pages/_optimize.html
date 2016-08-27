@@ -12,14 +12,12 @@
 				</div>
 			</form>
 		</div>
-		<div class="col-sm-1">
-			<!-- Button trigger modal -->
+<!-- 		<div class="col-sm-1">
 			<button type="button" class="btn btn-default" data-toggle="modal" data-target="#assign-variable-modal" ng-click="assignVariables()">
 				Assign
 			</button>
 		</div>
 		<div class="col-sm-1">
-			<!-- Button trigger modal -->
 			<button type="button" class="btn btn-default" data-toggle="modal" data-target="#option-modal">
 				Options
 			</button>
@@ -38,7 +36,38 @@
 			<button type="button" class="btn btn-default" ng-click="reset()">
 				Reset
 			</button>
+		</div> -->
+		
+		<div class="col-sm-5">
+			<ul class="nav nav-pills" role="tablist">
+				<li role="presentation">
+					<button type="button" class="btn btn-default" data-toggle="modal" data-target="#assign-variable-modal" ng-click="assignVariables()">
+						Assign
+					</button>
+				</li>
+				<li role="presentation">
+					<button type="button" class="btn btn-default" data-toggle="modal" data-target="#option-modal">
+						Options
+					</button>
+				</li>
+				<li role="presentation">
+					<button type="button" class="btn btn-primary" ng-click="spacemapping()" ng-disabled="data.spacemapButtonDisable">
+						Start
+					</button>
+				</li>
+				<li role="presentation">
+					<button type="button" class="btn btn-warning" ng-click="stopSimulation()">
+						Stop
+					</button>
+				</li>
+				<li role="presentation">
+					<button type="button" class="btn btn-default" ng-click="reset()">
+						Reset
+					</button>
+				</li>
+			</ul>
 		</div>
+
 	</div>
 	
 	<div class="row last-row-fullheight" style="padding-top: 10px;">
