@@ -1412,7 +1412,7 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 		}, null, this);
 	};
 
-	$scope.manuelSet = function () {
+	$scope.manualSet = function () {
 		$scope.data.manualVariableValue = angular.copy($scope.data.currentIter.dimension);
 		$scope.data.manualDeviation = SerializeM(topoM, $scope.data.currentIter.deviateMatrix, $scope.data.isSymmetric);
 	};
@@ -1546,7 +1546,7 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 								    dev = (randNum < 0.5 ? randNum - 1 : randNum) * $scope.data.perturbationStep,
 								    L = $scope.data.isSymmetric ? Math.floor((N + 1) / 2) : N,
 								    temp1 = i < L ? a + dev / 2 : a + dev;
-								return Math.round(temp1 * 10000) / 10000;
+								return Math.round(temp1 * 100000) / 100000;
 							});
 						}
 						AddTimeLog("---------------------------------------------------------------------------------------------------------------", false);
@@ -1615,7 +1615,7 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 						;
 						tempIter.id = indexIter;
 						tempIter.dimension = xf.map(function (a) {
-							return Math.round(a * 10000) / 10000;
+							return Math.round(a * 100000) / 100000;
 						});
 						AddTimeLog("---------------------------------------------------------------------------------------------------------------", false);
 						AddTimeLog("Iteration " + (indexIter + 1).toString() + " starts. Run " + (i + 1).toString() + " out of " + $scope.data.numIteration.toString());
@@ -1688,7 +1688,11 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 		}, null, this, [[61, 69]]);
 	}; // end of $scope.spacemapping
 
-	var synStoreState, topoM, variableAssigned, linearChart1, linearChart2;
+	var synStoreState,
+	    topoM,
+	    variableAssigned = false,
+	    linearChart1,
+	    linearChart2;
 	$timeout(function () {
 		synStoreState = store.getState().savedSynthesisData;
 		topoM = store.getState().topoM;

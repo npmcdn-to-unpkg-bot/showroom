@@ -106,7 +106,7 @@
 							<button type="button" class="btn btn-primary" ng-click="write2EM(data.currentIter.dimension)" ng-bind-html="data.write2EMButtonHtml"></button>
 						</li>
 						<li role="presentation">
-							<button type="button" class="btn btn-info" data-toggle="modal" data-target="#manual-set-modal" ng-click="manuelSet()">Manual</button>
+							<button type="button" class="btn btn-info" data-toggle="modal" data-target="#manual-set-modal" ng-click="manualSet()">Manual</button>
 						</li>
 						<li role="presentation" class="dropdown">
 						</li>
@@ -176,7 +176,7 @@
 							</form>
 						</div>
 						<div class="col-sm-1">
-							{{data.variableValue[data.dimensionNames[item.id].id].toFixed(4)}}
+							{{data.variableValue[data.dimensionNames[item.id].id].toFixed(5)}}
 						</div>
 					</div>
 					<hr>
