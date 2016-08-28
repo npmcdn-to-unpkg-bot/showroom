@@ -164,13 +164,16 @@
 							<form class="form-inline">
 								<div class="form-group">
 									<input id="lower-limit-{{$index}}" type="number" class="form-control" ng-model="data.lowerLimit[item.id]" placeholder="lower limit">
-									<label for="lower-limit-{{$index}}">inch&nbsp&nbsp&nbsp&nbsp</label>
+									<label for="lower-limit-{{$index}}">inch&nbsp;&nbsp;&nbsp;&nbsp;</label>
 								</div>
 								<div class="form-group">
 									<input id="upper-limit-{{$index}}" type="number" class="form-control" ng-model="data.upperLimit[item.id]" placeholder="upper limit">
-									<label for="upper-limit-{{$index}}">inch&nbsp&nbsp&nbsp&nbsp</label>
+									<label for="upper-limit-{{$index}}">inch&nbsp;&nbsp;&nbsp;&nbsp;</label>
 								</div>
 							</form>
+						</div>
+						<div class="col-sm-1">
+							{{data.variableValue[data.dimensionNames[item.id].id].toFixed(4)}}
 						</div>
 					</div>
 					<hr>

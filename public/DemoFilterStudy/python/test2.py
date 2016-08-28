@@ -120,7 +120,7 @@ import matplotlib.pyplot as plt
 
 
 
-reqJson = np.load('tempData.npy')[0]
+#reqJson = np.load('tempData.npy')[0]
 #freq = np.array(reqJson['freq']) * 1e6
 #w1 = (reqJson['centerFreq'] - reqJson['bandwidth'] / 2) * 1e9
 #w2 = (reqJson['centerFreq'] + reqJson['bandwidth'] / 2) * 1e9
@@ -192,70 +192,72 @@ reqJson = np.load('tempData.npy')[0]
 #resJson = {'B': B.tolist(), 'h': h.tolist(), 'xf': xf.tolist(), 'toStop': toStop}
 #print(json.dumps(resJson, separators = (',', ':')))
 
-#dimension = np.array(reqJson['dimension'])
-#extractedMatrix = np.array(reqJson['extractedMatrix'])
-#topology = np.array(reqJson['topology'])
-#isSymmetric = np.array(reqJson['isSymmetric'])
-#
-#N = topology.shape[0] - 2
-#seqM = np.zeros((N + 2, N + 2), dtype = int) - 1
-#index = 0
-#for i in np.arange(N + 2):
-#    for j in np.arange(N + 2 - i):
-#        if (topology[j, j + i] == 1) and not (isSymmetric and (j + j + i) > (N + 1)):
-#            seqM[j, j + i] = index
-#            index += 1
-#            
-#numDim = dimension.shape[1]
-#impactM = np.zeros((numDim, numDim), dtype = int)
-#for i in np.arange(N + 2):
-#    if seqM[i, i] != -1:
-#        for j in np.arange(N + 2):
-#            if seqM[i, j] != -1:
-#                impactM[seqM[i, j], seqM[i, i]] = 1
-#            if seqM[j, i] != -1:
-#                impactM[seqM[j, i], seqM[i, i]] = 1
-#                
-#for i in np.arange(1, N + 2):
-#    for j in np.arange(N + 2 - i):
-#        if seqM[j, j + i] != -1:
-#            impactM[seqM[j, j + i], seqM[j, j + i]] = 1
-#            if seqM[j, j] != -1:
-#                impactM[seqM[j, j], seqM[j, j + i]] = 1
-#            if seqM[j + i, j + i] != -1:
-#                impactM[seqM[j + i, j + i], seqM[j, j + i]] = 1
-#            elif seqM[N + 1 - j - i, N + 1 - j - i] != -1:
-#                impactM[seqM[N + 1 - j - i, N + 1 - j - i], seqM[j, j + i]] = 1
-#
-#A = np.zeros((numDim * dimension.shape[0], np.sum(impactM) + numDim))
-#B = extractedMatrix.reshape(numDim * dimension.shape[0])
-#for i in np.arange(dimension.shape[0]):
-#    index = 0
-#    for j in np.arange(numDim):
-#        tempL = np.sum(impactM[j])
-#        A[i * numDim + j, index : index + tempL] = dimension[i, impactM[j] == 1]
-#        index += tempL
-#        A[i * numDim + j, j - numDim] = 1.0
-#
-#x, residuals = np.linalg.lstsq(A, B)[0 : 2]
-#slopeM = np.zeros((numDim, numDim))
-#index = 0
-#for i in np.arange(numDim):
-#    for j in np.arange(numDim):
-#        if impactM[i, j] == 1:
-#            slopeM[i, j] = x[index]
-#            index += 1
-#intepM = x[index:]
-#invSlopeM = np.linalg.inv(slopeM)
-##intepM + (slopeM.dot(dimension.T)).T - extractedMatrix
-#
-#resJson = {'slopeM': slopeM.tolist(), 'invSlopeM': invSlopeM.tolist(), 'intepM': intepM.tolist()}
+reqJson = np.load('tempData.npy')[0]
+dimension = np.array(reqJson['dimension'])
+extractedMatrix = np.array(reqJson['extractedMatrix'])
+topology = np.array(reqJson['topology'])
+isSymmetric = np.array(reqJson['isSymmetric'])
 
-reqJson = np.load('tempData4.npy')[0]
-freq = reqJson["freq"]
-angleRad = np.unwrap(reqJson["angleRad"])
+N = topology.shape[0] - 2
+seqM = np.zeros((N + 2, N + 2), dtype = int) - 1
+index = 0
+for i in np.arange(N + 2):
+    for j in np.arange(N + 2 - i):
+        if (topology[j, j + i] == 1) and not (isSymmetric and (j + j + i) > (N + 1)):
+            seqM[j, j + i] = index
+            index += 1
+            
+numDim = dimension.shape[1]
+impactM = np.zeros((numDim, numDim), dtype = int)
+for i in np.arange(N + 2):
+    if seqM[i, i] != -1:
+        for j in np.arange(N + 2):
+            if seqM[i, j] != -1:
+                impactM[seqM[i, j], seqM[i, i]] = 1
+            if seqM[j, i] != -1:
+                impactM[seqM[j, i], seqM[i, i]] = 1
+                
+for i in np.arange(1, N + 2):
+    for j in np.arange(N + 2 - i):
+        if seqM[j, j + i] != -1:
+            impactM[seqM[j, j + i], seqM[j, j + i]] = 1
+            if seqM[j, j] != -1:
+                impactM[seqM[j, j], seqM[j, j + i]] = 1
+            if seqM[j + i, j + i] != -1:
+                impactM[seqM[j + i, j + i], seqM[j, j + i]] = 1
+            elif seqM[N + 1 - j - i, N + 1 - j - i] != -1:
+                impactM[seqM[N + 1 - j - i, N + 1 - j - i], seqM[j, j + i]] = 1
 
-c0 = sp.constants.speed_of_light
+A = np.zeros((numDim * dimension.shape[0], np.sum(impactM) + numDim))
+B = extractedMatrix.reshape(numDim * dimension.shape[0])
+for i in np.arange(dimension.shape[0]):
+    index = 0
+    for j in np.arange(numDim):
+        tempL = np.sum(impactM[j])
+        A[i * numDim + j, index : index + tempL] = dimension[i, impactM[j] == 1]
+        index += tempL
+        A[i * numDim + j, j - numDim] = 1.0
+
+x, residuals = np.linalg.lstsq(A, B)[0 : 2]
+slopeM = np.zeros((numDim, numDim))
+index = 0
+for i in np.arange(numDim):
+    for j in np.arange(numDim):
+        if impactM[i, j] == 1:
+            slopeM[i, j] = x[index]
+            index += 1
+intepM = x[index:]
+invSlopeM = np.linalg.inv(slopeM)
+#intepM + (slopeM.dot(dimension.T)).T - extractedMatrix
+
+resJson = {'slopeM': slopeM.tolist(), 'invSlopeM': invSlopeM.tolist(), 'intepM': intepM.tolist()}
+
+#reqJson = np.load('tempData4.npy')[0]
+#freq = reqJson["freq"]
+#angleRad = np.unwrap(reqJson["angleRad"])
+#
+#c0 = sp.constants.speed_of_light
+
 #piC0 = 4 * np.pi * np.pi / (c0 * c0)
 #x = np.array([np.min(freq), 0.2, 0.01]) # fc L phi
 #limitX = np.array([np.min(freq), 0.2, 1e3])
@@ -273,21 +275,21 @@ c0 = sp.constants.speed_of_light
 #    x = np.where(np.abs(x) < limitX, x, limitX * x / np.abs(x))
 #    print(x, r.dot(r) / lenFreq)
 
-unwrappedAngleRad = np.unwrap(angleRad)
-A = np.ones((len(freq), 2))
-A[:, 0] = -2 * np.pi * np.sqrt(freq * freq - fc * fc) / sp.constants.speed_of_light
-B = unwrappedAngleRad
-x, residuals = np.linalg.lstsq(A, B)[0:2]
-
-B -= np.around(x[1] / (2 * np.pi)) * 2 * np.pi
-temp1 = np.around(x[1] / (2 * np.pi)) * 2 * np.pi
-print(x[1] * 180 / np.pi, temp1)
-A = np.matrix(A[:, 0]).T
-x, residuals = np.linalg.lstsq(A, B)[0:2]
-print(x)
-
-angleRadNew = -2 * np.pi * x[0] * np.sqrt(freq * freq - fc * fc) / c0 + temp1
-#plt.figure()
-plt.clf()
-plt.plot(freq / 1e9, angleRad * 180 / np.pi, "*")
-plt.plot(freq / 1e9, angleRadNew * 180 / np.pi, "o")
+#unwrappedAngleRad = np.unwrap(angleRad)
+#A = np.ones((len(freq), 2))
+#A[:, 0] = -2 * np.pi * np.sqrt(freq * freq - fc * fc) / sp.constants.speed_of_light
+#B = unwrappedAngleRad
+#x, residuals = np.linalg.lstsq(A, B)[0:2]
+#
+#B -= np.around(x[1] / (2 * np.pi)) * 2 * np.pi
+#temp1 = np.around(x[1] / (2 * np.pi)) * 2 * np.pi
+#print(x[1] * 180 / np.pi, temp1)
+#A = np.matrix(A[:, 0]).T
+#x, residuals = np.linalg.lstsq(A, B)[0:2]
+#print(x)
+#
+#angleRadNew = -2 * np.pi * x[0] * np.sqrt(freq * freq - fc * fc) / c0 + temp1
+##plt.figure()
+#plt.clf()
+#plt.plot(freq / 1e9, angleRad * 180 / np.pi, "*")
+#plt.plot(freq / 1e9, angleRadNew * 180 / np.pi, "o")

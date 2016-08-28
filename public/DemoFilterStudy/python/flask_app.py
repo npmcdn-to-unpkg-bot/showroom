@@ -116,7 +116,7 @@ def get_task(method):
         xf = np.where(xf > lowerLimit, xf, lowerLimit)
         xf = np.where(xf < upperLimit, xf, upperLimit)
         h = xf - xf_old
-        if np.abs(np.sqrt(f.dot(f))) < 1e-4:
+        if f.dot(f) < 1e-9 * len(xc):
             toStop = 1
         else:
             toStop = 0
