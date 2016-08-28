@@ -150,17 +150,17 @@ angular
 		$scope.data = tempStoreState.savedSynthesisData;
 	} else {
 		$scope.data = {
-			filterOrder: 6,
+			filterOrder: 8,
 			returnLoss: 26,
-			centerFreq: 2.52,//14.36,
-			bandwidth: 0.052,//0.89,
+			centerFreq: 29,//14.36,
+			bandwidth: 0.3,//0.89,
 			unloadedQ: 200000,
-			startFreq: 2.42,//12.8,
-			stopFreq: 2.62,//15.5,
+			startFreq: 28.5,//12.8,
+			stopFreq: 29.5,//15.5,
 			numberOfPoints: 1000,
 			filterType: "BPF",
-			tranZeros: [['', 1.4], ['', -1.2]],
-			/* tranZeros: [['', '']], */
+			/* tranZeros: [['', 1.4], ['', -1.2]], */
+			tranZeros: [['', '']],
 			matrixDisplay: "M",
 			isSymmetric: false,
 			focusZero: 0
@@ -707,6 +707,10 @@ function handleChangeM(){
 									predictNames[indexName] = k;
 									break;
 								}
+								if ($scope.data.variableNames[k].name.toUpperCase().indexOf("M" + row.toString() + "0") !== -1){
+									predictNames[indexName] = k;
+									break;
+								}
 							}
 						}
 						indexName += 1;
@@ -773,13 +777,14 @@ function handleChangeM(){
 
 		async function Dim2M(){
 			try {
-				var tempDimNames = $scope.data.dimensionNames.map(function(a){return a.name});
+				var temp1, tempDimNames = $scope.data.dimensionNames.map(function(a){return a.name});
 				AddTimeLog("Simulation in process with the following dimension.\n\t" + JSON.stringify(tempDimNames).replace(/,/g, ", ") + "\n\t" + JSON.stringify(tempIter.dimension).replace(/,/g, ", "));
 				tempIter.s2p = "s" + indexIter.toString() + ".s2p";
 				sFile = await preloaded.EvaluateDimension(tempDimNames, tempIter.dimension, tempIter.s2p);
 				AddTimeLog("Simulation completed. Extracting coupling matrix.");
 				response = await common.xhr2('ExtractMatrix', {...sFile, ...synStoreState, tranZeros: tranZeros, topology: topoM, captureStartFreqGHz: captureStartFreqGHz, captureStopFreqGHz: captureStopFreqGHz});
-				AddTimeLog("Coupling matrix extracted.");
+				temp1 = SerializeM(topoM, response.deviateMatrix, $scope.data.isSymmetric).map(function (a){return Math.round(a * 10000) / 10000});
+				AddTimeLog("Coupling matrix extracted. The deviation is \n\t" + JSON.stringify(temp1).replace(/,/g, ", "));
 				tempIter.sFile = sFile;
 				tempIter.extractedMatrix = response.extractedMatrix;
 				tempIter.deviateMatrix = response.deviateMatrix;

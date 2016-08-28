@@ -557,17 +557,17 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 		$scope.data = tempStoreState.savedSynthesisData;
 	} else {
 		$scope.data = {
-			filterOrder: 6,
+			filterOrder: 8,
 			returnLoss: 26,
-			centerFreq: 2.52, //14.36,
-			bandwidth: 0.052, //0.89,
+			centerFreq: 29, //14.36,
+			bandwidth: 0.3, //0.89,
 			unloadedQ: 200000,
-			startFreq: 2.42, //12.8,
-			stopFreq: 2.62, //15.5,
+			startFreq: 28.5, //12.8,
+			stopFreq: 29.5, //15.5,
 			numberOfPoints: 1000,
 			filterType: "BPF",
-			tranZeros: [['', 1.4], ['', -1.2]],
-			/* tranZeros: [['', '']], */
+			/* tranZeros: [['', 1.4], ['', -1.2]], */
+			tranZeros: [['', '']],
 			matrixDisplay: "M",
 			isSymmetric: false,
 			focusZero: 0
@@ -1240,7 +1240,7 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 				switch (_context6.prev = _context6.next) {
 					case 0:
 						if (!(window.hasOwnProperty("preloaded") && !variableAssigned)) {
-							_context6.next = 47;
+							_context6.next = 50;
 							break;
 						}
 
@@ -1267,7 +1267,7 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 
 					case 11:
 						if (!(i < N + 2)) {
-							_context6.next = 43;
+							_context6.next = 46;
 							break;
 						}
 
@@ -1275,12 +1275,12 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 
 					case 13:
 						if (!(j < N + 2 - i)) {
-							_context6.next = 40;
+							_context6.next = 43;
 							break;
 						}
 
 						if (!(topoM[j][j + i] === 1 && !($scope.data.isSymmetric && j + j + i > N + 1))) {
-							_context6.next = 37;
+							_context6.next = 40;
 							break;
 						}
 
@@ -1292,7 +1292,7 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 
 					case 19:
 						if (!(k < $scope.data.variableNames.length)) {
-							_context6.next = 36;
+							_context6.next = 39;
 							break;
 						}
 
@@ -1302,7 +1302,7 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 						}
 
 						predictNames[indexName] = k;
-						return _context6.abrupt('break', 36);
+						return _context6.abrupt('break', 39);
 
 					case 23:
 						if (!($scope.data.variableNames[k].name.toUpperCase().indexOf(temp2) !== -1)) {
@@ -1311,11 +1311,11 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 						}
 
 						predictNames[indexName] = k;
-						return _context6.abrupt('break', 36);
+						return _context6.abrupt('break', 39);
 
 					case 26:
 						if (!(j === N && j + i === N + 1)) {
-							_context6.next = 33;
+							_context6.next = 36;
 							break;
 						}
 
@@ -1325,7 +1325,7 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 						}
 
 						predictNames[indexName] = k;
-						return _context6.abrupt('break', 36);
+						return _context6.abrupt('break', 39);
 
 					case 30:
 						if (!($scope.data.variableNames[k].name.toUpperCase().indexOf("M" + "0" + "L") !== -1)) {
@@ -1334,27 +1334,36 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 						}
 
 						predictNames[indexName] = k;
-						return _context6.abrupt('break', 36);
+						return _context6.abrupt('break', 39);
 
 					case 33:
+						if (!($scope.data.variableNames[k].name.toUpperCase().indexOf("M" + row.toString() + "0") !== -1)) {
+							_context6.next = 36;
+							break;
+						}
+
+						predictNames[indexName] = k;
+						return _context6.abrupt('break', 39);
+
+					case 36:
 						k++;
 						_context6.next = 19;
 						break;
 
-					case 36:
+					case 39:
 						indexName += 1;
 
-					case 37:
+					case 40:
 						j++;
 						_context6.next = 13;
 						break;
 
-					case 40:
+					case 43:
 						i++;
 						_context6.next = 11;
 						break;
 
-					case 43:
+					case 46:
 						$scope.data.dimensionNames = $scope.data.originVarNames.map(function (a, i) {
 							return $scope.data.variableNames[predictNames[i]];
 						});
@@ -1367,7 +1376,7 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 						/* console.log("$scope.data.dimensionNames\n", $scope.data.dimensionNames); */
 						$scope.$digest();
 
-					case 47:
+					case 50:
 					case 'end':
 						return _context6.stop();
 				}
@@ -1430,7 +1439,7 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 				switch (_context9.prev = _context9.next) {
 					case 0:
 						Dim2M = function Dim2M() {
-							var tempDimNames;
+							var temp1, tempDimNames;
 							return regeneratorRuntime.async(function Dim2M$(_context8) {
 								while (1) {
 									switch (_context8.prev = _context8.next) {
@@ -1455,7 +1464,10 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 										case 10:
 											response = _context8.sent;
 
-											AddTimeLog("Coupling matrix extracted.");
+											temp1 = SerializeM(topoM, response.deviateMatrix, $scope.data.isSymmetric).map(function (a) {
+												return Math.round(a * 10000) / 10000;
+											});
+											AddTimeLog("Coupling matrix extracted. The deviation is \n\t" + JSON.stringify(temp1).replace(/,/g, ", "));
 											tempIter.sFile = sFile;
 											tempIter.extractedMatrix = response.extractedMatrix;
 											tempIter.deviateMatrix = response.deviateMatrix;
@@ -1469,19 +1481,19 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
            				}, 3000); */
 											return _context8.abrupt('return', 0);
 
-										case 22:
-											_context8.prev = 22;
+										case 23:
+											_context8.prev = 23;
 											_context8.t0 = _context8['catch'](0);
 
 											AddTimeLog(_context8.t0.message);
 											return _context8.abrupt('return', undefined);
 
-										case 26:
+										case 27:
 										case 'end':
 											return _context8.stop();
 									}
 								}
-							}, null, this, [[0, 22]]);
+							}, null, this, [[0, 23]]);
 						};
 
 						tranZeros = synStoreState.tranZeros.map(function (d) {
