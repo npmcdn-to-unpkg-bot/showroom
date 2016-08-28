@@ -557,17 +557,17 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 		$scope.data = tempStoreState.savedSynthesisData;
 	} else {
 		$scope.data = {
-			filterOrder: 3,
+			filterOrder: 6,
 			returnLoss: 26,
-			centerFreq: 28.75, //14.36,
-			bandwidth: 0.6, //0.89,
+			centerFreq: 2.52, //14.36,
+			bandwidth: 0.052, //0.89,
 			unloadedQ: 200000,
-			startFreq: 28, //12.8,
-			stopFreq: 29.5, //15.5,
+			startFreq: 2.42, //12.8,
+			stopFreq: 2.62, //15.5,
 			numberOfPoints: 1000,
 			filterType: "BPF",
-			/* tranZeros: [['', 1.1], ['', 1.4], ['', 1.9]], */
-			tranZeros: [['', '']],
+			tranZeros: [['', 1.4], ['', -1.2]],
+			/* tranZeros: [['', '']], */
 			matrixDisplay: "M",
 			isSymmetric: false,
 			focusZero: 0
@@ -1384,7 +1384,7 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 		$scope.data.upperLimit[itemId] = 2.0 * $scope.data.variableValue[temp1[0].id];
 	};
 
-	$scope.write2EM = function _callee6() {
+	$scope.write2EM = function _callee6(dimension) {
 		var tempDimNames;
 		return regeneratorRuntime.async(function _callee6$(_context7) {
 			while (1) {
@@ -1397,7 +1397,7 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 						$scope.data.write2EMButtonHtml = "Setting ... " + "<i class='fa fa-refresh fa-spin fa-fw'></i>";
 						/* console.log(tempDimNames, $scope.data.currentIter.dimension); */
 						_context7.next = 4;
-						return regeneratorRuntime.awrap(preloaded.SetHFSSVariableValue(tempDimNames, $scope.data.currentIter.dimension));
+						return regeneratorRuntime.awrap(preloaded.SetHFSSVariableValue(tempDimNames, dimension));
 
 					case 4:
 						$timeout(function () {
@@ -1410,6 +1410,11 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 				}
 			}
 		}, null, this);
+	};
+
+	$scope.manuelSet = function () {
+		$scope.data.manualVariableValue = angular.copy($scope.data.currentIter.dimension);
+		$scope.data.manualDeviation = SerializeM(topoM, $scope.data.currentIter.deviateMatrix, $scope.data.isSymmetric);
 	};
 
 	$scope.stopSimulation = function () {
@@ -1576,7 +1581,15 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 						}), topoM, $scope.data.isSymmetric));
 
 					case 39:
-						xc_star = coarseModel.defunc(SerializeM(topoM, synStoreState.targetMatrix, $scope.data.isSymmetric));
+						xc_star = coarseModel.defunc(SerializeM(topoM, synStoreState.targetMatrix, $scope.data.isSymmetric)).map(function (a, i) {
+							if (a < $scope.data.lowerLimit[i]) {
+								return $scope.data.lowerLimit[i];
+							} else if (a > $scope.data.upperLimit[i]) {
+								return $scope.data.upperLimit[i];
+							} else {
+								return a;
+							}
+						});
 						xf = xc_star;
 						B = numeric.identity(xf.length);
 						h = numeric.rep([xf.length], 1e9);
@@ -1663,10 +1676,11 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 						break;
 
 					case 83:
+						$scope.data.spacemapButtonDisable = false;
 						AddTimeLog("----------------------------------------------------------------------------------------", false);
 						AddTimeLog("Space mapping finished.");
 
-					case 85:
+					case 86:
 					case 'end':
 						return _context9.stop();
 				}

@@ -103,7 +103,10 @@
 							</div>
 						</li>
 						<li role="presentation">
-							<button type="button" class="btn btn-primary" ng-click="write2EM()" ng-bind-html="data.write2EMButtonHtml"></button>
+							<button type="button" class="btn btn-primary" ng-click="write2EM(data.currentIter.dimension)" ng-bind-html="data.write2EMButtonHtml"></button>
+						</li>
+						<li role="presentation">
+							<button type="button" class="btn btn-info" data-toggle="modal" data-target="#manual-set-modal" ng-click="manuelSet()">Manual</button>
 						</li>
 						<li role="presentation" class="dropdown">
 						</li>
@@ -184,6 +187,7 @@
 			</div>
 		</div>
 	</div>
+	<!-- End of Modal -->
 
 	<!-- Modal -->
 	<div class="modal fade" id="option-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
@@ -245,6 +249,51 @@
 			</div>
 		</div>
 	</div>
+	<!-- End of Modal -->
 
+	<!-- Modal -->
+	<div class="modal fade" id="manual-set-modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+		<div class="modal-dialog  modal-lg" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+					<h4 class="modal-title" id="myModalLabel">Iteration&nbsp;{{(100 + data.currentIter.id + 1).toString().slice(-2)}}:</h4>
+				</div>
+				<div class="modal-body">
+					<div class="row">
+						<button type="button" class="btn btn-primary" ng-click="write2EM(data.manualVariableValue)" ng-bind-html="data.write2EMButtonHtml"></button>
+					</div>
+					<div class="row" ng-repeat="item in data.originVarNames track by $index">
+						<div class="col-sm-1">
+							{{item.name}}
+						</div>
+						<div class="col-sm-2">
+							{{data.manualDeviation[item.id].toFixed(5)}}
+						</div>
+						<div class="col-sm-2">
+							{{data.dimensionNames[item.id].name}}
+						</div>
+						<div class="col-sm-2">
+							{{data.currentIter.dimension[item.id]}} inch
+						</div>
+						<div class="col-sm-4">
+							<form class="form-inline">
+								<div class="form-group">
+									<input id="manual-set-{{$index}}" type="number" class="form-control" ng-model="data.manualVariableValue[item.id]">
+									<label for="manual-set-{{$index}}">inch&nbsp;&nbsp;&nbsp;&nbsp;</label>
+								</div>
+							</form>
+						</div>
+					</div>
+					<hr>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- End of Modal -->
+	
 </div>
 <!-- /#page-wrapper -->

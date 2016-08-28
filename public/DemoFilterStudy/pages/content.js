@@ -150,17 +150,17 @@ angular
 		$scope.data = tempStoreState.savedSynthesisData;
 	} else {
 		$scope.data = {
-			filterOrder: 3,
+			filterOrder: 6,
 			returnLoss: 26,
-			centerFreq: 28.75,//14.36,
-			bandwidth: 0.6,//0.89,
+			centerFreq: 2.52,//14.36,
+			bandwidth: 0.052,//0.89,
 			unloadedQ: 200000,
-			startFreq: 28,//12.8,
-			stopFreq: 29.5,//15.5,
+			startFreq: 2.42,//12.8,
+			stopFreq: 2.62,//15.5,
 			numberOfPoints: 1000,
 			filterType: "BPF",
-			/* tranZeros: [['', 1.1], ['', 1.4], ['', 1.9]], */
-			tranZeros: [['', '']],
+			tranZeros: [['', 1.4], ['', -1.2]],
+			/* tranZeros: [['', '']], */
 			matrixDisplay: "M",
 			isSymmetric: false,
 			focusZero: 0
@@ -728,16 +728,21 @@ function handleChangeM(){
 		$scope.data.upperLimit[itemId] = 2.0 * $scope.data.variableValue[temp1[0].id];
 	}
 
-	$scope.write2EM = async function(){
+	$scope.write2EM = async function(dimension){
 		var tempDimNames = $scope.data.dimensionNames.map(function(a){return a.name});
 		$scope.data.write2EMButtonHtml = "Setting ... " + "<i class='fa fa-refresh fa-spin fa-fw'></i>";
 		/* console.log(tempDimNames, $scope.data.currentIter.dimension); */
-		await preloaded.SetHFSSVariableValue(tempDimNames, $scope.data.currentIter.dimension);
+		await preloaded.SetHFSSVariableValue(tempDimNames, dimension);
 		$timeout(function(){
 			$scope.data.write2EMButtonHtml = "Update HFSS";
 		}, 500)
 	}
 
+	$scope.manuelSet = function(){
+		$scope.data.manualVariableValue = angular.copy($scope.data.currentIter.dimension);
+		$scope.data.manualDeviation = SerializeM(topoM, $scope.data.currentIter.deviateMatrix, $scope.data.isSymmetric);
+	}
+	
 	$scope.stopSimulation = function(){
 		$scope.data.stopSimulation = true;
 		AddTimeLog("---------------------------------------------------------------------------------------------------------------", false);
@@ -819,7 +824,15 @@ function handleChangeM(){
 		await coarseModel.update($scope.data.iterList.map(function (a) {return a.dimension}), $scope.data.iterList.map(function (a) {return SerializeM(topoM, a.extractedMatrix, $scope.data.isSymmetric)}), topoM, $scope.data.isSymmetric);
 
 		var xc_star, xf, xc, B, h;
-		xc_star = coarseModel.defunc(SerializeM(topoM, synStoreState.targetMatrix, $scope.data.isSymmetric));
+		xc_star = coarseModel.defunc(SerializeM(topoM, synStoreState.targetMatrix, $scope.data.isSymmetric)).map(function(a, i){
+			if (a < $scope.data.lowerLimit[i]){
+				return $scope.data.lowerLimit[i];
+			} else if (a > $scope.data.upperLimit[i]){
+				return $scope.data.upperLimit[i];
+			} else {
+				return a;
+			}
+		});
 		xf = xc_star;
 		B = numeric.identity(xf.length);
 		h = numeric.rep([xf.length], 1e9);
@@ -855,6 +868,7 @@ function handleChangeM(){
 			}
 			indexIter = indexIter + 1;
 		}
+		$scope.data.spacemapButtonDisable = false;
 		AddTimeLog("----------------------------------------------------------------------------------------", false);
 		AddTimeLog("Space mapping finished.");
 	} // end of $scope.spacemapping
