@@ -560,10 +560,10 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 			filterOrder: 8,
 			returnLoss: 26,
 			centerFreq: 29, //14.36,
-			bandwidth: 0.3, //0.89,
+			bandwidth: 3, //0.89,
 			unloadedQ: 200000,
-			startFreq: 28.5, //12.8,
-			stopFreq: 29.5, //15.5,
+			startFreq: 26, //12.8,
+			stopFreq: 32, //15.5,
 			numberOfPoints: 1000,
 			filterType: "BPF",
 			/* tranZeros: [['', 1.4], ['', -1.2]], */
