@@ -1,4 +1,8 @@
 var dirName = "%s";
+oModule = oDesign.GetModule("AnalysisSetup");
+oModule.EditSetup("Setup1", ["NAME:Setup1", "VariablesForDerivatives:=", []]);
+oModule.EditFrequencySweep("Setup1", "Sweep1", ["NAME:Sweep1", "Type:=", "Fast", "SaveFields:=", false, "SaveRadFields:=", false]);
+
 oDesign.Analyze("Setup1 : Sweep1");
 oModule = oDesign.GetModule("Solutions");
 oModule.ExportNetworkData("", ["Setup1:Sweep1"], 3, dirName + "\\temp\\%s", ["All"], false, 50, "S", -1, 2, 15);

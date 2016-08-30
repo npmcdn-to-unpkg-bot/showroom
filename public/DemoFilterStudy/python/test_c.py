@@ -30,7 +30,7 @@ with open("%s\\\\%s" % (sparaFolder, "_s_parameter.txt"), 'r') as json_file:
     testCases = np.array(json.load(json_file))
     
 plt.close("all")
-selectCases = np.array([23])
+selectCases = np.array([24])
 #selectCases = np.arange(1, 24)
 with backend_pdf.PdfPages("%s\\\\%s" % (sparaFolder, "summary.pdf")) as pdf:
     for testCase in testCases[selectCases - 1]:

@@ -584,6 +584,35 @@ function handleChangeM(){
 		return result;
 	}
 
+	function ModelHFSSDerivative(dimension, csvFile){
+		var temp1 = numeric.transpose(csvFile.split("\n").map(function(row){return row.split(",").map(Number)}).slice(1, -1));
+		this.dimension = dimension;
+		this.freq = temp1[0];
+		this.data = temp1.slice(1);
+	}
+
+	ModelHFSSDerivative.prototype.func = function(dimension){
+		var i, temp1, _this = this,
+			deltaDim = dimension.map(function(a, i){return a - _this.dimension[i]}),
+			data = this.data.slice(0, 4),
+			s = data.map(function(a, row){
+				return a.map(function(b, col){
+					temp1 = b;
+					for(i = 0; i < dimension.length; i++) {
+						temp1 = temp1 + deltaDim[i] * _this.data[4 * i + 4 + row][col];
+					}
+					return temp1;
+				})
+			}),
+			freq = this.freq.map(function(a){return a * 1000}),
+			S11_db = s[0].map(function(a, i){return 10 * Math.log(a * a + s[1][i] * s[1][i]) / Math.LN10}),
+			S11_angRad = s[0].map(function(a, i){return Math.atan2(s[1][i], a)}),
+			S21_db = s[2].map(function(a, i){return 10 * Math.log(a * a + s[3][i] * s[3][i]) / Math.LN10}),
+			S21_angRad = s[2].map(function(a, i){return Math.atan2(s[3][i], a)}),
+			sFile = {freq: freq, S11_db: S11_db, S11_angRad: S11_angRad, S21_db: S21_db, S21_angRad: S21_angRad};
+		return sFile;
+	}
+
 	function CoarseModelLinear() {
 		this.slopeM = []
 		this.invSlopeM = []
@@ -763,7 +792,7 @@ function handleChangeM(){
 			stopFreq = (synStoreState.startFreq < synStoreState.stopFreq)? synStoreState.stopFreq : synStoreState.startFreq + synStoreState.bandwidth * 8,
 			freqGHz = numeric.linspace(synStoreState.startFreq, stopFreq, numberOfPoints);
 		
-		var response, sFile, i, j, N = topoM.length - 2, indexIter = 0, tempIter = {}, coarseModel = new CoarseModelLinear(), resultDim2M,
+		var response, sFile, i, j, N = topoM.length - 2, indexIter = 0, tempIter = {}, coarseModel = new CoarseModelLinear(), resultDim2M, modelHFSSDerivative,
 			initDimension = await preloaded.GetHFSSVariableValue($scope.data.dimensionNames.map(function(a){return a.name}));
 		$scope.data.iterList = [];
 		$scope.data.spacemapButtonDisable = true;
@@ -777,10 +806,18 @@ function handleChangeM(){
 
 		async function Dim2M(){
 			try {
-				var temp1, tempDimNames = $scope.data.dimensionNames.map(function(a){return a.name});
+				var temp1, csvFile, tempDimNames = $scope.data.dimensionNames.map(function(a){return a.name});
 				AddTimeLog("Simulation in process with the following dimension.\n\t" + JSON.stringify(tempDimNames).replace(/,/g, ", ") + "\n\t" + JSON.stringify(tempIter.dimension).replace(/,/g, ", "));
 				tempIter.s2p = "s" + indexIter.toString() + ".s2p";
-				sFile = await preloaded.EvaluateDimension(tempDimNames, tempIter.dimension, tempIter.s2p);
+				if ($scope.data.useDerivative && indexIter === 0){
+					csvFile = await preloaded.EvaluateDerivative(tempDimNames, tempIter.dimension);
+					modelHFSSDerivative = new ModelHFSSDerivative(tempIter.dimension, csvFile);
+				}
+				if ($scope.data.useDerivative && indexIter < $scope.data.numPerturb){
+					sFile = modelHFSSDerivative.func(tempIter.dimension);
+				} else {
+					sFile = await preloaded.EvaluateDimension(tempDimNames, tempIter.dimension, tempIter.s2p);
+				}
 				AddTimeLog("Simulation completed. Extracting coupling matrix.");
 				response = await common.xhr2('ExtractMatrix', {...sFile, ...synStoreState, tranZeros: tranZeros, topology: topoM, captureStartFreqGHz: captureStartFreqGHz, captureStopFreqGHz: captureStopFreqGHz});
 				temp1 = SerializeM(topoM, response.deviateMatrix, $scope.data.isSymmetric).map(function (a){return Math.round(a * 10000) / 10000});
@@ -867,8 +904,9 @@ function handleChangeM(){
 			B = response.B;
 			h = response.h;
 			xf = response.xf;
-			console.log(xf, B, h, response.toStop);
+			/* console.log(xf, B, h, response.toStop); */
 			if (response.toStop === 1) {
+				AddTimeLog("Space mapping converged to a solution.");
 				break;
 			}
 			indexIter = indexIter + 1;
@@ -900,10 +938,11 @@ function handleChangeM(){
 			currentIter: {id: 0, q: 1e9},
 			isSymmetric: synStoreState.isSymmetric || false,
 			spacemapButtonDisable: false,
-			perturbationStep: Math.round(0.003 * 30.0 / synStoreState.centerFreq * 1000) / 1000,
+			perturbationStep: Math.round(0.001 * 30.0 / synStoreState.centerFreq * 1000) / 1000,
 			write2EMButtonHtml: "Update HFSS",
-			numPerturb: 5,
-			numIteration: 10
+			numPerturb: 10,
+			numIteration: 10,
+			useDerivative: true
 		};
 		
 		if (window.hasOwnProperty("preloaded")) {

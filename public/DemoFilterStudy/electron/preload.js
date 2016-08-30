@@ -216,6 +216,23 @@ preloaded.EvaluateDimension = function (names, dimension, s2p) {
 	}); */
 }
 
+preloaded.EvaluateDerivative = function (names, dimension) {
+	var p1 = ReadFileAsync("./template/JsHFSSSetup.txt"),
+		p2 = ReadFileAsync("./template/JsHFSSSetVariableValue.txt"),
+		p3 = ReadFileAsync("./template/JsHFSSAnalyzeDerivative.txt"),
+		csvFileName = "Derivative.csv";
+	return Promise.all([p1, p2, p3])
+	.then(function (values) {
+		var temp2 = util.format(values[1], JSON.stringify(names), JSON.stringify(dimension)),
+		temp3 = util.format(values[2], __dirname.replace(/\\/g, "\\\\"), JSON.stringify(names), csvFileName),
+		tempScript = [values[0], temp2, temp3].join("\n\n");
+		return execScript(tempScript)
+		.then(function () {
+			return ReadFileAsync(util.format("./temp/%s", csvFileName));
+		})
+	});
+}
+
 preloaded.Visa32Find = visa32.Visa32Find;
 preloaded.Visa32Query = visa32.Visa32Query;
 preloaded.KeysightPNAReadS = visa32.KeysightPNAReadS;

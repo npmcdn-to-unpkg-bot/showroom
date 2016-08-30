@@ -1116,6 +1116,51 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 		return result;
 	}
 
+	function ModelHFSSDerivative(dimension, csvFile) {
+		var temp1 = numeric.transpose(csvFile.split("\n").map(function (row) {
+			return row.split(",").map(Number);
+		}).slice(1, -1));
+		this.dimension = dimension;
+		this.freq = temp1[0];
+		this.data = temp1.slice(1);
+	}
+
+	ModelHFSSDerivative.prototype.func = function (dimension) {
+		var i,
+		    temp1,
+		    _this = this,
+		    deltaDim = dimension.map(function (a, i) {
+			return a - _this.dimension[i];
+		}),
+		    data = this.data.slice(0, 4),
+		    s = data.map(function (a, row) {
+			return a.map(function (b, col) {
+				temp1 = b;
+				for (i = 0; i < dimension.length; i++) {
+					temp1 = temp1 + deltaDim[i] * _this.data[4 * i + 4 + row][col];
+				}
+				return temp1;
+			});
+		}),
+		    freq = this.freq.map(function (a) {
+			return a * 1000;
+		}),
+		    S11_db = s[0].map(function (a, i) {
+			return 10 * Math.log(a * a + s[1][i] * s[1][i]) / Math.LN10;
+		}),
+		    S11_angRad = s[0].map(function (a, i) {
+			return Math.atan2(s[1][i], a);
+		}),
+		    S21_db = s[2].map(function (a, i) {
+			return 10 * Math.log(a * a + s[3][i] * s[3][i]) / Math.LN10;
+		}),
+		    S21_angRad = s[2].map(function (a, i) {
+			return Math.atan2(s[3][i], a);
+		}),
+		    sFile = { freq: freq, S11_db: S11_db, S11_angRad: S11_angRad, S21_db: S21_db, S21_angRad: S21_angRad };
+		return sFile;
+	};
+
 	function CoarseModelLinear() {
 		this.slopeM = [];
 		this.invSlopeM = [];
@@ -1433,13 +1478,13 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 	};
 
 	$scope.spacemapping = function _callee7() {
-		var tranZeros, captureStartFreqGHz, captureStopFreqGHz, numberOfPoints, stopFreq, freqGHz, response, sFile, i, j, N, indexIter, tempIter, coarseModel, resultDim2M, initDimension, Dim2M, xc_star, xf, xc, B, h;
+		var tranZeros, captureStartFreqGHz, captureStopFreqGHz, numberOfPoints, stopFreq, freqGHz, response, sFile, i, j, N, indexIter, tempIter, coarseModel, resultDim2M, modelHFSSDerivative, initDimension, Dim2M, xc_star, xf, xc, B, h;
 		return regeneratorRuntime.async(function _callee7$(_context9) {
 			while (1) {
 				switch (_context9.prev = _context9.next) {
 					case 0:
 						Dim2M = function Dim2M() {
-							var temp1, tempDimNames;
+							var temp1, csvFile, tempDimNames;
 							return regeneratorRuntime.async(function Dim2M$(_context8) {
 								while (1) {
 									switch (_context8.prev = _context8.next) {
@@ -1451,17 +1496,43 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 
 											AddTimeLog("Simulation in process with the following dimension.\n\t" + JSON.stringify(tempDimNames).replace(/,/g, ", ") + "\n\t" + JSON.stringify(tempIter.dimension).replace(/,/g, ", "));
 											tempIter.s2p = "s" + indexIter.toString() + ".s2p";
-											_context8.next = 6;
+
+											if (!($scope.data.useDerivative && indexIter === 0)) {
+												_context8.next = 9;
+												break;
+											}
+
+											_context8.next = 7;
+											return regeneratorRuntime.awrap(preloaded.EvaluateDerivative(tempDimNames, tempIter.dimension));
+
+										case 7:
+											csvFile = _context8.sent;
+
+											modelHFSSDerivative = new ModelHFSSDerivative(tempIter.dimension, csvFile);
+
+										case 9:
+											if (!($scope.data.useDerivative && indexIter < $scope.data.numPerturb)) {
+												_context8.next = 13;
+												break;
+											}
+
+											sFile = modelHFSSDerivative.func(tempIter.dimension);
+											_context8.next = 16;
+											break;
+
+										case 13:
+											_context8.next = 15;
 											return regeneratorRuntime.awrap(preloaded.EvaluateDimension(tempDimNames, tempIter.dimension, tempIter.s2p));
 
-										case 6:
+										case 15:
 											sFile = _context8.sent;
 
+										case 16:
 											AddTimeLog("Simulation completed. Extracting coupling matrix.");
-											_context8.next = 10;
+											_context8.next = 19;
 											return regeneratorRuntime.awrap(common.xhr2('ExtractMatrix', _extends({}, sFile, synStoreState, { tranZeros: tranZeros, topology: topoM, captureStartFreqGHz: captureStartFreqGHz, captureStopFreqGHz: captureStopFreqGHz })));
 
-										case 10:
+										case 19:
 											response = _context8.sent;
 
 											temp1 = SerializeM(topoM, response.deviateMatrix, $scope.data.isSymmetric).map(function (a) {
@@ -1481,19 +1552,19 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
            				}, 3000); */
 											return _context8.abrupt('return', 0);
 
-										case 23:
-											_context8.prev = 23;
+										case 32:
+											_context8.prev = 32;
 											_context8.t0 = _context8['catch'](0);
 
 											AddTimeLog(_context8.t0.message);
 											return _context8.abrupt('return', undefined);
 
-										case 27:
+										case 36:
 										case 'end':
 											return _context8.stop();
 									}
 								}
-							}, null, this, [[0, 23]]);
+							}, null, this, [[0, 32]]);
 						};
 
 						tranZeros = synStoreState.tranZeros.map(function (d) {
@@ -1670,13 +1741,14 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 						B = response.B;
 						h = response.h;
 						xf = response.xf;
-						console.log(xf, B, h, response.toStop);
+						/* console.log(xf, B, h, response.toStop); */
 
 						if (!(response.toStop === 1)) {
 							_context9.next = 79;
 							break;
 						}
 
+						AddTimeLog("Space mapping converged to a solution.");
 						return _context9.abrupt('break', 83);
 
 					case 79:
@@ -1726,10 +1798,11 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 			currentIter: { id: 0, q: 1e9 },
 			isSymmetric: synStoreState.isSymmetric || false,
 			spacemapButtonDisable: false,
-			perturbationStep: Math.round(0.003 * 30.0 / synStoreState.centerFreq * 1000) / 1000,
+			perturbationStep: Math.round(0.001 * 30.0 / synStoreState.centerFreq * 1000) / 1000,
 			write2EMButtonHtml: "Update HFSS",
-			numPerturb: 5,
-			numIteration: 10
+			numPerturb: 10,
+			numIteration: 10,
+			useDerivative: true
 		};
 
 		if (window.hasOwnProperty("preloaded")) {

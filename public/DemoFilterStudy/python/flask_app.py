@@ -116,7 +116,7 @@ def get_task(method):
         xf = np.where(xf > lowerLimit, xf, lowerLimit)
         xf = np.where(xf < upperLimit, xf, upperLimit)
         h = xf - xf_old
-        if f.dot(f) < 1e-9 * len(xc):
+        if f.dot(f) < 1e-10 * len(xc):
             toStop = 1
         else:
             toStop = 0
@@ -129,7 +129,7 @@ def get_task(method):
         dimension = np.array(reqJson['dimension'])
         extractedMatrix = np.array(reqJson['extractedMatrix'])
         topology = np.array(reqJson['topology'])
-        isSymmetric = np.array(reqJson['isSymmetric'])
+        isSymmetric = reqJson['isSymmetric']
         slopeM, invSlopeM, intepM = CP.CoarseModelUpdate(dimension, extractedMatrix, topology, isSymmetric)
         resJson = {'slopeM': slopeM.tolist(), 'invSlopeM': invSlopeM.tolist(), 'intepM': intepM.tolist()}
         return json.dumps(resJson, separators = (',', ':'))

@@ -1967,5 +1967,3 @@ def CoarseModelUpdate(dimension, extractedMatrix, topology, isSymmetric):
     #intepM + (slopeM.dot(dimension.T)).T - extractedMatrix
     
     return slopeM, invSlopeM, intepM
-
-

@@ -1,0 +1,27 @@
+var dirName = "%s",
+	varList = %s,
+	csvFileName = "%s",
+	nameList = ["re(partialS(1,1,))", "im(partialS(1,1,))", "re(partialS(2,1,))", "im(partialS(2,1,))"],
+	sweepName = "Setup1 : Sweep1";
+
+oModule = oDesign.GetModule("AnalysisSetup");
+oModule.EditSetup("Setup1", ["NAME:Setup1", "VariablesForDerivatives:=", varList]);
+oModule.EditFrequencySweep("Setup1", "Sweep1", ["NAME:Sweep1", "Type:=", "Interpolating", "SaveFields:=", false, "SaveRadFields:=", false]);
+
+oDesign.Analyze(sweepName);
+
+oModule = oDesign.GetModule("ReportSetup");
+oModule.CreateReport("XY Plot Syn1", "Modal Solution Data", "Rectangular Plot", sweepName, ["Domain:=", "Sweep"], ["Freq:=", ["All"]], ["X Component:=", "Freq", "Y Component:=", []], []);
+
+oModule.AddTraces("XY Plot Syn1", sweepName, ["Domain:=", "Sweep"], ["Freq:=", ["All"]], ["X Component:=", "Freq", "Y Component:=", ["re(S(1,1))", "im(S(1,1))", "re(S(2,1))", "im(S(2,1))"]], []);
+
+for(var i = 0; i < varList.length; i++) {
+	var tempList = [];
+    for(var j = 0; j < nameList.length; j++) {
+		tempList.push(nameList[j].replace("))", varList[i] + "))"));
+	}
+    oModule.AddTraces("XY Plot Syn1", sweepName, ["Domain:="  , "Sweep"], ["Freq:="  , ["All"]], ["X Component:=", "Freq", "Y Component:=", tempList], []);
+}
+
+oModule.ExportToFile("XY Plot Syn1", dirName + "\\temp\\" + csvFileName);
+oModule.DeleteReports(["XY Plot Syn1"]);
