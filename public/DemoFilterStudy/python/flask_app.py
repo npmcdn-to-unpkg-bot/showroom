@@ -102,6 +102,7 @@ def get_task(method):
         reqJson = flask.request.get_json()
         np.save("tempData2", np.array([reqJson]))
         B = np.array(reqJson['B'], dtype = float)
+#        print(np.around(B, 2))
         h = np.array(reqJson['h'], dtype = float)
         xc = np.array(reqJson['xc'], dtype = float)
         xc_star = np.array(reqJson['xc_star'], dtype = float)
@@ -116,7 +117,7 @@ def get_task(method):
         xf = np.where(xf > lowerLimit, xf, lowerLimit)
         xf = np.where(xf < upperLimit, xf, upperLimit)
         h = xf - xf_old
-        if f.dot(f) < 1e-10 * len(xc):
+        if f.dot(f) < 4e-10 * len(xc):
             toStop = 1
         else:
             toStop = 0

@@ -120,54 +120,54 @@ import matplotlib.pyplot as plt
 
 
 
-reqJson = np.load('tempData3.npy')[0]
-freq = np.array(reqJson['freq']) * 1e6
-w1 = (reqJson['centerFreq'] - reqJson['bandwidth'] / 2) * 1e9
-w2 = (reqJson['centerFreq'] + reqJson['bandwidth'] / 2) * 1e9
-normalizedFreq = CP.NormalizeFreq(freq, w1, w2)
-S11_amp = 10 ** (np.array(reqJson['S11_db']) / 20)
-S11 = S11_amp * (np.cos(np.array(reqJson['S11_angRad'])) + 1j * np.sin(np.array(reqJson['S11_angRad'])))
-S21_amp = 10 ** (np.array(reqJson['S21_db']) / 20)
-S21 = S21_amp * (np.cos(np.array(reqJson['S21_angRad'])) + 1j * np.sin(np.array(reqJson['S21_angRad'])))
-N = reqJson['filterOrder']
-numZeros = len(reqJson['tranZeros'])
-filterOrder = np.hstack((np.zeros((N, )), 2 * np.ones((numZeros, ))))
+#reqJson = np.load('tempData3.npy')[0]
+#freq = np.array(reqJson['freq']) * 1e6
+#w1 = (reqJson['centerFreq'] - reqJson['bandwidth'] / 2) * 1e9
+#w2 = (reqJson['centerFreq'] + reqJson['bandwidth'] / 2) * 1e9
+#normalizedFreq = CP.NormalizeFreq(freq, w1, w2)
+#S11_amp = 10 ** (np.array(reqJson['S11_db']) / 20)
+#S11 = S11_amp * (np.cos(np.array(reqJson['S11_angRad'])) + 1j * np.sin(np.array(reqJson['S11_angRad'])))
+#S21_amp = 10 ** (np.array(reqJson['S21_db']) / 20)
+#S21 = S21_amp * (np.cos(np.array(reqJson['S21_angRad'])) + 1j * np.sin(np.array(reqJson['S21_angRad'])))
+#N = reqJson['filterOrder']
+#numZeros = len(reqJson['tranZeros'])
+#filterOrder = np.hstack((np.zeros((N, )), 2 * np.ones((numZeros, ))))
 
-extractMethod = 6
-isSymmetric = False
-epsilon, epsilonE, Qu, coefF, coefP, rootE = CP.S2FP(freq, S21, S11, filterOrder, w1, w2, wga=1.122*0.0254, method=extractMethod, startFreq=0, stopFreq=0, isSymmetric=isSymmetric)
-
-matrixMethod = 5
-transversalMatrix = CP.FPE2M(epsilon, epsilonE, coefF, coefP, rootE, method=matrixMethod)
-
-topology = np.array(reqJson['topology'])
-extractedMatrix, msg1 = CP.FPE2MComprehensive(epsilon, epsilonE, coefF, coefP, rootE, topology, refRootP = reqJson['tranZeros'], method = matrixMethod)
-print(msg1)
-targetMatrix = np.array(reqJson['targetMatrix'])
-temp1 = targetMatrix.copy()
-temp1[np.abs(targetMatrix) < 1e-4] = 1e9
-deviateMatrix = (extractedMatrix - targetMatrix) / temp1
-
-S11_new, S21_new = CP.FPE2S(epsilon, epsilonE, coefF, coefP, rootE, normalizedFreq - 1j * reqJson['centerFreq'] / (reqJson['bandwidth'] * Qu))
-S21_new, S11_new = CP.CM2S(transversalMatrix, normalizedFreq - 1j * reqJson['centerFreq'] / (reqJson['bandwidth'] * Qu))
-
-plt.clf()
-plt.subplot(2, 2, 1)
-plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), 20*np.log10(np.abs(S11)), 'o');
-plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), 20*np.log10(np.abs(S11_new)), '*');
-plt.title('S11(dB)')
-plt.subplot(2, 2, 3)
-plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), np.angle(S11, deg=True), 'o');
-plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), np.angle(S11_new, deg=True), '*');
-plt.title('S11(degree)')
-plt.subplot(2, 2, 2)
-plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), 20*np.log10(np.abs(S21)), 'o');
-plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), 20*np.log10(np.abs(S21_new)), '*');
-plt.title('S21(dB)')
-plt.subplot(2, 2, 4)
-plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), np.angle(S21, deg=True), 'o');
-plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), np.angle(S21_new, deg=True), '*');
-plt.title('S21(degree)')
+#extractMethod = 6
+#isSymmetric = False
+#epsilon, epsilonE, Qu, coefF, coefP, rootE = CP.S2FP(freq, S21, S11, filterOrder, w1, w2, wga=1.122*0.0254, method=extractMethod, startFreq=0, stopFreq=0, isSymmetric=isSymmetric)
+#
+#matrixMethod = 5
+#transversalMatrix = CP.FPE2M(epsilon, epsilonE, coefF, coefP, rootE, method=matrixMethod)
+#
+#topology = np.array(reqJson['topology'])
+#extractedMatrix, msg1 = CP.FPE2MComprehensive(epsilon, epsilonE, coefF, coefP, rootE, topology, refRootP = reqJson['tranZeros'], method = matrixMethod)
+#print(msg1)
+#targetMatrix = np.array(reqJson['targetMatrix'])
+#temp1 = targetMatrix.copy()
+#temp1[np.abs(targetMatrix) < 1e-4] = 1e9
+#deviateMatrix = (extractedMatrix - targetMatrix) / temp1
+#
+#S11_new, S21_new = CP.FPE2S(epsilon, epsilonE, coefF, coefP, rootE, normalizedFreq - 1j * reqJson['centerFreq'] / (reqJson['bandwidth'] * Qu))
+#S21_new, S11_new = CP.CM2S(transversalMatrix, normalizedFreq - 1j * reqJson['centerFreq'] / (reqJson['bandwidth'] * Qu))
+#
+#plt.clf()
+#plt.subplot(2, 2, 1)
+#plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), 20*np.log10(np.abs(S11)), 'o');
+#plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), 20*np.log10(np.abs(S11_new)), '*');
+#plt.title('S11(dB)')
+#plt.subplot(2, 2, 3)
+#plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), np.angle(S11, deg=True), 'o');
+#plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), np.angle(S11_new, deg=True), '*');
+#plt.title('S11(degree)')
+#plt.subplot(2, 2, 2)
+#plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), 20*np.log10(np.abs(S21)), 'o');
+#plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), 20*np.log10(np.abs(S21_new)), '*');
+#plt.title('S21(dB)')
+#plt.subplot(2, 2, 4)
+#plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), np.angle(S21, deg=True), 'o');
+#plt.plot(CP.DenormalizeFreq(normalizedFreq, w1, w2), np.angle(S21_new, deg=True), '*');
+#plt.title('S21(degree)')
 
 
 #B = np.array(reqJson['B'], dtype = float)
@@ -193,64 +193,54 @@ plt.title('S21(degree)')
 #print(json.dumps(resJson, separators = (',', ':')))
 
 
-#reqJson = np.load('tempData.npy')[0]
-#dimension = np.array(reqJson['dimension'])
-#extractedMatrix = np.array(reqJson['extractedMatrix'])
-#topology = np.array(reqJson['topology'])
-#isSymmetric = reqJson['isSymmetric']
-#
-#N = topology.shape[0] - 2
-#seqM = np.zeros((N + 2, N + 2), dtype = int) - 1
-#index = 0
-#for i in np.arange(N + 2):
-#    for j in np.arange(N + 2 - i):
-#        if (topology[j, j + i] == 1) and not (isSymmetric and (j + j + i) > (N + 1)):
-#            seqM[j, j + i] = index
-#            index += 1
-#            
-#numDim = dimension.shape[1]
-#impactM = np.zeros((numDim, numDim), dtype = int)
-#for i in np.arange(N + 2):
-#    if seqM[i, i] != -1:
+reqJson = np.load('tempData.npy')[0]
+dimension = np.array(reqJson['dimension'])
+extractedMatrix = np.array(reqJson['extractedMatrix'])
+topology = np.array(reqJson['topology'])
+isSymmetric = reqJson['isSymmetric']
+
+N = topology.shape[0] - 2
+seqM = np.zeros((N + 2, N + 2), dtype = int) - 1
+index = 0
+for i in np.arange(N + 2):
+    for j in np.arange(N + 2 - i):
+        if (topology[j, j + i] == 1) and not (isSymmetric and (j + j + i) > (N + 1)):
+            seqM[j, j + i] = index
+            index += 1
+            
+numDim = dimension.shape[1]
+impactM = np.zeros((numDim, numDim), dtype = int)
+for i in np.arange(N + 2):
+    if seqM[i, i] != -1:
+        impactM[seqM[i, i], seqM[i, i]] = 1
 #        for j in np.arange(N + 2):
 #            if seqM[i, j] != -1:
 #                impactM[seqM[i, j], seqM[i, i]] = 1
 #            if seqM[j, i] != -1:
 #                impactM[seqM[j, i], seqM[i, i]] = 1
-#                
-#for i in np.arange(1, N + 2):
-#    for j in np.arange(N + 2 - i):
-#        if seqM[j, j + i] != -1:
-#            impactM[seqM[j, j + i], seqM[j, j + i]] = 1
-#            if seqM[j, j] != -1:
-#                impactM[seqM[j, j], seqM[j, j + i]] = 1
-#            if seqM[j + i, j + i] != -1:
-#                impactM[seqM[j + i, j + i], seqM[j, j + i]] = 1
-#            elif seqM[N + 1 - j - i, N + 1 - j - i] != -1:
-#                impactM[seqM[N + 1 - j - i, N + 1 - j - i], seqM[j, j + i]] = 1
-#
-#A = np.zeros((numDim * dimension.shape[0], np.sum(impactM) + numDim))
-#B = extractedMatrix.reshape(numDim * dimension.shape[0])
-#for i in np.arange(dimension.shape[0]):
-#    index = 0
-#    for j in np.arange(numDim):
-#        tempL = np.sum(impactM[j])
-#        A[i * numDim + j, index : index + tempL] = dimension[i, impactM[j] == 1]
-#        index += tempL
-#        A[i * numDim + j, j - numDim] = 1.0
-#
-#x, residuals = np.linalg.lstsq(A, B)[0 : 2]
-#slopeM = np.zeros((numDim, numDim))
-#index = 0
-#for i in np.arange(numDim):
-#    for j in np.arange(numDim):
-#        if impactM[i, j] == 1:
-#            slopeM[i, j] = x[index]
-#            index += 1
-#intepM = x[index:]
-#invSlopeM = np.linalg.inv(slopeM)
-#resJson = {'slopeM': slopeM.tolist(), 'invSlopeM': invSlopeM.tolist(), 'intepM': intepM.tolist()}
-##intepM + (slopeM.dot(dimension.T)).T - extractedMatrix
+
+for i in np.arange(1, N + 2):
+    for j in np.arange(N + 2 - i):
+        if seqM[j, j + i] != -1:
+            impactM[seqM[j, j + i], seqM[j, j + i]] = 1
+            if seqM[j, j] != -1:
+                impactM[seqM[j, j], seqM[j, j + i]] = 1
+            if seqM[j + i, j + i] != -1:
+                impactM[seqM[j + i, j + i], seqM[j, j + i]] = 1
+            elif seqM[N + 1 - j - i, N + 1 - j - i] != -1:
+                impactM[seqM[N + 1 - j - i, N + 1 - j - i], seqM[j, j + i]] = 1
+
+slopeM = np.zeros((numDim, numDim))
+for i in np.arange(numDim):
+    slopeM[:, i] = (extractedMatrix[i + 1] - extractedMatrix[0]) / (dimension[i + 1, i] - dimension[0, i])
+slopeM *= impactM
+invSlopeM = np.linalg.inv(slopeM)
+intepM = extractedMatrix[0] - slopeM.dot(dimension[0])
+
+resJson = {'slopeM': slopeM.tolist(), 'invSlopeM': invSlopeM.tolist(), 'intepM': intepM.tolist()}
+print(np.around(slopeM, 3))
+aaa = intepM + (slopeM.dot(dimension.T)).T - extractedMatrix
+print(np.around(aaa, 3))
 
 
 #reqJson = np.load('tempData4.npy')[0]

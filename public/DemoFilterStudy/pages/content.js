@@ -129,7 +129,10 @@ angular
 		for (i = 0; i < N + 1; i++){
 			M[i][i + 1] = 1;		
 			M[i + 1][i] = 1;
+			M[N + 1 - i][i] = 1;
+			M[N + 1 - i][i + 1] = 1;
 		}
+		M[0][N + 1] = 1;
 		store.dispatch({type: 'createTopoM', M: M})
 	}
 
@@ -150,13 +153,13 @@ angular
 		$scope.data = tempStoreState.savedSynthesisData;
 	} else {
 		$scope.data = {
-			filterOrder: 8,
+			filterOrder: 6,
 			returnLoss: 26,
-			centerFreq: 29,//14.36,
-			bandwidth: 3,//0.89,
+			centerFreq: 6,//14.36,
+			bandwidth: 0.3,//0.89,
 			unloadedQ: 200000,
-			startFreq: 26,//12.8,
-			stopFreq: 32,//15.5,
+			startFreq: 5.5,//12.8,
+			stopFreq: 6.5,//15.5,
 			numberOfPoints: 1000,
 			filterType: "BPF",
 			/* tranZeros: [['', 1.4], ['', -1.2]], */
@@ -796,7 +799,8 @@ function handleChangeM(){
 			initDimension = await preloaded.GetHFSSVariableValue($scope.data.dimensionNames.map(function(a){return a.name}));
 		$scope.data.iterList = [];
 		$scope.data.spacemapButtonDisable = true;
-		$scope.data.stopSimulation = false;
+		$scope.data.stopSimulation = false,
+		$scope.data.numPerturb = $scope.data.dimensionNames.length + 1;
 
 		AddTimeLog("Space mapping started.");
 		if (!window.hasOwnProperty("preloaded")) {
@@ -851,11 +855,21 @@ function handleChangeM(){
 			if (i === 0){
 				tempIter.dimension = initDimension;
 			} else {
-				tempIter.dimension = initDimension.map(function (a, i) {
-					var N = topoM.length - 2, randNum = Math.random(), dev = ((randNum < 0.5)? randNum - 1 : randNum) * $scope.data.perturbationStep, L = $scope.data.isSymmetric? Math.floor((N + 1) / 2) : N, temp1 = (i < L)? a + dev / 2 : a + dev;
-					return Math.round(temp1 * 100000) / 100000;
+				tempIter.dimension = initDimension.map(function (a, j) {
+/* 					var N = topoM.length - 2, randNum = Math.random(), dev = ((randNum < 0.5)? randNum - 1 : randNum) * $scope.data.perturbationStep, L = $scope.data.isSymmetric? Math.floor((N + 1) / 2) : N, temp1 = (j < L)? a + dev / 2 : a + dev;
+					return Math.round(temp1 * 100000) / 100000; */
+					if (j + 1 === i){
+						if (SerializeM(topoM, $scope.data.iterList[0].deviateMatrix, $scope.data.isSymmetric)[j] > 0){					
+							return a + $scope.data.perturbationStep;
+						} else {				
+							return a - $scope.data.perturbationStep;
+						}
+					} else {
+						return a;
+					}
 				});
 			}
+			console.log(tempIter.dimension);
 			AddTimeLog("---------------------------------------------------------------------------------------------------------------", false);
 			AddTimeLog("Iteration " + (indexIter + 1).toString() + " starts. Perturbation " + (i + 1).toString() + " out of " + $scope.data.numPerturb.toString());
 			resultDim2M = await Dim2M();
@@ -938,7 +952,7 @@ function handleChangeM(){
 			currentIter: {id: 0, q: 1e9},
 			isSymmetric: synStoreState.isSymmetric || false,
 			spacemapButtonDisable: false,
-			perturbationStep: Math.round(0.001 * 30.0 / synStoreState.centerFreq * 1000) / 1000,
+			perturbationStep: Math.round(0.00001 * 30.0 / synStoreState.centerFreq * 1000) / 1000,
 			write2EMButtonHtml: "Update HFSS",
 			numPerturb: 10,
 			numIteration: 10,

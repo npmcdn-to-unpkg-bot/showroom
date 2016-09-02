@@ -1927,11 +1927,12 @@ def CoarseModelUpdate(dimension, extractedMatrix, topology, isSymmetric):
     impactM = np.zeros((numDim, numDim), dtype = int)
     for i in np.arange(N + 2):
         if seqM[i, i] != -1:
-            for j in np.arange(N + 2):
-                if seqM[i, j] != -1:
-                    impactM[seqM[i, j], seqM[i, i]] = 1
-                if seqM[j, i] != -1:
-                    impactM[seqM[j, i], seqM[i, i]] = 1
+            impactM[seqM[i, i], seqM[i, i]] = 1
+#            for j in np.arange(N + 2):
+#                if seqM[i, j] != -1:
+#                    impactM[seqM[i, j], seqM[i, i]] = 1
+#                if seqM[j, i] != -1:
+#                    impactM[seqM[j, i], seqM[i, i]] = 1
                     
     for i in np.arange(1, N + 2):
         for j in np.arange(N + 2 - i):
@@ -1944,26 +1945,32 @@ def CoarseModelUpdate(dimension, extractedMatrix, topology, isSymmetric):
                 elif seqM[N + 1 - j - i, N + 1 - j - i] != -1:
                     impactM[seqM[N + 1 - j - i, N + 1 - j - i], seqM[j, j + i]] = 1
     
-    A = np.zeros((numDim * dimension.shape[0], np.sum(impactM) + numDim))
-    B = extractedMatrix.reshape(numDim * dimension.shape[0])
-    for i in np.arange(dimension.shape[0]):
-        index = 0
-        for j in np.arange(numDim):
-            tempL = np.sum(impactM[j])
-            A[i * numDim + j, index : index + tempL] = dimension[i, impactM[j] == 1]
-            index += tempL
-            A[i * numDim + j, j - numDim] = 1.0
-    
-    x, residuals = np.linalg.lstsq(A, B)[0 : 2]
+#    A = np.zeros((numDim * dimension.shape[0], np.sum(impactM) + numDim))
+#    B = extractedMatrix.reshape(numDim * dimension.shape[0])
+#    for i in np.arange(dimension.shape[0]):
+#        index = 0
+#        for j in np.arange(numDim):
+#            tempL = np.sum(impactM[j])
+#            A[i * numDim + j, index : index + tempL] = dimension[i, impactM[j] == 1]
+#            index += tempL
+#            A[i * numDim + j, j - numDim] = 1.0
+#    
+#    x, residuals = np.linalg.lstsq(A, B)[0 : 2]
+#    slopeM = np.zeros((numDim, numDim))
+#    index = 0
+#    for i in np.arange(numDim):
+#        for j in np.arange(numDim):
+#            if impactM[i, j] == 1:
+#                slopeM[i, j] = x[index]
+#                index += 1
+#    intepM = x[index:]
+#    invSlopeM = np.linalg.inv(slopeM)
     slopeM = np.zeros((numDim, numDim))
-    index = 0
     for i in np.arange(numDim):
-        for j in np.arange(numDim):
-            if impactM[i, j] == 1:
-                slopeM[i, j] = x[index]
-                index += 1
-    intepM = x[index:]
+        slopeM[:, i] = (extractedMatrix[i + 1] - extractedMatrix[0]) / (dimension[i + 1, i] - dimension[0, i])
+    slopeM *= impactM
     invSlopeM = np.linalg.inv(slopeM)
+    intepM = extractedMatrix[0] - slopeM.dot(dimension[0])
     #intepM + (slopeM.dot(dimension.T)).T - extractedMatrix
     
     return slopeM, invSlopeM, intepM

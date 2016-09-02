@@ -536,7 +536,10 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 		for (i = 0; i < N + 1; i++) {
 			M[i][i + 1] = 1;
 			M[i + 1][i] = 1;
+			M[N + 1 - i][i] = 1;
+			M[N + 1 - i][i + 1] = 1;
 		}
+		M[0][N + 1] = 1;
 		store.dispatch({ type: 'createTopoM', M: M });
 	};
 
@@ -557,13 +560,13 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 		$scope.data = tempStoreState.savedSynthesisData;
 	} else {
 		$scope.data = {
-			filterOrder: 8,
+			filterOrder: 6,
 			returnLoss: 26,
-			centerFreq: 29, //14.36,
-			bandwidth: 3, //0.89,
+			centerFreq: 6, //14.36,
+			bandwidth: 0.3, //0.89,
 			unloadedQ: 200000,
-			startFreq: 26, //12.8,
-			stopFreq: 32, //15.5,
+			startFreq: 5.5, //12.8,
+			stopFreq: 6.5, //15.5,
 			numberOfPoints: 1000,
 			filterType: "BPF",
 			/* tranZeros: [['', 1.4], ['', -1.2]], */
@@ -1586,7 +1589,7 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 
 						$scope.data.iterList = [];
 						$scope.data.spacemapButtonDisable = true;
-						$scope.data.stopSimulation = false;
+						$scope.data.stopSimulation = false, $scope.data.numPerturb = $scope.data.dimensionNames.length + 1;
 
 						AddTimeLog("Space mapping started.");
 
@@ -1603,7 +1606,7 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 
 					case 17:
 						if (!(i < $scope.data.numPerturb)) {
-							_context9.next = 37;
+							_context9.next = 38;
 							break;
 						}
 
@@ -1623,47 +1626,53 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 						if (i === 0) {
 							tempIter.dimension = initDimension;
 						} else {
-							tempIter.dimension = initDimension.map(function (a, i) {
-								var N = topoM.length - 2,
-								    randNum = Math.random(),
-								    dev = (randNum < 0.5 ? randNum - 1 : randNum) * $scope.data.perturbationStep,
-								    L = $scope.data.isSymmetric ? Math.floor((N + 1) / 2) : N,
-								    temp1 = i < L ? a + dev / 2 : a + dev;
-								return Math.round(temp1 * 100000) / 100000;
+							tempIter.dimension = initDimension.map(function (a, j) {
+								/* 					var N = topoM.length - 2, randNum = Math.random(), dev = ((randNum < 0.5)? randNum - 1 : randNum) * $scope.data.perturbationStep, L = $scope.data.isSymmetric? Math.floor((N + 1) / 2) : N, temp1 = (j < L)? a + dev / 2 : a + dev;
+        					return Math.round(temp1 * 100000) / 100000; */
+								if (j + 1 === i) {
+									if (SerializeM(topoM, $scope.data.iterList[0].deviateMatrix, $scope.data.isSymmetric)[j] > 0) {
+										return a + $scope.data.perturbationStep;
+									} else {
+										return a - $scope.data.perturbationStep;
+									}
+								} else {
+									return a;
+								}
 							});
 						}
+						console.log(tempIter.dimension);
 						AddTimeLog("---------------------------------------------------------------------------------------------------------------", false);
 						AddTimeLog("Iteration " + (indexIter + 1).toString() + " starts. Perturbation " + (i + 1).toString() + " out of " + $scope.data.numPerturb.toString());
-						_context9.next = 30;
+						_context9.next = 31;
 						return regeneratorRuntime.awrap(Dim2M());
 
-					case 30:
+					case 31:
 						resultDim2M = _context9.sent;
 
 						if (!(typeof resultDim2M === "undefined")) {
-							_context9.next = 33;
+							_context9.next = 34;
 							break;
 						}
 
 						return _context9.abrupt('return', 0);
 
-					case 33:
+					case 34:
 						indexIter = indexIter + 1;
 
-					case 34:
+					case 35:
 						i++;
 						_context9.next = 17;
 						break;
 
-					case 37:
-						_context9.next = 39;
+					case 38:
+						_context9.next = 40;
 						return regeneratorRuntime.awrap(coarseModel.update($scope.data.iterList.map(function (a) {
 							return a.dimension;
 						}), $scope.data.iterList.map(function (a) {
 							return SerializeM(topoM, a.extractedMatrix, $scope.data.isSymmetric);
 						}), topoM, $scope.data.isSymmetric));
 
-					case 39:
+					case 40:
 						xc_star = coarseModel.defunc(SerializeM(topoM, synStoreState.targetMatrix, $scope.data.isSymmetric)).map(function (a, i) {
 							if (a < $scope.data.lowerLimit[i]) {
 								return $scope.data.lowerLimit[i];
@@ -1678,14 +1687,14 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 						h = numeric.rep([xf.length], 1e9);
 						i = 0;
 
-					case 44:
+					case 45:
 						if (!(i < $scope.data.numIteration)) {
-							_context9.next = 83;
+							_context9.next = 84;
 							break;
 						}
 
 						if (!$scope.data.stopSimulation) {
-							_context9.next = 50;
+							_context9.next = 51;
 							break;
 						}
 
@@ -1694,7 +1703,7 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 						AddTimeLog("Simulation stopped by user.");
 						return _context9.abrupt('return', 0);
 
-					case 50:
+					case 51:
 						;
 						tempIter.id = indexIter;
 						tempIter.dimension = xf.map(function (a) {
@@ -1702,74 +1711,74 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 						});
 						AddTimeLog("---------------------------------------------------------------------------------------------------------------", false);
 						AddTimeLog("Iteration " + (indexIter + 1).toString() + " starts. Run " + (i + 1).toString() + " out of " + $scope.data.numIteration.toString());
-						_context9.next = 57;
+						_context9.next = 58;
 						return regeneratorRuntime.awrap(Dim2M());
 
-					case 57:
+					case 58:
 						resultDim2M = _context9.sent;
 
 						if (!(typeof resultDim2M === "undefined")) {
-							_context9.next = 60;
+							_context9.next = 61;
 							break;
 						}
 
 						return _context9.abrupt('return', 0);
 
-					case 60:
+					case 61:
 						/* await coarseModel.update($scope.data.iterList.map(function (a) {return a.dimension}).slice(-numPerturb), $scope.data.iterList.map(function (a) {return SerializeM(topoM, a.extractedMatrix, $scope.data.isSymmetric)}).slice(-numPerturb), topoM, $scope.data.isSymmetric); */
 						xc = coarseModel.defunc(SerializeM(topoM, tempIter.extractedMatrix, $scope.data.isSymmetric));
-						_context9.prev = 61;
-						_context9.next = 64;
+						_context9.prev = 62;
+						_context9.next = 65;
 						return regeneratorRuntime.awrap(common.xhr2('SpaceMappingCalculate', { B: B, h: h, xc: xc, xc_star: xc_star, xf: xf, lowerLimit: $scope.data.lowerLimit, upperLimit: $scope.data.upperLimit }));
 
-					case 64:
+					case 65:
 						response = _context9.sent;
 
 						AddTimeLog("h: " + JSON.stringify(response.h).replace(/,/g, ", "));
 						AddTimeLog("f: " + JSON.stringify(response.f).replace(/,/g, ", "));
-						_context9.next = 73;
+						_context9.next = 74;
 						break;
 
-					case 69:
-						_context9.prev = 69;
-						_context9.t0 = _context9['catch'](61);
+					case 70:
+						_context9.prev = 70;
+						_context9.t0 = _context9['catch'](62);
 
 						AddTimeLog(_context9.t0.message);
 						return _context9.abrupt('return', 0);
 
-					case 73:
+					case 74:
 						B = response.B;
 						h = response.h;
 						xf = response.xf;
 						/* console.log(xf, B, h, response.toStop); */
 
 						if (!(response.toStop === 1)) {
-							_context9.next = 79;
+							_context9.next = 80;
 							break;
 						}
 
 						AddTimeLog("Space mapping converged to a solution.");
-						return _context9.abrupt('break', 83);
-
-					case 79:
-						indexIter = indexIter + 1;
+						return _context9.abrupt('break', 84);
 
 					case 80:
+						indexIter = indexIter + 1;
+
+					case 81:
 						i++;
-						_context9.next = 44;
+						_context9.next = 45;
 						break;
 
-					case 83:
+					case 84:
 						$scope.data.spacemapButtonDisable = false;
 						AddTimeLog("----------------------------------------------------------------------------------------", false);
 						AddTimeLog("Space mapping finished.");
 
-					case 86:
+					case 87:
 					case 'end':
 						return _context9.stop();
 				}
 			}
-		}, null, this, [[61, 69]]);
+		}, null, this, [[62, 70]]);
 	}; // end of $scope.spacemapping
 
 	var synStoreState,
@@ -1798,7 +1807,7 @@ angular.module("content", ['KM_tools', 'socket.io', 'infinite-scroll', 'ui.route
 			currentIter: { id: 0, q: 1e9 },
 			isSymmetric: synStoreState.isSymmetric || false,
 			spacemapButtonDisable: false,
-			perturbationStep: Math.round(0.001 * 30.0 / synStoreState.centerFreq * 1000) / 1000,
+			perturbationStep: Math.round(0.00001 * 30.0 / synStoreState.centerFreq * 1000) / 1000,
 			write2EMButtonHtml: "Update HFSS",
 			numPerturb: 10,
 			numIteration: 10,

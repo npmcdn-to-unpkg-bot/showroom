@@ -40,3 +40,5 @@ python/__pycache__
 CP.cpython-35.pyc
 *.s2p
 tempScript.*
+electron/temp/*.*
+electron/temp

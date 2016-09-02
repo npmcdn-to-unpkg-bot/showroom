@@ -11,17 +11,17 @@ oModule.EditFrequencySweep("Setup1", "Sweep1", ["NAME:Sweep1", "Type:=", "Interp
 oDesign.Analyze(sweepName);
 
 oModule = oDesign.GetModule("ReportSetup");
-oModule.CreateReport("XY Plot Syn1", "Modal Solution Data", "Rectangular Plot", sweepName, ["Domain:=", "Sweep"], ["Freq:=", ["All"]], ["X Component:=", "Freq", "Y Component:=", []], []);
+oModule.CreateReport("DataTableSyn1", "Modal Solution Data", "Data Table", sweepName, ["Domain:=", "Sweep"], ["Freq:=", ["All"]], ["X Component:=", "Freq", "Y Component:=", []], []);
 
-oModule.AddTraces("XY Plot Syn1", sweepName, ["Domain:=", "Sweep"], ["Freq:=", ["All"]], ["X Component:=", "Freq", "Y Component:=", ["re(S(1,1))", "im(S(1,1))", "re(S(2,1))", "im(S(2,1))"]], []);
+oModule.AddTraces("DataTableSyn1", sweepName, ["Domain:=", "Sweep"], ["Freq:=", ["All"]], ["X Component:=", "Freq", "Y Component:=", ["re(S(1,1))", "im(S(1,1))", "re(S(2,1))", "im(S(2,1))"]], []);
 
 for(var i = 0; i < varList.length; i++) {
 	var tempList = [];
     for(var j = 0; j < nameList.length; j++) {
 		tempList.push(nameList[j].replace("))", varList[i] + "))"));
 	}
-    oModule.AddTraces("XY Plot Syn1", sweepName, ["Domain:="  , "Sweep"], ["Freq:="  , ["All"]], ["X Component:=", "Freq", "Y Component:=", tempList], []);
+    oModule.AddTraces("DataTableSyn1", sweepName, ["Domain:="  , "Sweep"], ["Freq:="  , ["All"]], ["X Component:=", "Freq", "Y Component:=", tempList], []);
 }
 
-oModule.ExportToFile("XY Plot Syn1", dirName + "\\temp\\" + csvFileName);
-oModule.DeleteReports(["XY Plot Syn1"]);
+oModule.ExportToFile("DataTableSyn1", dirName + "\\temp\\" + csvFileName);
+oModule.DeleteReports(["DataTableSyn1"]);
