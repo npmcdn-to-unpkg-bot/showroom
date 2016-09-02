@@ -952,7 +952,7 @@ function handleChangeM(){
 			currentIter: {id: 0, q: 1e9},
 			isSymmetric: synStoreState.isSymmetric || false,
 			spacemapButtonDisable: false,
-			perturbationStep: Math.round(0.00001 * 30.0 / synStoreState.centerFreq * 1000) / 1000,
+			perturbationStep: Math.round(0.00001 * 30.0 / synStoreState.centerFreq * 1000000) / 1000000,
 			write2EMButtonHtml: "Update HFSS",
 			numPerturb: 10,
 			numIteration: 10,
