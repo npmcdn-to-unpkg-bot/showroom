@@ -42,3 +42,4 @@ CP.cpython-35.pyc
 tempScript.*
 electron/temp/*.*
 electron/temp
+*.csv
